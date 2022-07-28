@@ -7,31 +7,37 @@
 #include <stdlib.h>
 #include <iostream>
 
-// NOTE: DEBUG: this is testing code.
-static void RenderWeirdGradient(GameBitmapBuffer* buffer, int x_offset, int y_offset) {
-    // NOTE: Drawing Logic.
 
-    uint8_t* row = (uint8_t*)buffer->memory;
-
-    for (int y = 0; y < buffer->height; ++y) {
-
-        uint32_t* pixel = (uint32_t*)row;
-
-        for (int x = 0; x < buffer->width; ++x) {
-
-            uint8_t blue = (uint8_t)(x + x_offset);       // NOTE: Blue channel
-            uint8_t green = (uint8_t)(0);                 // NOTE: Green channel
-            uint8_t red = (uint8_t)(y + y_offset);       // NOTE: Red channel
+inline int DeltaTimeToFps(int delta_time) {
+    return delta_time > 0 ? (1000/delta_time) : 1000;
+}
 
 
-            *pixel++ = ((red << 16) | (green << 8) | blue);
-        }
-        row += buffer->pitch;
+
+static uint32_t ConwayRuleset(uint32_t was_alive, int num_neighbors) {
+    if (was_alive && 
+            (num_neighbors == 2 || 
+             num_neighbors == 3)) {
+        return 1;
+    } else if (!was_alive && 
+            num_neighbors == 3) {
+        return 1;
+    } else {
+        return 0;
     }
 }
 
+static uint32_t IslandRuleset(uint32_t waas_alive, int num_neighbors) {
+    if (num_neighbors > 4) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+
 static bool first_run = true;
-static int NumAliveNeighbors(GameOfLifeState* life_state, int x, int y) {
+static int NumAliveNeighbors(GameOfLifeState* life_state, int x, int y, int max_x, int max_y) {
     int count = 0;
     
     for (int c = x - 1; c <= x + 1; ++c) {
@@ -39,11 +45,11 @@ static int NumAliveNeighbors(GameOfLifeState* life_state, int x, int y) {
             
             if ((c == x && r == y) || 
                 (r < 0 || c < 0) ||
-                (r >= 96 || c >= 128)) {
+                (r >= max_y || c >= max_x)) {
                 continue;
             }
             
-            int i = (128 * r) + c;
+            int i = (max_x * r) + c;
 
             if (life_state->cells[i] != 0) {
                 ++count;
@@ -54,43 +60,35 @@ static int NumAliveNeighbors(GameOfLifeState* life_state, int x, int y) {
 }
 static void RenderGameOfLife(GameBitmapBuffer* graphics_buffer, GameOfLifeState* life_state) {
     // update the cell_state
-    int max_x = 128;    
-    int max_y = 96;    
+    int max_x = 256;    
+    int max_y = 144;    
     
     if (first_run) {
-        srand(123);
     }
     
-    uint32_t* new_cells = new uint32_t[128*96];
+    uint32_t* new_cells = new uint32_t[max_x * max_y];
 
     for (int x = 0; x < max_x; ++x) {
         for (int y = 0; y < max_y; ++y) {
             if (first_run) {
                 uint32_t alive = 0;
 
-                if (rand() % 2 == 1) {
+                if (rand() % 3 != 0) {
                     alive = 1;
                 }
 
 
-                int i = (128 * y) + x;
+                int i = (max_x * y) + x;
                 new_cells[i] = (uint32_t)alive;    
             } else {
-                int i = (128 * y) + x;
+                int i = (max_x * y) + x;
                 uint32_t was_alive = life_state->cells[i];
                 uint32_t alive = was_alive;
-                int num_neighbors = NumAliveNeighbors(life_state, x, y);
+                int num_neighbors = NumAliveNeighbors(life_state, x, y, max_x, max_y);
 
-                if (was_alive && 
-                        (num_neighbors == 2 || 
-                         num_neighbors == 3)) {
-                    alive = 1;
-                } else if (!was_alive && 
-                        num_neighbors == 3) {
-                    alive = 1;
-                } else {
-                    alive = 0;
-                }
+                alive = IslandRuleset(was_alive, num_neighbors);
+
+
                 new_cells[i] = (uint32_t)alive;    
             }
         }
@@ -100,7 +98,7 @@ static void RenderGameOfLife(GameBitmapBuffer* graphics_buffer, GameOfLifeState*
     for (int x = 0; x < max_x; ++x) {
         for (int y = 0; y < max_y; ++y) {
             
-            int i = (128 * y) + x;
+            int i = (max_x * y) + x;
 
             life_state->cells[i] = new_cells[i];
         
@@ -129,7 +127,7 @@ static void RenderGameOfLife(GameBitmapBuffer* graphics_buffer, GameOfLifeState*
             int cell_x = x / 5;
             int cell_y = y / 5;
             
-            int i = (128 * cell_y) + cell_x;
+            int i = (max_x * cell_y) + cell_x;
 
             if (life_state->cells[i] != 0) {
                 red = 255;
@@ -143,7 +141,7 @@ static void RenderGameOfLife(GameBitmapBuffer* graphics_buffer, GameOfLifeState*
         row += graphics_buffer->pitch;
     }
 }
-static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* graphics_buffer, KeyboardState* keyboard_state) {
+static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* graphics_buffer, KeyboardState* keyboard_state, int delta_time) {
     
     GameState* game_state = (GameState*)memory->permanent_storage;
         
@@ -176,6 +174,12 @@ static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* graphics_b
             keyboard_state->state & KEY_STATE_W) {
         RenderGameOfLife(graphics_buffer, cell_state);
     }
-
-
+    if ((keyboard_state->state & KEY_STATE_S) &&
+            !(keyboard_state->prev_state & KEY_STATE_S)) {
+        first_run = true;
+        RenderGameOfLife(graphics_buffer, cell_state);
+    }
+    int fps = DeltaTimeToFps(delta_time);
+    // std::cout << fps << std::endl;
+    
 }

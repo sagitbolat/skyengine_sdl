@@ -65,11 +65,11 @@ struct GameState {
     int y_offset;
 };
 struct GameOfLifeState {
-    uint32_t cells[64*2*48*2];    
+    uint32_t cells[256*144];    
 };
 
 
-static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* graphics_buffer, KeyboardState* keyboard_state);
+static void GameUpdateAndRender(GameMemory*, GameBitmapBuffer*, KeyboardState*, int delta_time);
 
 
 #define SKYENGINE_H

@@ -3,8 +3,8 @@
 #include "skyengine.cpp" 
 
 // SECTION: Constants
-#define SCREEN_WIDTH 640
-#define SCREEN_HEIGHT 480
+#define SCREEN_WIDTH 1280
+#define SCREEN_HEIGHT 720
 
 // SECTION: Function declarations
 static void BlitToScreen(GameBitmapBuffer*, SDL_Texture*, SDL_Renderer*);
@@ -58,11 +58,18 @@ int main(int argc, char* argv[]) {
     KeyboardState keyboard_state = {0};
     keyboard_state.state = 0;
 
+    
+    
     SDL_bool running = SDL_TRUE;
 
-
-
     SDL_Event e = {0};
+    
+    
+    // NOTE: Timer variables.
+    int timer_start = SDL_GetTicks();
+    int timer_end = SDL_GetTicks();
+
+
     while(running) {
         keyboard_state.prev_state = keyboard_state.state;
         while (SDL_PollEvent(&e)) {
@@ -124,8 +131,10 @@ int main(int argc, char* argv[]) {
                     break;
             }
         }
-        
-        GameUpdateAndRender(&game_memory, &graphics_buffer, &keyboard_state); 
+        timer_end = SDL_GetTicks();
+        int delta_time = timer_end - timer_start;
+        timer_start = timer_end; 
+        GameUpdateAndRender(&game_memory, &graphics_buffer, &keyboard_state, delta_time); 
         BlitToScreen(&graphics_buffer, texture, renderer);
          
     }
