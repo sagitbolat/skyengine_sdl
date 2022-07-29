@@ -67,7 +67,7 @@ struct GameOfLifeState {
     uint32_t cells[256*144];
 };
 struct Color {
-    uint8_t red, green, blue;
+    uint8_t a, red, green, blue;
 };
 struct HuegeneState {
     Color cells[256*144];    

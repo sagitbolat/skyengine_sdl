@@ -48,37 +48,38 @@ static void ApplyColorToRandNeighbor(Color* cells, Color color, int x, int y, in
                 (r >= max_y || c >= max_x)) {
                 continue;
             }
-                    
+            
             int i = (max_x * r) + c;
-            int spread_color = rand() % 4;
-            if (cells[i].red == 0 && 
-                cells[i].green == 0 && 
-                cells[i].blue == 0 && 
-                spread_color == 0) 
-            {
-                int red_change_factor = rand() % 10;
-                int green_change_factor = rand() % 10;
-                int blue_change_factor = rand() % 10;
-                                 
-                 
-                color.red -= red_change_factor; 
-                color.green -= green_change_factor; 
-                color.blue -= blue_change_factor; 
-                 
-                if (color.red <= 0) {color.red = 1;}
-                if (color.green <= 0) {color.green = 1;}
-                if (color.blue <= 0) {color.blue = 1;}
 
-                cells[i] = color; 
-                return;
+            int will_mutate_color = rand() % 2;
+            
+            Color curr_color = cells[i];
+
+            if (will_mutate_color == 0 && 
+            (curr_color.red == 0 && 
+            curr_color.green == 0 && 
+            curr_color.blue == 0)) {
+
+                //mutate this color to original
+                uint8_t red_dec = rand() % 6;
+                uint8_t blue_dec = rand() % 6;
+                if (color.red > red_dec) {
+                    color.red -= red_dec;
+                }
+                if (color.blue > blue_dec) {
+                    color.blue -= blue_dec;
+                }
+
+                cells[i] = color;
+                
+                continue;
             }
 
         }
     }
-
 }
 
-static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* life_state) {
+static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_state) {
     // update the cell_state
     int max_x = 256;    
     int max_y = 144;    
@@ -88,49 +89,39 @@ static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* life_
     }
      
     Color* new_cells = new Color[max_x * max_y];
-    if (first_run) {
-        for (int x = 0; x < max_x; ++x) {
-            for (int y = 0; y < max_y; ++y) {
-                int i = (max_x * y) + x;
-                new_cells[i].red = 0;
-                new_cells[i].green = 0;
-                new_cells[i].blue = 0; 
-            }
-        } 
-        
-        
-        int center_x = max_x / 2;
-        int center_y = max_y / 2;
-        
-        Color starting_color = {0};
-        starting_color.red = 255; 
 
-        new_cells[(max_x * center_y) + center_x] = starting_color;
-    }
-    else {
-        for (int x = 0; x < max_x; ++x) {
-            for (int y = 0; y < max_y; ++y) {
-                int i = (max_x * y) + x;
-                // Apply huegene rules            
-                // 1. Find empty squares near it.
-                // 2. change the color a little bit.
-                
-                Color color = life_state->cells[i]; 
-                if (color.red == 0 && color.blue == 0 && color.green == 0) { 
-                    continue; 
+    for (int x = 0; x < max_x; ++x) {
+        for (int y = 0; y < max_y; ++y) {
+            if (first_run) {
+                Color color = {0};
+
+                if (y == max_y / 2 && x == max_x/2) {
+                    color.red = 255;
+                    color.blue = 255;
                 }
-                ApplyColorToRandNeighbor(new_cells, color, x, y, max_x, max_y);             
+
+                int i = (max_x * y) + x;
+                new_cells[i] = color;    
+            } else {
+                int i = (max_x * y) + x;
+                Color color = hue_state->cells[i];
+
+                if (color.red != 0 || color.green != 0 || color.blue != 0) {
+                    ApplyColorToRandNeighbor(new_cells, color, x, y, max_x, max_y);
+                }
+
+                new_cells[i] = color;    
             }
         }
     }
-    
+
     //copy cell state to the game_state.
     for (int x = 0; x < max_x; ++x) {
         for (int y = 0; y < max_y; ++y) {
             
             int i = (max_x * y) + x;
 
-            life_state->cells[i] = new_cells[i];
+            hue_state->cells[i] = new_cells[i];
         
         }
     } 
@@ -152,14 +143,11 @@ static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* life_
             int cell_x = x / 5;
             int cell_y = y / 5;
             
-            
             int i = (max_x * cell_y) + cell_x;
-            
-            uint8_t red = life_state->cells[i].red;
-            uint8_t green = life_state->cells[i].green;
-            uint8_t blue = life_state->cells[i].blue;
 
-            
+            uint8_t red = hue_state->cells[i].red;
+            uint8_t green = hue_state->cells[i].green;
+            uint8_t blue = hue_state->cells[i].blue;
 
             *pixel++ = ((red << 16) | (green << 8) | blue);
         }
@@ -274,6 +262,8 @@ static void RenderGameOfLife(GameBitmapBuffer* graphics_buffer, GameOfLifeState*
         row += graphics_buffer->pitch;
     }
 }
+
+
 static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* graphics_buffer, KeyboardState* keyboard_state, int delta_time) {
     
 //    GameState* game_state = (GameState*)memory->permanent_storage;
