@@ -2,7 +2,6 @@
 
 #include <stdint.h>
 
-
 #define Kilobytes(value) ((value) * 1024)
 #define Megabytes(value) (Kilobytes(value) * 1024)
 #define Gigabytes(value) (Megabytes(value) * 1024)
@@ -65,7 +64,13 @@ struct GameState {
     int y_offset;
 };
 struct GameOfLifeState {
-    uint32_t cells[256*144];    
+    uint32_t cells[256*144];
+};
+struct Color {
+    uint8_t red, green, blue;
+};
+struct HuegeneState {
+    Color cells[256*144];    
 };
 
 
