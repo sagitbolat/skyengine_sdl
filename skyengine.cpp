@@ -39,7 +39,8 @@ static uint32_t IslandRuleset(uint32_t waas_alive, int num_neighbors) {
 static bool first_run = true;
 
 // SECTION: Huegene
-static void ApplyColorToRandNeighbor(Color* cells, Color color, int x, int y, int max_x, int max_y) {
+static Color GetColorOfRandNeighbor(Color* cells, int x, int y, int max_x, int max_y) {
+    Color color = {0};
     for (int c = x - 1; c <= x + 1; ++c) {
         for (int r = y - 1; r <= y + 1; ++r) {
             
@@ -48,35 +49,16 @@ static void ApplyColorToRandNeighbor(Color* cells, Color color, int x, int y, in
                 (r >= max_y || c >= max_x)) {
                 continue;
             }
-            
             int i = (max_x * r) + c;
 
-            int will_mutate_color = rand() % 2;
-            
-            Color curr_color = cells[i];
-
-            if (will_mutate_color == 0 && 
-            (curr_color.red == 0 && 
-            curr_color.green == 0 && 
-            curr_color.blue == 0)) {
-
-                //mutate this color to original
-                uint8_t red_dec = rand() % 6;
-                uint8_t blue_dec = rand() % 6;
-                if (color.red > red_dec) {
-                    color.red -= red_dec;
-                }
-                if (color.blue > blue_dec) {
-                    color.blue -= blue_dec;
-                }
-
-                cells[i] = color;
-                
-                continue;
+            if (cells[i].red != 0 || cells[i].green != 0 || cells[i].blue != 0) {
+                color = cells[i];
+                return color;
             }
-
+    
         }
     }
+    return color;
 }
 
 static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_state) {
@@ -106,8 +88,21 @@ static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_s
                 int i = (max_x * y) + x;
                 Color color = hue_state->cells[i];
 
-                if (color.red != 0 || color.green != 0 || color.blue != 0) {
-                    ApplyColorToRandNeighbor(new_cells, color, x, y, max_x, max_y);
+                uint32_t to_mutate = rand() % 4;
+
+                if (color.red == 0 && color.green == 0 && color.blue == 0 && to_mutate == 0) {
+                    color = GetColorOfRandNeighbor(hue_state->cells, x, y, max_x, max_y);
+
+                    uint8_t red_dec = rand() % 6;
+                    uint8_t blue_dec = rand() % 6;
+
+                    if (color.red > red_dec) {
+                        color.red -= red_dec;
+                    }
+                    if (color.blue > blue_dec) {
+                        color.blue -= blue_dec;
+                    }
+
                 }
 
                 new_cells[i] = color;    
