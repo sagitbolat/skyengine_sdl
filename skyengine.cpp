@@ -277,13 +277,33 @@ static void RenderGameOfLife(GameBitmapBuffer* graphics_buffer, GameOfLifeState*
 }
 
 
+static void DrawRectangle(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uint8_t blue, int min_x, int min_y, int max_x, int max_y) {
+
+    uint8_t* row = (uint8_t*)graphics_buffer->memory;
+
+    for (int y = min_y; y < max_y; ++y) {
+        
+        //if (y < 0 || y >= graphics_buffer->height) { continue; }
+
+        uint32_t* pixel = (uint32_t*)row;
+
+        for (int x = min_x; x < max_x; ++x) {
+            
+            //if (x < 0 || x >= graphics_buffer->width) { continue; }
+
+            *pixel++ = ((red << 16) | (green << 8) | blue);
+        }
+        row += graphics_buffer->pitch;
+    }
+}
+
 static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* graphics_buffer, KeyboardState* keyboard_state, int delta_time) {
     
-//    GameState* game_state = (GameState*)memory->permanent_storage;
+    GameState* game_state = (GameState*)memory->permanent_storage;
         
 //    GameOfLifeState* cell_state = (GameOfLifeState*)memory->permanent_storage;
 
-    HuegeneState* huegene_state = (HuegeneState*)memory->permanent_storage; 
+//    HuegeneState* huegene_state = (HuegeneState*)memory->permanent_storage; 
 
     if (!memory->is_initialized) {
         memory->is_initialized = true;
@@ -303,10 +323,44 @@ static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* graphics_b
         game_state->x_offset -= 1;
     }
     */
-     
+    
+    uint32_t tilemap[9][16] = {
+        {1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1},
+        {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 1},
+        {1, 0, 0, 1,  0, 0, 0, 1,  1, 0, 0, 0,  1, 0, 0, 1},
+        {1, 0, 0, 1,  0, 0, 0, 1,  1, 0, 0, 0,  1, 0, 0, 1},
+        {1, 0, 0, 1,  0, 0, 0, 1,  1, 0, 0, 0,  0, 0, 0, 1},
+        {1, 0, 0, 1,  0, 0, 0, 1,  1, 0, 0, 0,  1, 0, 0, 1},
+        {1, 0, 0, 1,  0, 0, 0, 1,  1, 0, 0, 0,  1, 0, 0, 1},
+        {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 1},
+        {1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1},
+    };
+    
+    int square_size = 80; // NOTE: Size of square tile in pixels 
+
+    for (int y = 0; y < 9; ++y) {
+        for (int x = 0; x < 16; ++x) {
+            uint32_t tile_id = tilemap[y][x];
+            uint8_t red = 0;
+            uint8_t green = 0;
+            uint8_t blue = 0;
+            
+            if (tile_id == 0) {
+                red = 255;
+                green = 255;
+                blue = 255;
+            }
+            
+            int curr_x = x * square_size;
+            int curr_y = y * square_size;
+            DrawRectangle(graphics_buffer, red, green, blue, curr_x, curr_y, curr_x + square_size, curr_y + square_size);
+        }  
+    }
+
     // TODO: Allow sample offsets here for more robust platform options.
     //RenderWeirdGradient(graphics_buffer, game_state->x_offset, game_state->y_offset);
     
+    /*
     if ((keyboard_state->state & KEY_STATE_SPACE && 
             !(keyboard_state->prev_state & KEY_STATE_SPACE)) ||
             keyboard_state->state & KEY_STATE_W) {
@@ -320,7 +374,8 @@ static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* graphics_b
         //RenderGameOfLife(graphics_buffer, cell_state);
     }
         RenderHuegene(graphics_buffer, huegene_state);
-
+    */
+    
     //int fps = DeltaTimeToFps(delta_time);
     // std::cout << fps << std::endl;
     

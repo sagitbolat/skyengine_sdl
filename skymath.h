@@ -28,7 +28,7 @@ union Vector4D {
 	struct {
 		union {
             Vector3D xyz;
-            float x, y, z;
+			struct { float x, y, z; };
         };
         float w;
 	};
@@ -40,7 +40,7 @@ union Vector4D {
 	struct {
 		union {
             Vector3D rgb;
-            float r, g, b;
+			struct { float r, g, b; };
         };
         float a;
 	};

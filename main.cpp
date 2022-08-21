@@ -10,17 +10,6 @@
 static void BlitToScreen(GameBitmapBuffer*, SDL_Texture*, SDL_Renderer*);
 
 int main(int argc, char* argv[]) {
-    /*int x = 640, y = 480, f = 60;
-    for ( int i = 1; i < argc; i++ ) {
-        if ( strcmp( argv[ i ], "-x" ) == 0 && argc > i + 1 ) {
-            x = (int) strtol( argv[ ++i ], NULL, 10 );
-        } else if ( strcmp( argv[ i ], "-y" ) == 0 && argc > i + 1 ) {
-            y = (int) strtol( argv[ ++i ], NULL, 10 );
-        } else if ( strcmp( argv[ i ], "-f" ) == 0 && argc > i + 1 ) {
-            f = (int) strtol( argv[ ++i ], NULL, 10 );
-        }
-    }*/ 
-   
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
         
