@@ -12,13 +12,33 @@ inline int DeltaTimeToFps(int delta_time) {
     return delta_time > 0 ? (1000/delta_time) : 1000;
 }
 
+static uint64_t sky_rand_seed = 0;
+uint64_t a = 1664525;
+uint64_t c = 1013904223;
+uint64_t m = 4294967296;
+static void sky_srand(uint64_t seed) {
+    sky_rand_seed = seed;
+}
+
+static uint64_t sky_rand() {
+    
+    
+    sky_rand_seed = ((a * sky_rand_seed) + c) % m;
+    return sky_rand_seed;
+}
+
+static float sky_rand_float() {
+    return (float)sky_rand() / m; 
+}
+
+
 static void GenerateTileMap(GameState* game_state) {
     // NOTE: populate with random noise
     for (int y = 0; y < 144; ++y) {
         for (int x = 0; x < 256; ++x) {
             
             uint32_t tile_id = 0;
-            if (rand() % 2 == 1) {
+            if (sky_rand_float() < 0.5f) {
                 tile_id = 1;            
             } 
             game_state->tiles[y * 256 + x] = tile_id;
@@ -68,7 +88,7 @@ static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* graphics_b
     
     static bool first = true;
     if (first) {
-        srand(123134408);
+        sky_srand(223137);
         GenerateTileMap(game_state);
         first = false;
     }
