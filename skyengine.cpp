@@ -12,285 +12,45 @@ inline int DeltaTimeToFps(int delta_time) {
     return delta_time > 0 ? (1000/delta_time) : 1000;
 }
 
+static void GenerateTileMap(GameState* game_state) {
+    // NOTE: populate with random noise
+    for (int y = 0; y < 144; ++y) {
+        for (int x = 0; x < 256; ++x) {
+            
+            uint32_t tile_id = 0;
+            if (rand() % 2 == 1) {
+                tile_id = 1;            
+            } 
+            game_state->tiles[y * 256 + x] = tile_id;
 
-
-static uint32_t ConwayRuleset(uint32_t was_alive, int num_neighbors) {
-    if (was_alive && 
-            (num_neighbors == 2 || 
-             num_neighbors == 3)) {
-        return 1;
-    } else if (!was_alive && 
-            num_neighbors == 3) {
-        return 1;
-    } else {
-        return 0;
-    }
+        }
+    }     
 }
-
-static uint32_t IslandRuleset(uint32_t waas_alive, int num_neighbors) {
-    if (num_neighbors > 4) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
-
-static bool first_run = true;
-
-// SECTION: Huegene
-static Color GetColorOfRandNeighbor(Color* cells, int x, int y, int max_x, int max_y) {
-    Color color = {0};
-    for (int c = x - 1; c <= x + 1; ++c) {
-        for (int r = y - 1; r <= y + 1; ++r) {
-            
-            if ((c == x && r == y) || 
-                (r < 0 || c < 0) ||
-                (r >= max_y || c >= max_x)) {
-                continue;
-            }
-            int i = (max_x * r) + c;
-
-            if (cells[i].red != 0 || cells[i].green != 0 || cells[i].blue != 0) {
-                color = cells[i];
-                return color;
-            }
-    
-        }
-    }
-    return color;
-}
-
-static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_state) {
-    int max_x = 256;    
-    int max_y = 144;    
-    int jaggedness = 50;
-    int fade_speed = 3;
-    
-    if (first_run) {
-        //srand(123456789);
-    }
-     
-    Color* new_cells = new Color[max_x * max_y];
-
-    // update the cell_state
-    for (int x = 0; x < max_x; ++x) {
-        for (int y = 0; y < max_y; ++y) {
-            if (first_run) {
-                Color color = {0};
-
-                if (y == 0 && x == max_x/2) {
-                    color.red = 214;
-                    color.green = 2;
-                    color.blue = 112;
-                }
-                if (y == max_y / 2 && x == max_x/2) {
-                    color.red = 155;
-                    color.green = 79;
-                    color.blue = 150;
-                }
-                if (y == max_y-1 && x == max_x/2) {
-                    color.red = 0;
-                    color.green = 56;
-                    color.blue = 168;
-                }
-
-                int i = (max_x * y) + x;
-                new_cells[i] = color;    
-            } else {
-                int i = (max_x * y) + x;
-                Color color = hue_state->cells[i];
-
-                int  to_mutate = rand() % jaggedness;
-
-                if (color.red == 0 && color.green == 0 && color.blue == 0 && to_mutate == 0) {
-                    color = GetColorOfRandNeighbor(hue_state->cells, x, y, max_x, max_y);
-
-                    uint8_t red_dec = rand() % fade_speed;
-                    uint8_t green_dec = rand() % fade_speed;
-                    uint8_t blue_dec = rand() % fade_speed;
-
-                    
-                    if (color.red > red_dec) {
-                        color.red -= red_dec;
-                    }
-                    if (color.green > green_dec) {
-                        color.green -= green_dec;
-                    }
-                    if (color.blue > blue_dec) {
-                        color.blue -= blue_dec;
-                    }
-
-                }
-
-                new_cells[i] = color;    
-            }
-        }
-    }
-
-    //copy cell state to the game_state.
-    for (int x = 0; x < max_x; ++x) {
-        for (int y = 0; y < max_y; ++y) {
-            
-            int i = (max_x * y) + x;
-
-            hue_state->cells[i] = new_cells[i];
-        
-        }
-    } 
-
-    delete new_cells;
-
-    first_run = false;
-    
-    // Update the buffer
-
-    uint8_t* row = (uint8_t*)graphics_buffer->memory;
-
-    for (int y = 0; y < graphics_buffer->height; ++y) {
-
-        uint32_t* pixel = (uint32_t*)row;
-
-        for (int x = 0; x < graphics_buffer->width; ++x) {
-            
-            int cell_x = x / 5;
-            int cell_y = y / 5;
-            
-            int i = (max_x * cell_y) + cell_x;
-
-            uint8_t red = hue_state->cells[i].red;
-            uint8_t green = hue_state->cells[i].green;
-            uint8_t blue = hue_state->cells[i].blue;
-
-            *pixel++ = ((red << 16) | (green << 8) | blue);
-        }
-        row += graphics_buffer->pitch;
-    }
-    
-}
-
-// SECTION: Game Of Life
-static int NumAliveNeighbors(GameOfLifeState* life_state, int x, int y, int max_x, int max_y) {
-    int count = 0;
-    
-    for (int c = x - 1; c <= x + 1; ++c) {
-        for (int r = y - 1; r <= y + 1; ++r) {
-            
-            if ((c == x && r == y) || 
-                (r < 0 || c < 0) ||
-                (r >= max_y || c >= max_x)) {
-                continue;
-            }
-            
-            int i = (max_x * r) + c;
-
-            if (life_state->cells[i] != 0) {
-                ++count;
-            }
-        }
-    }
-    return(count);
-}
-static void RenderGameOfLife(GameBitmapBuffer* graphics_buffer, GameOfLifeState* life_state) {
-    // update the cell_state
-    int max_x = 256;    
-    int max_y = 144;    
-    
-    if (first_run) {
-        srand(123456789);
-    }
-     
-    uint32_t* new_cells = new uint32_t[max_x * max_y];
-
-    for (int x = 0; x < max_x; ++x) {
-        for (int y = 0; y < max_y; ++y) {
-            if (first_run) {
-                uint32_t alive = 0;
-
-                if (rand() % 3 != 0) {
-                    alive = 1;
-                }
-
-
-                int i = (max_x * y) + x;
-                new_cells[i] = (uint32_t)alive;    
-            } else {
-                int i = (max_x * y) + x;
-                uint32_t was_alive = life_state->cells[i];
-                uint32_t alive = was_alive;
-                int num_neighbors = NumAliveNeighbors(life_state, x, y, max_x, max_y);
-
-                alive = IslandRuleset(was_alive, num_neighbors);
-
-
-                new_cells[i] = (uint32_t)alive;    
-            }
-        }
-    }
-
-    //copy cell state to the game_state.
-    for (int x = 0; x < max_x; ++x) {
-        for (int y = 0; y < max_y; ++y) {
-            
-            int i = (max_x * y) + x;
-
-            life_state->cells[i] = new_cells[i];
-        
-        }
-    } 
-
-    delete new_cells;
-
-    first_run = false;
-    
-    // Update the buffer
-
-    uint8_t* row = (uint8_t*)graphics_buffer->memory;
-
-    for (int y = 0; y < graphics_buffer->height; ++y) {
-
-        uint32_t* pixel = (uint32_t*)row;
-
-        for (int x = 0; x < graphics_buffer->width; ++x) {
-
-            uint8_t red = 0;
-            uint8_t green = 0;
-            uint8_t blue = 0;
-            
-            
-            int cell_x = x / 5;
-            int cell_y = y / 5;
-            
-            int i = (max_x * cell_y) + cell_x;
-
-            if (life_state->cells[i] != 0) {
-                red = 255;
-                green = 255;
-                blue = 255;                
-            }
-
-
-            *pixel++ = ((red << 16) | (green << 8) | blue);
-        }
-        row += graphics_buffer->pitch;
-    }
-}
-
 
 static void DrawRectangle(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uint8_t blue, int min_x, int min_y, int max_x, int max_y) {
+    
+    if (min_x < 0) {
+        min_x = 0;
+    }
+    if (min_y < 0) {
+        min_y = 0;
+    }
+    if (max_x > graphics_buffer->width) {
+        max_x = graphics_buffer->width;
+    }
+    if (max_y > graphics_buffer->height) {
+        max_y = graphics_buffer->height;
+    }
 
-    uint8_t* row = (uint8_t*)graphics_buffer->memory;
+    uint8_t* row = (uint8_t*)graphics_buffer->memory + 
+                     (min_x * graphics_buffer->bytes_per_pixel) + 
+                     (min_y * graphics_buffer->pitch);
 
     for (int y = min_y; y < max_y; ++y) {
-        
-        //if (y < 0 || y >= graphics_buffer->height) { continue; }
-
+       
         uint32_t* pixel = (uint32_t*)row;
-
+        
         for (int x = min_x; x < max_x; ++x) {
-            
-            //if (x < 0 || x >= graphics_buffer->width) { continue; }
-
             *pixel++ = ((red << 16) | (green << 8) | blue);
         }
         row += graphics_buffer->pitch;
@@ -300,82 +60,39 @@ static void DrawRectangle(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_
 static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* graphics_buffer, KeyboardState* keyboard_state, int delta_time) {
     
     GameState* game_state = (GameState*)memory->permanent_storage;
-        
-//    GameOfLifeState* cell_state = (GameOfLifeState*)memory->permanent_storage;
-
-//    HuegeneState* huegene_state = (HuegeneState*)memory->permanent_storage; 
 
     if (!memory->is_initialized) {
         memory->is_initialized = true;
     }
+    int square_size = 5; // NOTE: Size of square tile in pixels 
     
-    /* 
-    if (keyboard_state->state & KEY_STATE_W) {
-        game_state->y_offset += 1;
+    static bool first = true;
+    if (first) {
+        srand(123134408);
+        GenerateTileMap(game_state);
+        first = false;
     }
-    if (keyboard_state->state & KEY_STATE_A) {
-        game_state->x_offset += 1;
-    }
-    if (keyboard_state->state & KEY_STATE_S) {
-        game_state->y_offset -= 1;
-    }
-    if (keyboard_state->state & KEY_STATE_D) {
-        game_state->x_offset -= 1;
-    }
-    */
-    
-    uint32_t tilemap[9][16] = {
-        {1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1},
-        {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 1},
-        {1, 0, 0, 1,  0, 0, 0, 1,  1, 0, 0, 0,  1, 0, 0, 1},
-        {1, 0, 0, 1,  0, 0, 0, 1,  1, 0, 0, 0,  1, 0, 0, 1},
-        {1, 0, 0, 1,  0, 0, 0, 1,  1, 0, 0, 0,  0, 0, 0, 1},
-        {1, 0, 0, 1,  0, 0, 0, 1,  1, 0, 0, 0,  1, 0, 0, 1},
-        {1, 0, 0, 1,  0, 0, 0, 1,  1, 0, 0, 0,  1, 0, 0, 1},
-        {1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 1},
-        {1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1},
-    };
-    
-    int square_size = 80; // NOTE: Size of square tile in pixels 
 
-    for (int y = 0; y < 9; ++y) {
-        for (int x = 0; x < 16; ++x) {
-            uint32_t tile_id = tilemap[y][x];
-            uint8_t red = 0;
-            uint8_t green = 0;
-            uint8_t blue = 0;
+    for (int y = 0; y < 144; ++y) {
+        for (int x = 0; x < 256; ++x) {
+            uint32_t tile_id = game_state->tiles[y * 256 + x];
+            uint8_t red = 155;
+            uint8_t green = 155;
+            uint8_t blue = 155;
             
-            if (tile_id == 0) {
+            if (tile_id == 1) {
                 red = 255;
                 green = 255;
                 blue = 255;
             }
-            
-            int curr_x = x * square_size;
-            int curr_y = y * square_size;
-            DrawRectangle(graphics_buffer, red, green, blue, curr_x, curr_y, curr_x + square_size, curr_y + square_size);
+
+            int min_x = x * square_size;
+            int min_y = y * square_size;
+            DrawRectangle(graphics_buffer, red, green, blue, min_x, min_y, min_x + square_size, min_y + square_size);
         }  
     }
 
-    // TODO: Allow sample offsets here for more robust platform options.
-    //RenderWeirdGradient(graphics_buffer, game_state->x_offset, game_state->y_offset);
-    
-    /*
-    if ((keyboard_state->state & KEY_STATE_SPACE && 
-            !(keyboard_state->prev_state & KEY_STATE_SPACE)) ||
-            keyboard_state->state & KEY_STATE_W) {
-        RenderHuegene(graphics_buffer, huegene_state);
-        //RenderGameOfLife(graphics_buffer, cell_state);
-    }
-    if ((keyboard_state->state & KEY_STATE_S) &&
-            !(keyboard_state->prev_state & KEY_STATE_S)) {
-        first_run = true;
-        RenderHuegene(graphics_buffer, huegene_state);
-        //RenderGameOfLife(graphics_buffer, cell_state);
-    }
-        RenderHuegene(graphics_buffer, huegene_state);
-    */
-    
+
     //int fps = DeltaTimeToFps(delta_time);
     // std::cout << fps << std::endl;
     

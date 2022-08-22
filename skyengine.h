@@ -12,7 +12,7 @@
 // NOTE: Services that the game provides to the platform layer:
     // TODO: Maybe seperate sound on another thread and update async.
 
-// NOTE: We meed timing, controller/keyboard input, bitmap buffer for graphics, sound buffer.
+// NOTE: We need timing, controller/keyboard input, bitmap buffer for graphics, sound buffer.
 
 
 // NOTE: Platform independant bitmap buffer.
@@ -20,6 +20,7 @@ struct GameBitmapBuffer {
     void*       memory;
     int         width;
     int         height;
+    int         bytes_per_pixel;
     int         pitch;
 };
 
@@ -60,17 +61,7 @@ struct GameMemory {
 
 // NOTE: The game state representation.
 struct GameState {
-    int x_offset;
-    int y_offset;
-};
-struct GameOfLifeState {
-    uint32_t cells[256*144];
-};
-struct Color {
-    uint8_t a, red, green, blue;
-};
-struct HuegeneState {
-    Color cells[256*144];    
+    uint32_t tiles[256 * 144];
 };
 
 

@@ -30,6 +30,7 @@ int main(int argc, char* argv[]) {
     graphics_buffer.width = SCREEN_WIDTH;
     graphics_buffer.height = SCREEN_HEIGHT;
     graphics_buffer.pitch = SCREEN_WIDTH * 32;
+    graphics_buffer.bytes_per_pixel = 4;
     graphics_buffer.memory = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 32);
     memset(graphics_buffer.memory, 0, SCREEN_WIDTH * SCREEN_HEIGHT * 32);
 
