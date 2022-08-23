@@ -8,6 +8,18 @@
 
 #define ArrayCount(array) (sizeof(array) / sizeof((array)[0]))
 
+#ifdef __GNUC__
+#  define UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
+#else
+#  define UNUSED(x) UNUSED_ ## x
+#endif
+
+#ifdef __GNUC__
+#  define UNUSED_FUNCTION(x) __attribute__((__unused__)) UNUSED_ ## x
+#else
+#  define UNUSED_FUNCTION(x) UNUSED_ ## x
+#endif
+
 
 // NOTE: Services that the game provides to the platform layer:
     // TODO: Maybe seperate sound on another thread and update async.
