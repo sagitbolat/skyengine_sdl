@@ -128,7 +128,7 @@ float Magnitude(const Vector4D vec) {
 Vector3D Normalize(const Vector3D vec) {	
 	return (vec / Magnitude(vec)); 
 }
-	
+
 
 /********************************
  *
