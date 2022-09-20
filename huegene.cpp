@@ -1,5 +1,5 @@
 #include "SDL_sky.cpp"
-
+#include "sky_random.cpp"
 
 bool first_run = true;
 
@@ -7,12 +7,12 @@ struct Color {
     uint8_t a, red, green, blue;
 };
 
-int width = 256;
-int height = 144;
-int square_size = 5; //1280/256 = 5 and 720/144 = 5
+int width = 1280;
+int height = 720;
+int square_size = 1; 
 
 struct HuegeneState {
-    Color cells[256 * 144];
+    Color cells[1280 * 720];
 };
 
 
@@ -30,6 +30,7 @@ static void Start(GameState* game_state) {
     HuegeneState* huegene_state = (HuegeneState*)game_state;
     RenderHuegene(graphics_buffer, huegene_state);
     first_run = false;
+    xorshift128plus::sky_srand(21021039);
     return;
 }
 
@@ -61,11 +62,13 @@ static Color GetColorOfRandNeighbor(Color* cells, int x, int y, int max_x, int m
     return color;
 }
 
+
+// TODO: Swap from using default prng to xorshift or perlin noise.
 static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_state) {
-    int max_x = 256;    
-    int max_y = 144;    
+    int max_x = width;    
+    int max_y = height;    
     int jaggedness = 50;
-    int fade_speed = 3;
+    int fade_speed = 2;
     
     if (jaggedness < 1) {
         jaggedness = 1;
@@ -75,7 +78,7 @@ static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_s
     }
 
     if (first_run) {
-        srand(123456789);
+        //srand(123456789);
     }
      
     Color* new_cells = new Color[max_x * max_y];
@@ -116,6 +119,22 @@ static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_s
                     uint8_t green_dec = rand() % fade_speed;
                     uint8_t blue_dec = rand() % fade_speed;
                     
+                    // SECTION: MORE RANDOMIZATION. CAN DELETE.
+                    int flip_chance = 50;
+                    uint8_t red_flip = rand() % 100;
+                    uint8_t green_flip = rand() % 100;
+                    uint8_t blue_flip = rand() % 100;
+                    if (red_flip < flip_chance) {
+                       red_dec *= -1; 
+                    }
+                    if (green_flip < flip_chance) {
+                       green_dec *= -1; 
+                    }
+                    if (blue_flip < flip_chance) {
+                       blue_dec *= -1; 
+                    }
+                    // END OF SECTION
+
                     if (color.red > red_dec) {
                         color.red -= red_dec;
                     }

@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
     // NOTE: Initializing game state memory
     GameMemory game_memory = {0};
     game_memory.is_initialized = true;
-    game_memory.permanent_storage_size = Megabytes(4);
+    game_memory.permanent_storage_size = Megabytes(128);
     game_memory.permanent_storage = malloc(game_memory.permanent_storage_size);
     game_memory.transient_storage_size = Gigabytes(1);
     game_memory.transient_storage = malloc(game_memory.transient_storage_size);
