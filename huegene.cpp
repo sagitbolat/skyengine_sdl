@@ -1,16 +1,21 @@
 #include "SDL_sky.cpp"
-#include "sky_random.cpp"
 
 
-int square_size = 1;
 bool first_run = true;
 
-struct HuegeneState {
-    uint32_t tiles[1920 * 1080];
-};
 struct Color {
     uint8_t a, red, green, blue;
 };
+
+int width = 256;
+int height = 144;
+int square_size = 5; //1280/256 = 5 and 720/144 = 5
+
+struct HuegeneState {
+    Color cells[256 * 144];
+};
+
+
 
 static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_state);
 
@@ -34,14 +39,43 @@ static void Update(GameState* game_state) {
     return;
 }
 
+// SECTION: Huegene
+static Color GetColorOfRandNeighbor(Color* cells, int x, int y, int max_x, int max_y) {
+    Color color = {0};
+    for (int c = x - 1; c <= x + 1; ++c) {
+        for (int r = y - 1; r <= y + 1; ++r) {
+            
+            if ((c == x && r == y) || 
+                (r < 0 || c < 0) ||
+                (r >= max_y || c >= max_x)) {
+                continue;
+            }
+            int i = (max_x * r) + c;
+            if (cells[i].red != 0 || cells[i].green != 0 || cells[i].blue != 0) {
+                color = cells[i];
+                return color;
+            }
+    
+        }
+    }
+    return color;
+}
+
 static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_state) {
     int max_x = 256;    
     int max_y = 144;    
     int jaggedness = 50;
     int fade_speed = 3;
     
+    if (jaggedness < 1) {
+        jaggedness = 1;
+    }
+    if (fade_speed < 1) {
+        fade_speed = 1;
+    }
+
     if (first_run) {
-        //srand(123456789);
+        srand(123456789);
     }
      
     Color* new_cells = new Color[max_x * max_y];
@@ -50,20 +84,25 @@ static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_s
         for (int y = 0; y < max_y; ++y) {
             if (first_run) {
                 Color color = {0};
-                if (y == 0 && x == max_x/2) {
-                    color.red = 214;
-                    color.green = 2;
-                    color.blue = 112;
-                }
+                // if (y == 0 && x == max_x/2) {
+                //     color.red = 214;
+                //     color.green = 2;
+                //     color.blue = 112;
+                // }
+                // if (y == max_y / 2 && x == max_x/2) {
+                //     color.red = 155;
+                //     color.green = 79;
+                //     color.blue = 150;
+                // }
+                // if (y == max_y-1 && x == max_x/2) {
+                //     color.red = 0;
+                //     color.green = 56;
+                //     color.blue = 168;
+                // }
                 if (y == max_y / 2 && x == max_x/2) {
                     color.red = 155;
                     color.green = 79;
                     color.blue = 150;
-                }
-                if (y == max_y-1 && x == max_x/2) {
-                    color.red = 0;
-                    color.green = 56;
-                    color.blue = 168;
                 }
                 int i = (max_x * y) + x;
                 new_cells[i] = color;    
@@ -91,3 +130,32 @@ static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_s
             }
         }
     }
+
+    
+    //copy cell state to the game_state.
+    for (int x = 0; x < max_x; ++x) {
+        for (int y = 0; y < max_y; ++y) {
+            
+            int i = (max_x * y) + x;
+            hue_state->cells[i] = new_cells[i];
+        
+        }
+    } 
+    delete new_cells;
+    first_run = false;
+
+    // Draw to buffer
+    for (int y = 0; y < max_y; ++y) {
+        for (int x = 0; x < max_x; ++x) {   
+            int i = (y * max_x) + x;  
+            uint8_t red = hue_state->cells[i].red;
+            uint8_t green = hue_state->cells[i].green;       
+            uint8_t blue = hue_state->cells[i].blue;       
+            
+            
+            int min_x = x * square_size;
+            int min_y = y * square_size;
+            DrawRectangle(red, green, blue, min_x, min_y, min_x + square_size, min_y + square_size);
+        }
+    }
+}

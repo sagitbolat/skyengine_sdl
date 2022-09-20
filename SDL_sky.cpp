@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
         
-    SDL_Window* window = SDL_CreateWindow("Hello World",
+    SDL_Window* window = SDL_CreateWindow("Sky Engine",
                         SDL_WINDOWPOS_UNDEFINED,
                         SDL_WINDOWPOS_UNDEFINED,
                         SCREEN_WIDTH, SCREEN_HEIGHT, 
