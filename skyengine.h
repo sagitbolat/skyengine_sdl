@@ -73,7 +73,7 @@ struct GameMemory {
 
 // NOTE: The game state representation.
 struct GameState {
-    uint32_t tiles[256 * 144];
+    void* state;
 };
 
 

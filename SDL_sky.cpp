@@ -9,6 +9,9 @@
 // SECTION: Function declarations
 static void BlitToScreen(GameBitmapBuffer*, SDL_Texture*, SDL_Renderer*);
 
+// SECTION: User Defined function declarations
+static void SkyInit();
+
 int main(int argc, char* argv[]) {
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
@@ -59,6 +62,7 @@ int main(int argc, char* argv[]) {
     int timer_start = SDL_GetTicks();
     int timer_end = SDL_GetTicks();
 
+    SkyInit();
 
     while(running) {
         keyboard_state.prev_state = keyboard_state.state;
@@ -138,7 +142,6 @@ int main(int argc, char* argv[]) {
 }
 
 static void BlitToScreen(GameBitmapBuffer* buffer, SDL_Texture* texture, SDL_Renderer* renderer) {
-
     SDL_UpdateTexture(texture, NULL, buffer->memory, buffer->pitch);
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, NULL, NULL);    

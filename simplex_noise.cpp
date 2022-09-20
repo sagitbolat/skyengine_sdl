@@ -2,7 +2,7 @@
  */
 
 
-#include "stdint.h"
+#include <stdint.h>
 
 namespace Noise {
     static float frequency = 1.0f;      // Frequency of the first octave.
@@ -43,7 +43,7 @@ namespace Noise {
         return ((h & 1) ? -u : u) + ((h & 2) ? -2.0f * v : 2.0f * v);
     }
 
-    float Noise(float x, float y) {
+    float simplex(float x, float y) {
         float n0, n1, n2;
 
         // Skewing/Unskewing factors for 2D

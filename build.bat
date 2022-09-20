@@ -1,6 +1,6 @@
 @echo off
 mkdir build
 pushd build
-g++ ..\main.cpp -IC:\SDL2\include -LC:\SDL2\lib -Wall -lmingw32 -lSDL2main -lSDL2 -o main.exe 
-.\main.exe
+g++ ..\%1.cpp -IC:\SDL2\include -LC:\SDL2\lib -Wall -lmingw32 -lSDL2main -lSDL2 -o %1.exe 
+.\%1.exe
 popd
