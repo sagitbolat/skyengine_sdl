@@ -89,13 +89,13 @@ static void SkyInit() {
     return;
 }
 
-static void Start(GameState* game_state) {
+static void Start(GameState* game_state, KeyboardState* keyboard_state) {
     IslandState* island_state = (IslandState*) game_state;
     GenerateTileMap(island_state);
     return;
 }
 
-static void Update(GameState* game_state) {
+static void Update(GameState* game_state, KeyboardState* keyboard_state) {
     IslandState* island_state = (IslandState*) game_state;
     for (int y = 0; y < 144; ++y) {
         for (int x = 0; x < 256; ++x) {

@@ -3,9 +3,6 @@
 
 bool first_run = true;
 
-struct Color {
-    uint8_t a, red, green, blue;
-};
 
 int width = 1280;
 int height = 720;
@@ -26,15 +23,15 @@ static void SkyInit() {
     return;
 }
 
-static void Start(GameState* game_state) {
+static void Start(GameState* game_state, KeyboardState* keyboard_state) {
     HuegeneState* huegene_state = (HuegeneState*)game_state;
     RenderHuegene(graphics_buffer, huegene_state);
     first_run = false;
-    xorshift128plus::sky_srand(21021039);
+    sky_srand(21021039);
     return;
 }
 
-static void Update(GameState* game_state) {
+static void Update(GameState* game_state, KeyboardState* keyboard_state) {
     HuegeneState* huegene_state = (HuegeneState*)game_state;
     RenderHuegene(graphics_buffer, huegene_state);
     return;
@@ -67,8 +64,9 @@ static Color GetColorOfRandNeighbor(Color* cells, int x, int y, int max_x, int m
 static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_state) {
     int max_x = width;    
     int max_y = height;    
-    int jaggedness = 50;
+    int jaggedness = 5;
     int fade_speed = 2;
+    int flip_chance = 60; //in percentages
     
     if (jaggedness < 1) {
         jaggedness = 1;
@@ -87,43 +85,65 @@ static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_s
         for (int y = 0; y < max_y; ++y) {
             if (first_run) {
                 Color color = {0};
-                // if (y == 0 && x == max_x/2) {
+                // if (y == 160 && x % 15 == 0) {
                 //     color.red = 214;
                 //     color.green = 2;
                 //     color.blue = 112;
                 // }
+                // if (y == max_y / 2 && x % 15 == 0) {
+                //     color.red = 155;
+                //     color.green = 79;
+                //     color.blue = 150;
+                // }
+                // if (y == max_y-161 && x % 15 == 0) {
+                //     color.red = 0;
+                //     color.green = 106;
+                //     color.blue = 220;
+                // }
+
                 // if (y == max_y / 2 && x == max_x/2) {
                 //     color.red = 155;
                 //     color.green = 79;
                 //     color.blue = 150;
                 // }
-                // if (y == max_y-1 && x == max_x/2) {
-                //     color.red = 0;
-                //     color.green = 56;
-                //     color.blue = 168;
+
+                // if (y == 240 && x == 320) {
+                //     color.red = 215;
+                //     color.green = 169;
+                //     color.blue = 227;
                 // }
-                if (y == max_y / 2 && x == max_x/2) {
-                    color.red = 155;
-                    color.green = 79;
-                    color.blue = 150;
+                // if (y == 240 && x == 960) {
+                //     color.red = 139;
+                //     color.green = 190;
+                //     color.blue = 232;
+                // }
+                // if (y == 480 && x == 640) {
+                //     color.red = 168;
+                //     color.green = 213;
+                //     color.blue = 186;
+                // }
+
+                if (y == 0) {
+                    color.red = 0;
+                    color.green = 170;
+                    color.blue = 17;
                 }
                 int i = (max_x * y) + x;
                 new_cells[i] = color;    
             } else {
                 int i = (max_x * y) + x;
                 Color color = hue_state->cells[i];
-                int  to_mutate = rand() % jaggedness;
+                int  to_mutate = sky_rand() % jaggedness;
                 if (color.red == 0 && color.green == 0 && color.blue == 0 && to_mutate == 0) {
                     color = GetColorOfRandNeighbor(hue_state->cells, x, y, max_x, max_y);
-                    uint8_t red_dec = rand() % fade_speed;
-                    uint8_t green_dec = rand() % fade_speed;
-                    uint8_t blue_dec = rand() % fade_speed;
+                    uint8_t red_dec = sky_rand() % fade_speed;
+                    uint8_t green_dec = sky_rand() % fade_speed;
+                    uint8_t blue_dec = sky_rand() % fade_speed;
                     
                     // SECTION: MORE RANDOMIZATION. CAN DELETE.
-                    int flip_chance = 50;
-                    uint8_t red_flip = rand() % 100;
-                    uint8_t green_flip = rand() % 100;
-                    uint8_t blue_flip = rand() % 100;
+                    uint8_t red_flip = sky_rand() % 100;
+                    uint8_t green_flip = sky_rand() % 100;
+                    uint8_t blue_flip = sky_rand() % 100;
                     if (red_flip < flip_chance) {
                        red_dec *= -1; 
                     }

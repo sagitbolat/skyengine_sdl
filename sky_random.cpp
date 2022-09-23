@@ -13,32 +13,37 @@ namespace lcg {
         return rand_seed;
     }
     float sky_rand_float() {
-        return (float)rand() / m; 
+        return (float)sky_rand() / m; 
     
     }
 }
-namespace xorshift128plus {
-    static uint64_t s[2] = { (uint64_t)rand(), (uint64_t)rand() };
-    
-    void sky_srand(uint64_t seed) {
-        s[0] = seed;
-        s[1] = 0;
-    }
-        
-    uint64_t sky_rand() {
-        uint64_t a = s[0];
-        uint64_t b = s[1];
+//xorshift128 plus
+static uint64_t s[2] = { (uint64_t)rand(), (uint64_t)rand() };
 
-        s[0] = b;
-        a ^= a << 23;
-        a ^= a >> 18;
-        a ^= b;
-        a ^= b >> 5;
-        s[1] = a;
-
-        return a + b;
-    }
+void sky_srand(uint64_t seed) {
+    s[0] = seed;
+    s[1] = 0;
 }
+    
+uint64_t sky_rand() {
+    uint64_t a = s[0];
+    uint64_t b = s[1];
+
+    s[0] = b;
+    a ^= a << 23;
+    a ^= a >> 18;
+    a ^= b;
+    a ^= b >> 5;
+    s[1] = a;
+
+    return a + b;
+}
+// TODO: Test this for correctness!
+float sky_rand_float() {
+    uint64_t m = (uint64_t)1 << 32;
+    return (float)sky_rand() / m; 
+}
+
 
 
 

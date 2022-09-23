@@ -1,17 +1,17 @@
 #include <SDL2/SDL.h>
 #include "skyengine.h"
 #include "skyengine.cpp" 
-
 // SECTION: Constants
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 720
 
-// SECTION: Function declarations
-static void BlitToScreen(GameBitmapBuffer*, SDL_Texture*, SDL_Renderer*);
-
 // SECTION: User Defined function declarations
 static void SkyInit();
 
+// SECTION: Function declarations
+static void BlitToScreen(GameBitmapBuffer*, SDL_Texture*, SDL_Renderer*);
+
+SDL_Renderer* renderer;
 int main(int argc, char* argv[]) {
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
                         SCREEN_WIDTH, SCREEN_HEIGHT, 
                         SDL_WINDOW_SHOWN);
 
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     SDL_Texture* texture = SDL_CreateTexture(renderer, 
                         SDL_PIXELFORMAT_ARGB8888, 
                         SDL_TEXTUREACCESS_STREAMING, 
@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
         timer_start = timer_end; 
         GameUpdateAndRender(&game_memory, &graphics_buffer, &keyboard_state, delta_time); 
         BlitToScreen(&graphics_buffer, texture, renderer);
-         
+        
     }
     
 
@@ -147,4 +147,19 @@ static void BlitToScreen(GameBitmapBuffer* buffer, SDL_Texture* texture, SDL_Ren
     SDL_RenderCopy(renderer, texture, NULL, NULL);    
     SDL_RenderPresent(renderer);
 }
+
+
+// #include "SDL_ttf.h"
+// void SkyText(const char* text, Rect* position_rect, Color color, int font_size, const char* font) {
+//     TTF_Font* font = TTF_OpenFont("font", font_size);
+//     SDL_Color _color = {color.red, color.green, color.blue};
+//     SDL_Surface* text_surface = TTF_RenderText_Solid(font, text, _color); 
+//     SDL_Texture* text_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
+//     SDL_Rect rect;
+//     rect.x = position_rect->x;
+//     rect.y = position_rect->y;
+//     rect.w = position_rect->width;
+//     rect.h = position_rect->height;
+//     SDL_RenderCopy(internal::renderer, text_texture, NULL, &rect);
+// } 
 

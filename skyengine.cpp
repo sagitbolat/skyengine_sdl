@@ -1,7 +1,7 @@
 #include "skyengine.h"
 // TODO: Remove this at some point and implement trig functions myself.
-#include <math.h>
-#define PI32 3.14159265f
+// #include <math.h>
+// #define PI32 3.14159265f
 
 // TODO: Remove this at some point and implement your own random functions.
 #include <stdlib.h>
@@ -47,8 +47,8 @@ static void DrawRectangle(uint8_t red, uint8_t green, uint8_t blue, int min_x, i
 }
 
 // SECTION: User Defined Functions
-static void Start(GameState* game_state);
-static void Update(GameState* game_state);
+static void Start(GameState* game_state, KeyboardState* keyboard_state);
+static void Update(GameState* game_state, KeyboardState* keyboard_state);
 
 static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* _graphics_buffer, KeyboardState* keyboard_state, int delta_time) {
     
@@ -62,18 +62,18 @@ static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* _graphics_
     
     static bool first = true;
     
-    if (keyboard_state->state & KEY_STATE_SPACE && 
-            !(keyboard_state->prev_state & KEY_STATE_SPACE)) {
-        first = true;
-    }
+    // if (keyboard_state->state & KEY_STATE_SPACE && 
+    //         !(keyboard_state->prev_state & KEY_STATE_SPACE)) {
+    //     first = true;
+    // }
 
     if (first) {
         //skymath::xorshift128plus::sky_srand(223137);
-        Start(game_state);
+        Start(game_state, keyboard_state);
         first = false;
     }
     else {
-        Update(game_state);
+        Update(game_state, keyboard_state);
     }
     
     //int fps = DeltaTimeToFps(delta_time);
