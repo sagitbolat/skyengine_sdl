@@ -51,7 +51,6 @@ static void Start(GameState* game_state, KeyboardState* keyboard_state);
 static void Update(GameState* game_state, KeyboardState* keyboard_state);
 
 static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* _graphics_buffer, KeyboardState* keyboard_state, int delta_time) {
-    
 
     graphics_buffer = _graphics_buffer;
     GameState* game_state = (GameState*)memory->permanent_storage;
@@ -61,14 +60,8 @@ static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* _graphics_
     }
     
     static bool first = true;
-    
-    // if (keyboard_state->state & KEY_STATE_SPACE && 
-    //         !(keyboard_state->prev_state & KEY_STATE_SPACE)) {
-    //     first = true;
-    // }
 
     if (first) {
-        //skymath::xorshift128plus::sky_srand(223137);
         Start(game_state, keyboard_state);
         first = false;
     }

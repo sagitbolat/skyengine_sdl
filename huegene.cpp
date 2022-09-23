@@ -1,5 +1,8 @@
 #include "SDL_sky.cpp"
 #include "sky_random.cpp"
+#include "bmp.cpp"
+#include <iostream>
+
 
 bool first_run = true;
 
@@ -33,7 +36,15 @@ static void Start(GameState* game_state, KeyboardState* keyboard_state) {
 
 static void Update(GameState* game_state, KeyboardState* keyboard_state) {
     HuegeneState* huegene_state = (HuegeneState*)game_state;
+    if ((keyboard_state->state & KEY_STATE_SPACE) && !(keyboard_state->prev_state & KEY_STATE_SPACE)) {
+        GenerateBitmapImage(huegene_state->cells, 1280, 720, "Huegene_output.bmp"); 
+        printf("attempting bmp generation");
+    }
     RenderHuegene(graphics_buffer, huegene_state);
+    if ((keyboard_state->state & KEY_STATE_SPACE) && !(keyboard_state->prev_state & KEY_STATE_SPACE)) {
+        GenerateBitmapImage(huegene_state->cells, 1280, 720, "Huegene_output.bmp"); 
+        std::cout << "attempting to generate bmp" << std::endl;
+    }
     return;
 }
 
