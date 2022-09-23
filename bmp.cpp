@@ -2,30 +2,6 @@
 #include <stdio.h>
 #include "skyengine.h"
 
-struct BmpFileHeader {
-    uint8_t type1;       // must always be set to 'B' to declare that this is a .bmp-file.
-    uint8_t type2;       // must always be set to 'M' to declare that this is a .bmp-file.
-    uint32_t size;       // specifies the size of the file in bytes.
-    uint16_t reserved1;  // must always be set to zero.
-    uint16_t reserved2;  // must always be set to zero.
-    uint32_t off_bits;   // specifies the offset from the beginning of the file to the bitmap data.
-};
-
-struct BmpInfoHeader {
-    uint32_t size;                  // specifies the size of the BITMAPINFOHEADER structure, in bytes.
-    uint32_t width;                 // specifies the width of the image, in pixels.
-    uint32_t height;                // specifies the height of the image, in pixels.
-    uint16_t planes;                // specifies the number of planes of the target device, must be set to zero.
-    uint16_t bit_count;             // specifies the number of bits per pixel.
-    uint32_t compression;           // specifies the type of compression, usually set to zero (no compression).
-    uint32_t image_size;            // specifies the size of the image data, in bytes. If there is no compression, it is valid to set this member to zero.
-    uint32_t x_pixels_per_meter;    // specifies the the horizontal pixels per meter on the designated targer device, usually set to zero.
-    uint32_t y_pixels_per_meter;    // specifies the the vertical pixels per meter on the designated targer device, usually set to zero.
-    uint32_t colors_used;           // specifies the number of colors used in the bitmap, if set to zero the number of colors is calculated using the biBitCount member.
-    uint32_t colors_important;      // specifies the number of color that are 'important' for the bitmap, if set to zero, all colors are important.
-};
-
-
 void GenerateBitmapImage(Color* image_data, int width_in_pixels, int height_in_pixels, char* image_file_name) {
     const int FILE_HEADER_SIZE = 14;
     const int INFO_HEADER_SIZE = 40;
@@ -55,7 +31,7 @@ void GenerateBitmapImage(Color* image_data, int width_in_pixels, int height_in_p
     fh[10] = (uint8_t)(off_bits);
     
     
-    uint8_t ih = {
+    uint8_t ih[] = {
         0, 0, 0, 0,
         0, 0, 0, 0,
         0, 0, 0, 0,
@@ -86,17 +62,18 @@ void GenerateBitmapImage(Color* image_data, int width_in_pixels, int height_in_p
 
 
     FILE* image_file = fopen(image_file_name, "wb");
-    fwrite(fh, 1, sizeof(BmpFileHeader), image_file);
-    fwrite(ih, 1, sizeof(BmpInfoHeader), image_file);
+    fwrite(fh, 1, FILE_HEADER_SIZE, image_file);
+    fwrite(ih, 1, INFO_HEADER_SIZE, image_file);
 
-    for (int h = 0; h < (height_in_pixels); ++h) {
+    for (int h = height_in_pixels - 1; h >= 0; --h) {
         for (int w = 0; w < width_in_pixels; ++w) {
             int i = (h * width_in_pixels) + w;
-            fwrite(&(image_data[i].red), 1, 8, image_file);
-            fwrite(&(image_data[i].green), 1, 8, image_file);
-            fwrite(&(image_data[i].blue), 1, 8, image_file);
+            fwrite(&(image_data[i].blue), 1, 1, image_file);
+            fwrite(&(image_data[i].green), 1, 1, image_file);
+            fwrite(&(image_data[i].red), 1, 1, image_file);
         }
         fwrite(padding, 1, padding_size, image_file);
+
     }
     
     fclose(image_file);
