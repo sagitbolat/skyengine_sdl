@@ -1,7 +1,9 @@
 #include "SDL_sky.cpp"
 //TODO: Figure out how to get SDL_ttf to work for this example.
 
-static void SkyInit() {
+static void Init(int* w, int* h) {
+    *w = 1280;
+    *h = 720;
 }
 
 static void Start(GameState* game_state, KeyboardState* keyboard_state) {

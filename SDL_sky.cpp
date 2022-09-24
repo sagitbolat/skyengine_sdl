@@ -3,16 +3,15 @@
 #include "skyengine.h"
 #include "skyengine.cpp" 
 
-// SECTION: Constants
-#define SCREEN_WIDTH 1280
-#define SCREEN_HEIGHT 720
+// SECTION: Window Size
+int SCREEN_WIDTH = 1280;
+int SCREEN_HEIGHT = 720;
 
 // SECTION: User Defined function declarations
-static void SkyInit();
+static void Init(int* width, int* height);
 
 // SECTION: Function declarations
 //static void BlitToScreen(GameBitmapBuffer*, SDL_Texture*, SDL_Renderer*);
-
 
 // TODO: remove from global space.
 SDL_Renderer* renderer;
@@ -23,6 +22,7 @@ int main(int argc, char* argv[]) {
         printf("Unable to load SDL_ttf.");
     }
 
+    Init(&SCREEN_WIDTH, &SCREEN_HEIGHT);
 
     SDL_Window* window = SDL_CreateWindow("Sky Engine",
                         SDL_WINDOWPOS_UNDEFINED,
@@ -69,8 +69,6 @@ int main(int argc, char* argv[]) {
     // NOTE: Timer variables.
     int timer_start = SDL_GetTicks();
     int timer_end = SDL_GetTicks();
-
-    SkyInit();
 
     while(running) {
         keyboard_state.prev_state = keyboard_state.state;

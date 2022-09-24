@@ -54,7 +54,7 @@ static void GenerateTileMap(IslandState* game_state) {
             
             uint64_t chance_for_water = 45;
             uint32_t tile_id = TILE_LAND;
-            if (xorshift128plus::sky_rand() % 100 < chance_for_water) {
+            if (sky_rand() % 100 < chance_for_water) {
                 tile_id = TILE_WATER;            
             } 
             game_state->tiles[y * 256 + x] = tile_id;
@@ -85,7 +85,9 @@ static void GenerateTileMap(IslandState* game_state) {
     free(new_tiles);
 }
 
-static void SkyInit() {
+static void Init(int* w, int* h) {
+    *w = 1280;
+    *h = 720;
     return;
 }
 

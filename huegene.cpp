@@ -7,12 +7,12 @@
 bool first_run = true;
 
 
-int width = 1280;
-int height = 720;
+#define WIDTH 1920
+#define HEIGHT 1080
 int square_size = 1; 
 
 struct HuegeneState {
-    Color cells[1280 * 720];
+    Color cells[WIDTH * HEIGHT];
 };
 
 
@@ -21,10 +21,11 @@ static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_s
 
 
 
-
-static void SkyInit() {
-    return;
+static void Init(int* w, int* h) {
+    *w = WIDTH;
+    *h = HEIGHT;
 }
+
 
 static void Start(GameState* game_state, KeyboardState* keyboard_state) {
     HuegeneState* huegene_state = (HuegeneState*)game_state;
@@ -69,8 +70,8 @@ static Color GetColorOfRandNeighbor(Color* cells, int x, int y, int max_x, int m
 
 // TODO: Swap from using default prng to xorshift or perlin noise.
 static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_state) {
-    int max_x = width;    
-    int max_y = height;    
+    int max_x = WIDTH;    
+    int max_y = HEIGHT;    
     int jaggedness = 5;
     int fade_speed = 2;
     int flip_chance = 60; //in percentages
