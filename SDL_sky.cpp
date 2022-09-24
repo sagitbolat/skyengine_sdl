@@ -1,6 +1,8 @@
 #include <SDL2/SDL.h>
+#include "SDL2/SDL_ttf.h"
 #include "skyengine.h"
 #include "skyengine.cpp" 
+
 // SECTION: Constants
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 720
@@ -9,13 +11,19 @@
 static void SkyInit();
 
 // SECTION: Function declarations
-static void BlitToScreen(GameBitmapBuffer*, SDL_Texture*, SDL_Renderer*);
+//static void BlitToScreen(GameBitmapBuffer*, SDL_Texture*, SDL_Renderer*);
 
+
+// TODO: remove from global space.
 SDL_Renderer* renderer;
 int main(int argc, char* argv[]) {
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
-        
+    if (TTF_Init() == -1) {
+        printf("Unable to load SDL_ttf.");
+    }
+
+
     SDL_Window* window = SDL_CreateWindow("Sky Engine",
                         SDL_WINDOWPOS_UNDEFINED,
                         SDL_WINDOWPOS_UNDEFINED,
@@ -128,8 +136,13 @@ int main(int argc, char* argv[]) {
         timer_end = SDL_GetTicks();
         int delta_time = timer_end - timer_start;
         timer_start = timer_end; 
+        SDL_RenderClear(renderer);
+        SDL_UpdateTexture(texture, NULL, graphics_buffer.memory, graphics_buffer.pitch);
+        SDL_RenderCopy(renderer, texture, NULL, NULL);    
+        
         GameUpdateAndRender(&game_memory, &graphics_buffer, &keyboard_state, delta_time); 
-        BlitToScreen(&graphics_buffer, texture, renderer);
+        SDL_RenderPresent(renderer);
+        //BlitToScreen(&graphics_buffer, texture, renderer);
         
     }
     
@@ -137,29 +150,42 @@ int main(int argc, char* argv[]) {
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    TTF_Quit();
     SDL_Quit();
     return 0;
 }
 
-static void BlitToScreen(GameBitmapBuffer* buffer, SDL_Texture* texture, SDL_Renderer* renderer) {
-    SDL_UpdateTexture(texture, NULL, buffer->memory, buffer->pitch);
-    SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer, texture, NULL, NULL);    
-    SDL_RenderPresent(renderer);
-}
+// static void BlitToScreen(GameBitmapBuffer* graphics_buffer, SDL_Texture* texture, SDL_Renderer* renderer) {   
+//     SDL_RenderClear(renderer);
+//     SDL_UpdateTexture(texture, NULL, graphics_buffer->memory, graphics_buffer->pitch);
+//     SDL_RenderCopy(renderer, texture, NULL, NULL); 
+//     SDL_RenderPresent(renderer);
+// }
 
-
-// #include "SDL_ttf.h"
-// void SkyText(const char* text, Rect* position_rect, Color color, int font_size, const char* font) {
-//     TTF_Font* font = TTF_OpenFont("font", font_size);
-//     SDL_Color _color = {color.red, color.green, color.blue};
-//     SDL_Surface* text_surface = TTF_RenderText_Solid(font, text, _color); 
-//     SDL_Texture* text_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
-//     SDL_Rect rect;
-//     rect.x = position_rect->x;
-//     rect.y = position_rect->y;
-//     rect.w = position_rect->width;
-//     rect.h = position_rect->height;
-//     SDL_RenderCopy(internal::renderer, text_texture, NULL, &rect);
-// } 
+void SkyText(const char* text, Rect position_rect, Color color, int font_size, const char* font) {
+    TTF_Font* ttf_font = TTF_OpenFont(font, font_size);
+    if (ttf_font == NULL) {
+        printf( "Unable to open font! SDL_ttf Error: %s\n", TTF_GetError() );
+    }
+    SDL_Color sdl_color = {color.red, color.green, color.blue};
+    SDL_Surface* text_surface = TTF_RenderText_Solid(ttf_font, text, sdl_color); 
+    if( text_surface == NULL )
+    {
+        printf( "Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError() );
+    }
+    SDL_Texture* text_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
+    if( text_texture == NULL )
+    {
+        printf( "Unable to create texture! SDL_ttf Error: %s\n", TTF_GetError() );
+    }
+    SDL_Rect rect;
+    rect.x = position_rect.x;
+    rect.y = position_rect.y;
+    rect.w = position_rect.width;
+    rect.h = position_rect.height;
+    SDL_RenderCopy(renderer, text_texture, 0, &rect);
+    TTF_CloseFont(ttf_font);
+    SDL_FreeSurface(text_surface);
+    SDL_DestroyTexture(text_texture);
+} 
 

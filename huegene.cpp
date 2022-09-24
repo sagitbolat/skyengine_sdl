@@ -40,7 +40,7 @@ static void Update(GameState* game_state, KeyboardState* keyboard_state) {
         GenerateBitmapImage(huegene_state->cells, 1280, 720, (char*)"Huegene_output.bmp"); 
         printf("attempting bmp generation");
     }
-    RenderHuegene(graphics_buffer, huegene_state);
+    RenderHuegene(graphics_buffer, huegene_state); 
     return;
 }
 
