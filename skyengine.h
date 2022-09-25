@@ -61,13 +61,14 @@ struct KeyboardState {
 
 // SECTION: Memory. This is the persistant memory that
 // has to be passed from the platform layer to the game
-// or vice versa.
+// or vice versa. 
+// Using this memory should be done with the Arena Allocator functions.
 struct GameMemory {
     bool is_initialized;
     uint64_t permanent_storage_size;
-    void* permanent_storage;
+    void* permanent_storage;            // Gamestate stuff
 
-    uint64_t transient_storage_size;
+    uint64_t transient_storage_size;    // Asset loading.
     void* transient_storage;
 };
 

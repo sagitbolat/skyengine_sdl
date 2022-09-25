@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "skyengine.h"
+#include "arena_allocator.h"
+
 
 void GenerateBitmapImage(Color* image_data, int width_in_pixels, int height_in_pixels, char* image_file_name) {
     const int FILE_HEADER_SIZE = 14;
@@ -80,3 +82,28 @@ void GenerateBitmapImage(Color* image_data, int width_in_pixels, int height_in_p
 
 }
 
+// NOTE: Do bitmap loading.
+// NOTE: Returns the address of the asset on the GameMemory->transient_storage Arena.
+size_t LoadBitmap(char* image_file_name) {
+    
+    const int FILE_HEADER_SIZE = 14;
+    const int INFO_HEADER_SIZE = 40;
+    const int BYTES_PER_PIXEL = 3;
+    
+    FILE* image_file = fopen(image_file_name, "r");
+    uint8_t* fh;
+    size_t fh_size = fopen(fh, 1, FILE_HEADER_SIZE, image_file);
+    
+    // NOTE: error checking
+    if (fh_size != FILE_HEADER_SIZE) {
+        // TODO: Error
+        printf("LoadBitmap Error. Header sizes do not match. Possible EOF error or wrong format.. \0");
+    }
+    if (fh[0] != 'B' && f[1] != 'M') {
+        // TODO: Filetype Error
+        printf("LoadBitmap Error. Incorrect filetype. Filetype must be of type bmp. \0");
+    }
+    // TODO: Read the 4 uint8_t's into the uint32_t.
+    uint32_t file_size = (fh[2]) + (fh[3] << 8) + (fh[4] << 16) + (fh[5] << 24);
+
+}

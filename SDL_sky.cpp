@@ -2,6 +2,16 @@
 #include "skyengine.h"
 #include "skyengine.cpp" 
 
+
+// NOTE: System-dependant page memory allocation for arena
+#ifdef __linux__
+#include <sys/mman.h>
+#endif
+#ifdef _WIN32
+// TODO: Include virutual alloc.
+#endif
+
+
 // SECTION: Window Size
 int SCREEN_WIDTH = 1280;
 int SCREEN_HEIGHT = 720;
@@ -50,10 +60,29 @@ int main(int argc, char* argv[]) {
     GameMemory game_memory = {0};
     game_memory.is_initialized = true;
     game_memory.permanent_storage_size = Megabytes(128);
-    game_memory.permanent_storage = malloc(game_memory.permanent_storage_size);
     game_memory.transient_storage_size = Gigabytes(1);
-    game_memory.transient_storage = malloc(game_memory.transient_storage_size);
-
+    
+#ifdef __linux__ 
+    printf("LINUX DETECTED \0");
+    game_memory.permanent_storage = mmap(
+        nullptr, 
+        game_memory.permanent_storage_size, 
+        PROT_READ | PROT_WRITE,
+        MAP_PRIVATE | MAP_ANON | MAP_NORESERVE,
+        -1, 0
+    );
+                                         
+    game_memory.transient_storage = mmap(
+        nullptr, 
+        game_memory.transient_storage_size, 
+        PROT_READ | PROT_WRITE,
+        MAP_PRIVATE | MAP_ANON | MAP_NORESERVE,
+        -1, 0
+    );
+#endif
+#ifdef _WIN32
+    // TODO: Windows virtual alloc page allocation for game_memory.
+#endif
 
     // NOTE: Initializing keyboard state.
     KeyboardState keyboard_state = {0};
