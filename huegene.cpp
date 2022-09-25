@@ -23,7 +23,8 @@ static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_s
 
 static void Init(int* w, int* h) {
     *w = WIDTH;
-    *h = HEIGHT;
+    *h =  HEIGHT;
+    return;
 }
 
 
@@ -31,14 +32,14 @@ static void Start(GameState* game_state, KeyboardState* keyboard_state) {
     HuegeneState* huegene_state = (HuegeneState*)game_state;
     RenderHuegene(graphics_buffer, huegene_state);
     first_run = false;
-    sky_srand(21021039);
+    //sky_srand(21021039);
     return;
 }
 
 static void Update(GameState* game_state, KeyboardState* keyboard_state) {
     HuegeneState* huegene_state = (HuegeneState*)game_state;
     if ((keyboard_state->state & KEY_STATE_SPACE) && !(keyboard_state->prev_state & KEY_STATE_SPACE)) {
-        GenerateBitmapImage(huegene_state->cells, 1280, 720, (char*)"Huegene_output.bmp"); 
+        GenerateBitmapImage(huegene_state->cells, WIDTH, HEIGHT, (char*)"Huegene_output.bmp"); 
         printf("attempting bmp generation");
     }
     RenderHuegene(graphics_buffer, huegene_state); 
@@ -74,7 +75,7 @@ static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_s
     int max_y = HEIGHT;    
     int jaggedness = 5;
     int fade_speed = 2;
-    int flip_chance = 60; //in percentages
+    int flip_chance = 50; //in percentages
     
     if (jaggedness < 1) {
         jaggedness = 1;
@@ -130,12 +131,21 @@ static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_s
                 //     color.green = 213;
                 //     color.blue = 186;
                 // }
+                
+                int x_center = WIDTH/2;
+                int y_center = HEIGHT/2;
 
-                if (y == 0) {
+                if (y == y_center && x == x_center) {
+                    color.red = 101;
+                    color.green = 124;
+                    color.blue = 255;
+                } else if (y == (y_center + 3) && x == x_center) {
                     color.red = 0;
-                    color.green = 170;
-                    color.blue = 17;
+                    color.green = 179;
+                    color.blue = 60;
                 }
+                
+
                 int i = (max_x * y) + x;
                 new_cells[i] = color;    
             } else {
