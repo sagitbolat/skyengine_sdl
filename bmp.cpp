@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "skyengine.h"
-#include "arena_allocator.h"
+#include "arena_allocator.cpp"
 
 
 void GenerateBitmapImage(Color* image_data, int width_in_pixels, int height_in_pixels, char* image_file_name) {
@@ -89,7 +89,7 @@ void GenerateBitmapImage(Color* image_data, int width_in_pixels, int height_in_p
 
 // NOTE: Do bitmap loading.
 // NOTE: Returns the address of the asset on the GameMemory->transient_storage Arena.
-size_t LoadBitmap(char* image_file_name) {
+size_t LoadBitmap(GameMemory* game_memory_arena, char* image_file_name) {
     
     const int FILE_HEADER_SIZE = 14;
     const int INFO_HEADER_SIZE = 40;
@@ -103,12 +103,12 @@ size_t LoadBitmap(char* image_file_name) {
     uint8_t* fh;
     size_t fh_size = fread(fh, 1, FILE_HEADER_SIZE, image_file);
     
-    // NOTE: error checking
+    // NOTE: Error checking
     if (fh_size != FILE_HEADER_SIZE) {
         // TODO: Error
         printf("LoadBitmap Error. File header sizes do not match. Possible EOF error or wrong format.. \0");
     }
-    if (fh[0] != 'B' && f[1] != 'M') {
+    if (fh[0] != 'B' && fh[1] != 'M') {
         // TODO: Filetype Error
         printf("LoadBitmap Error. Incorrect filetype. Filetype must be of type bmp. \0");
     }
@@ -116,7 +116,7 @@ size_t LoadBitmap(char* image_file_name) {
     uint32_t file_size = INT8ARRAY_TO_INT32(fh, 2);
 
 
-
+    
     // SECTION: info_header
     uint8_t* ih;
     size_t ih_size = fread(ih, 1, INFO_HEADER_SIZE, image_file);
@@ -131,13 +131,30 @@ size_t LoadBitmap(char* image_file_name) {
         printf("LoadBitmap Error. Info header sizes do not match. Possible EOF error or wrong format.. \0");
     }
     if (BYTES_PER_PIXEL * 8 != bits_per_pixel) {
+        // TODO: Pixel Resolution Error
         printf("LoadBitmap Error. Bytes per pixel are not 3. Possible wrong bmp color resolution. Use a 24-bit bmp format. \0");
     }
 
+
+
+    // SECTION: image data
+    int width_in_bytes = image_width * BYTES_PER_PIXEL;
+    int padding_size = (4 - (width_in_bytes) % 4) % 4;
+
+    size_t image_size = image_width * image_height * 3;
+    size_t memory_index = Arena::AllocateAsset(game_memory_arena, image_size);
+    uint8_t* image_data = ((uint8_t*)(game_memory_arena->transient_storage))[memory_index];
+    for (int h = image_height - 1; h >= 0; --h) {
+        for (int w = 0; w < image_width; ++w) {
+            int i = (h * image_width) + w;
+            fread(&image_data[i], 1, 3, image_file);
+        }
+        fseek(image_file, padding_size, SEEK_CUR);         
+    }
+        
+    fclose(image_file);
+
     
-
-
-
-
+    
 
 }

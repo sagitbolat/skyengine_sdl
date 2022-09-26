@@ -47,6 +47,7 @@ void DrawRectangle(uint8_t red, uint8_t green, uint8_t blue, int min_x, int min_
 }
 
 // SECTION: User Defined Functions
+static void Awake(GameMemory* game_memory);
 static void Start(GameState* game_state, KeyboardState* keyboard_state);
 static void Update(GameState* game_state, KeyboardState* keyboard_state);
 

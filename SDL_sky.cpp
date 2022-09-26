@@ -19,6 +19,7 @@ int SCREEN_HEIGHT = 720;
 // SECTION: User Defined function declarations
 static void Init(int* width, int* height);
 
+
 // SECTION: Function declarations
 static void BlitToScreen(GameBitmapBuffer*, SDL_Texture*, SDL_Renderer*);
 
@@ -95,10 +96,14 @@ int main(int argc, char* argv[]) {
     SDL_Event e = {0};
     
     
+    //Awake routine.
+    Awake(&game_memory);
+
+
     // NOTE: Timer variables.
     int timer_start = SDL_GetTicks();
     int timer_end = SDL_GetTicks();
-
+    
     while(running) {
         keyboard_state.prev_state = keyboard_state.state;
         while (SDL_PollEvent(&e)) {

@@ -68,7 +68,9 @@ struct GameMemory {
     uint64_t permanent_storage_size;
     void* permanent_storage;            // Gamestate stuff
 
+
     uint64_t transient_storage_size;    // Asset loading.
+    size_t transient_current_address;
     void* transient_storage;
 };
 
