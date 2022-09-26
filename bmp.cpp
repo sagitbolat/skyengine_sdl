@@ -82,6 +82,11 @@ void GenerateBitmapImage(Color* image_data, int width_in_pixels, int height_in_p
 
 }
 
+
+// arr is the array that contains 4 int8's
+// i is the index of the first int8.
+#define INT8ARRAY_TO_INT32(arr, i) (arr[i]) + (arr[i+1] << 8) + (arr[i+2] << 16) + (arr[i+3] << 24)
+
 // NOTE: Do bitmap loading.
 // NOTE: Returns the address of the asset on the GameMemory->transient_storage Arena.
 size_t LoadBitmap(char* image_file_name) {
@@ -91,19 +96,48 @@ size_t LoadBitmap(char* image_file_name) {
     const int BYTES_PER_PIXEL = 3;
     
     FILE* image_file = fopen(image_file_name, "r");
+    
+
+
+    // SECTION: file_header
     uint8_t* fh;
-    size_t fh_size = fopen(fh, 1, FILE_HEADER_SIZE, image_file);
+    size_t fh_size = fread(fh, 1, FILE_HEADER_SIZE, image_file);
     
     // NOTE: error checking
     if (fh_size != FILE_HEADER_SIZE) {
         // TODO: Error
-        printf("LoadBitmap Error. Header sizes do not match. Possible EOF error or wrong format.. \0");
+        printf("LoadBitmap Error. File header sizes do not match. Possible EOF error or wrong format.. \0");
     }
     if (fh[0] != 'B' && f[1] != 'M') {
         // TODO: Filetype Error
         printf("LoadBitmap Error. Incorrect filetype. Filetype must be of type bmp. \0");
     }
     // TODO: Read the 4 uint8_t's into the uint32_t.
-    uint32_t file_size = (fh[2]) + (fh[3] << 8) + (fh[4] << 16) + (fh[5] << 24);
+    uint32_t file_size = INT8ARRAY_TO_INT32(fh, 2);
+
+
+
+    // SECTION: info_header
+    uint8_t* ih;
+    size_t ih_size = fread(ih, 1, INFO_HEADER_SIZE, image_file);
+    
+    uint32_t image_width   = INT8ARRAY_TO_INT32(ih, 4);
+    uint32_t image_height  = INT8ARRAY_TO_INT32(ih, 8);
+    uint8_t bits_per_pixel = ih[14]; 
+    
+    // NOTE: Error checking
+    if (ih_size != INFO_HEADER_SIZE) {
+        // TODO: Error
+        printf("LoadBitmap Error. Info header sizes do not match. Possible EOF error or wrong format.. \0");
+    }
+    if (BYTES_PER_PIXEL * 8 != bits_per_pixel) {
+        printf("LoadBitmap Error. Bytes per pixel are not 3. Possible wrong bmp color resolution. Use a 24-bit bmp format. \0");
+    }
+
+    
+
+
+
+
 
 }
