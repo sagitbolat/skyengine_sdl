@@ -27,6 +27,9 @@ static void Init(int* w, int* h) {
     return;
 }
 
+static void Awake(GameMemory* game_memory) {
+    return;
+}
 
 static void Start(GameState* game_state, KeyboardState* keyboard_state) {
     HuegeneState* huegene_state = (HuegeneState*)game_state;
