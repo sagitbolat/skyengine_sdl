@@ -18,7 +18,7 @@ int SCREEN_HEIGHT = 720;
 
 // SECTION: User Defined function declarations
 static void Init(int* width, int* height);
-
+static void Awake(GameMemory* game_memory);
 
 // SECTION: Function declarations
 static void BlitToScreen(GameBitmapBuffer*, SDL_Texture*, SDL_Renderer*);

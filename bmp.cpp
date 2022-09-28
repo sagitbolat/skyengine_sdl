@@ -100,8 +100,8 @@ size_t LoadBitmap(GameMemory* game_memory_arena, char* image_file_name) {
 
 
     // SECTION: file_header
-    uint8_t* fh;
-    size_t fh_size = fread(fh, 1, FILE_HEADER_SIZE, image_file);
+    uint8_t fh[FILE_HEADER_SIZE];
+    size_t fh_size = fread(fh, sizeof(uint8_t), FILE_HEADER_SIZE, image_file);
     
     // NOTE: Error checking
     if (fh_size != FILE_HEADER_SIZE) {
@@ -118,7 +118,7 @@ size_t LoadBitmap(GameMemory* game_memory_arena, char* image_file_name) {
 
     
     // SECTION: info_header
-    uint8_t* ih;
+    uint8_t* ih = (uint8_t*)malloc(sizeof(uint8_t) * INFO_HEADER_SIZE);
     size_t ih_size = fread(ih, 1, INFO_HEADER_SIZE, image_file);
     
     uint32_t image_width   = INT8ARRAY_TO_INT32(ih, 4);
@@ -142,8 +142,7 @@ size_t LoadBitmap(GameMemory* game_memory_arena, char* image_file_name) {
     int padding_size = (4 - (width_in_bytes) % 4) % 4;
 
     size_t image_size = image_width * image_height * 3;
-    size_t memory_index = Arena::AllocateAsset(game_memory_arena, image_size);
-    uint8_t* image_data = ((uint8_t*)(game_memory_arena->transient_storage))[memory_index];
+    uint8_t* image_data = (uint8_t*)(Arena::AllocateAsset(game_memory_arena, image_size));
     for (int h = image_height - 1; h >= 0; --h) {
         for (int w = 0; w < image_width; ++w) {
             int i = (h * image_width) + w;
