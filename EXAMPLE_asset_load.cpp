@@ -10,7 +10,7 @@ static void Init(int* w, int *h) {
 ImageData image_data = {0};
 static void Awake(GameMemory* game_memory) {
     
-    size_t image_size = LoadBitmap(game_memory, "Huegene_output.bmp", &image_data);
+    size_t image_size = LoadBitmap(game_memory, "test_tilemap.bmp", &image_data);
     
     printf("Image size: %ld%c", image_size, '\n');
     
@@ -29,12 +29,12 @@ static void Update(GameState* game_state, KeyboardState* keyboard_state) {
     
     for (int y = 0; y < h; ++y) {
         for (int x = 0; x < w; ++x) {
-            int i = ((y * w) + x)*3;
+            int i = ((y * w) + x)*image_data.bytes_per_pixel;
             Color c = {0};
             c.red  = data[i + 2];
             c.green = data[i + 1];
             c.blue   = data[i + 0];
-            DrawRectangle(c.red, c.green, c.blue, x*10, y*10, x*10+10, y*10+10);
+            DrawRectangle(c.red, c.green, c.blue, x, y, 20, 20);
 
         }
     }

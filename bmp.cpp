@@ -7,6 +7,7 @@
 struct ImageData {
     uint16_t width;
     uint16_t height;
+    uint8_t bytes_per_pixel;
     uint8_t* data;
 };
 
@@ -121,7 +122,6 @@ size_t LoadBitmap(GameMemory* game_memory_arena, const char* image_file_name, Im
     // TODO: Might be unnecessary to save file size
     //uint32_t file_size = INT8ARRAY_TO_INT32(fh, 2);
     uint32_t byte_offset = INT8ARRAY_TO_INT32(fh, 10);
-    printf("Byte offset of image data is: %d", byte_offset);
 
     
     // SECTION: info_header
@@ -138,8 +138,8 @@ size_t LoadBitmap(GameMemory* game_memory_arena, const char* image_file_name, Im
     }
     if (BYTES_PER_PIXEL * 8 != bits_per_pixel) {
         // TODO: Pixel Resolution Error
-        printf("LoadBitmap Warning. %d bits per pixel. Does not match 24. Will attempt to adjust to %d.%c", bits_per_pixel, BYTES_PER_PIXEL, '\n');
         BYTES_PER_PIXEL = bits_per_pixel / 8;
+        printf("LoadBitmap Warning. %d bits per pixel. Does not match 24. Will attempt to adjust to %d.%c", bits_per_pixel, BYTES_PER_PIXEL*8, '\n');
     }
 
 
@@ -152,18 +152,19 @@ size_t LoadBitmap(GameMemory* game_memory_arena, const char* image_file_name, Im
 
     image_data->width = image_width;
     image_data->height = image_height;
+    image_data->bytes_per_pixel = BYTES_PER_PIXEL;
     image_data->data = (uint8_t*)(Arena::AllocateAsset(game_memory_arena, image_size));
    
 
-    //move to offset
+    //move to start of bitmap data
     fseek(image_file, byte_offset, SEEK_SET);
-
+    //read the data
     for (int h = image_height - 1; h >= 0; --h) {
         for (uint32_t w = 0; w < image_width; ++w) {
             uint32_t i = ((h * image_width) + w) * BYTES_PER_PIXEL;
-            fread(&(image_data->data[i+0]), 1, 1, image_file);
-            fread(&(image_data->data[i+1]), 1, 1, image_file);
-            fread(&(image_data->data[i+2]), 1, 1, image_file);
+            for (int k = 0; k < BYTES_PER_PIXEL; ++k) {
+                fread(&(image_data->data[i+k]), 1, 1, image_file);
+            }
         }
         fseek(image_file, padding_size, SEEK_CUR);         
     }

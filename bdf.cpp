@@ -1,4 +1,4 @@
-struct FontBitmap {
+struct FontData {
     // TODO: Figure out how to store font asset info and stuff.
 };
 
@@ -9,7 +9,7 @@ struct FontBitmap {
 // etc...
 //
 // TODO: Should return a bitmap.
-FontBitmap* GetFontBitmap(char* font_file_name) {
+size_t GetFontBitmap(GameMemory* game_memory_arena, const char* font_file_name, FontData* font_data) {
 
     return NULL;
 }

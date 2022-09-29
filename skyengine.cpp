@@ -16,8 +16,11 @@ inline int DeltaTimeToFps(int delta_time) {
 // TODO: Make not global somehow.
 static GameBitmapBuffer* graphics_buffer;
 
-void DrawRectangle(uint8_t red, uint8_t green, uint8_t blue, int min_x, int min_y, int max_x, int max_y) {
-    
+void DrawRectangle(uint8_t red, uint8_t green, uint8_t blue, int x, int y, int width, int height) {
+    int min_x = x * width;
+    int min_y = y * height;
+    int max_x = min_x + width;
+    int max_y = min_y + height;
     if (min_x < 0) {
         min_x = 0;
     }
