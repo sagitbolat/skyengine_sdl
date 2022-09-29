@@ -69,7 +69,7 @@ void GenerateBitmapImage(Color* image_data, int width_in_pixels, int height_in_p
     
 
 
-    FILE* image_file = fopen(image_file_name, "wb");
+    FILE* image_file = fopen(image_file_name, "rb");
     fwrite(fh, 1, FILE_HEADER_SIZE, image_file);
     fwrite(ih, 1, INFO_HEADER_SIZE, image_file);
 
@@ -99,7 +99,7 @@ size_t LoadBitmap(GameMemory* game_memory_arena, const char* image_file_name, Im
     
     const int FILE_HEADER_SIZE = 14;
     const int INFO_HEADER_SIZE = 40;
-    const int BYTES_PER_PIXEL = 3;
+    int BYTES_PER_PIXEL = 3;
     
     FILE* image_file = fopen(image_file_name, "r");
     
@@ -112,15 +112,16 @@ size_t LoadBitmap(GameMemory* game_memory_arena, const char* image_file_name, Im
     // NOTE: Error checking
     if (fh_size != FILE_HEADER_SIZE) {
         // TODO: Error
-        printf("LoadBitmap Error. File header sizes do not match. Possible EOF error or wrong format.%c", '\0');
+        printf("LoadBitmap Error. File header sizes do not match. Possible EOF error or wrong format.%c", '\n');
     }
     if (fh[0] != 'B' && fh[1] != 'M') {
         // TODO: Filetype Error
-        printf("LoadBitmap Error. Incorrect filetype. Filetype must be of type bmp.%c", '\0');
+        printf("LoadBitmap Error. Incorrect filetype. Filetype must be of type bmp.%c", '\n');
     }
     // TODO: Might be unnecessary to save file size
     //uint32_t file_size = INT8ARRAY_TO_INT32(fh, 2);
-
+    uint32_t byte_offset = INT8ARRAY_TO_INT32(fh, 10);
+    printf("Byte offset of image data is: %d", byte_offset);
 
     
     // SECTION: info_header
@@ -130,15 +131,15 @@ size_t LoadBitmap(GameMemory* game_memory_arena, const char* image_file_name, Im
     uint32_t image_width   = INT8ARRAY_TO_INT32(ih, 4);
     uint32_t image_height  = INT8ARRAY_TO_INT32(ih, 8);
     uint8_t bits_per_pixel = ih[14]; 
-    
     // NOTE: Error checking
     if (ih_size != INFO_HEADER_SIZE) {
         // TODO: Error
-        printf("LoadBitmap Error. Info header sizes do not match. Possible EOF error or wrong format.%c", '\0');
+        printf("LoadBitmap Error. Info header sizes do not match. Possible EOF error or wrong format.%c", '\n');
     }
     if (BYTES_PER_PIXEL * 8 != bits_per_pixel) {
         // TODO: Pixel Resolution Error
-        printf("LoadBitmap Error. Bytes per pixel are not 3. Possible wrong bmp color resolution. Use a 24-bit bmp format.%c", '\0');
+        printf("LoadBitmap Warning. %d bits per pixel. Does not match 24. Will attempt to adjust to %d.%c", bits_per_pixel, BYTES_PER_PIXEL, '\n');
+        BYTES_PER_PIXEL = bits_per_pixel / 8;
     }
 
 
@@ -147,17 +148,22 @@ size_t LoadBitmap(GameMemory* game_memory_arena, const char* image_file_name, Im
     int width_in_bytes = image_width * BYTES_PER_PIXEL;
     int padding_size = (4 - (width_in_bytes) % 4) % 4;
 
-    size_t image_size = image_width * image_height * 3;
+    size_t image_size = image_width * image_height * BYTES_PER_PIXEL;
 
     image_data->width = image_width;
     image_data->height = image_height;
     image_data->data = (uint8_t*)(Arena::AllocateAsset(game_memory_arena, image_size));
-    
+   
+
+    //move to offset
+    fseek(image_file, byte_offset, SEEK_SET);
 
     for (int h = image_height - 1; h >= 0; --h) {
         for (uint32_t w = 0; w < image_width; ++w) {
-            uint32_t i = (h * image_width) + w;
-            fread(&(image_data->data[i]), 1, 3, image_file);
+            uint32_t i = ((h * image_width) + w) * BYTES_PER_PIXEL;
+            fread(&(image_data->data[i+0]), 1, 1, image_file);
+            fread(&(image_data->data[i+1]), 1, 1, image_file);
+            fread(&(image_data->data[i+2]), 1, 1, image_file);
         }
         fseek(image_file, padding_size, SEEK_CUR);         
     }

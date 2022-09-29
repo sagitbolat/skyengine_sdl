@@ -7,8 +7,8 @@
 bool first_run = true;
 
 
-#define WIDTH 1920
-#define HEIGHT 1080
+#define WIDTH 64
+#define HEIGHT 64
 int square_size = 1; 
 
 struct HuegeneState {

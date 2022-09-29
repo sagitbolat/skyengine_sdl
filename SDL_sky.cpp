@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
                         SDL_WINDOW_SHOWN);
 
     if (window == NULL) {
-        printf("Window failed to create.%c", '\0');
+        printf("Window failed to create.%c", '\n');
     }
 
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
     game_memory.transient_storage_size = Gigabytes(1);
     
 #ifdef __linux__ 
-    printf("LINUX DETECTED%c", '\0');
+    printf("LINUX DETECTED%c", '\n');
     game_memory.permanent_storage = mmap(
         nullptr, 
         game_memory.permanent_storage_size, 
