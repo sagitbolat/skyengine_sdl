@@ -102,7 +102,7 @@ size_t LoadBitmap(GameMemory* game_memory_arena, const char* image_file_name, Im
     const int INFO_HEADER_SIZE = 40;
     int BYTES_PER_PIXEL = 3;
     
-    FILE* image_file = fopen(image_file_name, "r");
+    FILE* image_file = fopen(image_file_name, "rb");
     
 
 
