@@ -1,3 +1,19 @@
+# TODO (for later):
+1. Create a converter that will convert bitmaps from assets (bmps and ttfs)
+into a custom asset file. 
+    a. We can load the custom asset file on our shipped builds instead of having
+    seperate bmp and ttf parsers that do it on runtime. Since loading the 
+    custom asset file will be faster than a raw bmp or ttf, we can save on frame
+    time this way.
+
+
+
+
+
+
+
+
+
 # Map Generation
 
 ### Overworld Gen:

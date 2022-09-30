@@ -38,7 +38,7 @@ size_t LoadFont(GameMemory* game_memory_arena, const char* font_file_name, FontD
     
     stbtt_InitFont(&font, ttf_buffer, stbtt_GetFontOffsetForIndex(ttf_buffer, 0));
     int width, height, x_offset, y_offset;
-    uint8_t* temp_bitmap = stbtt_GetCodepointBitmap(&font, 0, stbtt_ScaleForPixelHeight(&font, 128), 'A', &width, &height, &x_offset, &y_offset);
+    uint8_t* temp_bitmap = stbtt_GetCodepointBitmap(&font, 0, stbtt_ScaleForPixelHeight(&font, 64), 'N', &width, &height, &x_offset, &y_offset);
     
     // NOTE: Free the buffer.
     free(ttf_buffer);
