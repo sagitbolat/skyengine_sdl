@@ -1,3 +1,4 @@
+#pragma once
 #include "skyengine.h"
 // TODO: Remove this at some point and implement trig functions myself.
 // #include <math.h>
@@ -52,7 +53,7 @@ void DrawRectangle(uint8_t red, uint8_t green, uint8_t blue, int x, int y, int w
 // SECTION: User Defined Functions
 static void Awake(GameMemory* game_memory);
 static void Start(GameState* game_state, KeyboardState* keyboard_state);
-static void Update(GameState* game_state, KeyboardState* keyboard_state);
+static void Update(GameState* game_state, KeyboardState* keyboard_state, int delta_time);
 
 static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* _graphics_buffer, KeyboardState* keyboard_state, int delta_time) {
 
@@ -70,7 +71,7 @@ static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* _graphics_
         first = false;
     }
     else {
-        Update(game_state, keyboard_state);
+        Update(game_state, keyboard_state, delta_time);
     }
     
     //int fps = DeltaTimeToFps(delta_time);

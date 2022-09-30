@@ -1,7 +1,7 @@
 /* Implementation based on a design by Sebastien Rombauts
  */
 
-
+#pragma once
 #include <stdint.h>
 
 namespace Noise {

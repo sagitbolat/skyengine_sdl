@@ -1,5 +1,4 @@
-#if !defined(SKYENGINE_H)
-
+#pragma once
 #include <stdint.h>
 
 #define Kilobytes(value) ((value) * 1024)
@@ -89,7 +88,3 @@ struct Color {
 };
 
 static void GameUpdateAndRender(GameMemory*, GameBitmapBuffer*, KeyboardState*, int delta_time);
-
-
-#define SKYENGINE_H
-#endif

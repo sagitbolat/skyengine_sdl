@@ -35,7 +35,6 @@ static void Update(GameState* game_state, KeyboardState* keyboard_state) {
             c.green = data[i + 1];
             c.blue   = data[i + 0];
             DrawRectangle(c.red, c.green, c.blue, x, y, 20, 20);
-
         }
     }
 

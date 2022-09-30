@@ -1,3 +1,4 @@
+#pragma once
 // SECTION: PRNG
 
 namespace lcg {

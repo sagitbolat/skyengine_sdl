@@ -1,8 +1,8 @@
+#pragma once
 #include <stdint.h>
 #include <stdio.h>
-#include "skyengine.h"
+#include "skyengine.cpp"
 #include "arena_allocator.cpp"
-
 
 struct ImageData {
     uint16_t width;
@@ -82,7 +82,6 @@ void GenerateBitmapImage(Color* image_data, int width_in_pixels, int height_in_p
             fwrite(&(image_data[i].red), 1, 1, image_file);
         }
         fwrite(padding, 1, padding_size, image_file);
-
     }
     
     fclose(image_file);
@@ -141,7 +140,6 @@ size_t LoadBitmap(GameMemory* game_memory_arena, const char* image_file_name, Im
         BYTES_PER_PIXEL = bits_per_pixel / 8;
         printf("LoadBitmap Warning. %d bits per pixel. Does not match 24. Will attempt to adjust to %d.%c", bits_per_pixel, BYTES_PER_PIXEL*8, '\n');
     }
-
 
 
     // SECTION: image data

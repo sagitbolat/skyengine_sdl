@@ -1,29 +1,26 @@
 #include "SDL_sky.cpp"
-//TODO: Figure out how to get SDL_ttf to work for this example.
-
+#include "truetype.cpp"
 static void Init(int* w, int* h) {
     *w = 1280;
     *h = 720;
 }
 
+FontData font_data = {0};
+
+static void Awake(GameMemory* game_memory) {
+
+    LoadFont(game_memory, "pixel.ttf", &font_data);  
+
+}
+
 static void Start(GameState* game_state, KeyboardState* keyboard_state) {
+    
+    
     return;
 }
 
-static void Update(GameState* game_state, KeyboardState* keyboard_state) {
-    Rect rect = {};
-    rect.height = 100;
-    rect.width = 400;
-    rect.x = 440;
-    rect.y = 300;
-    Color color = {};
-    color.red = 255;
-    color.blue = 255;
-    color.green = 255;
-    char* message = (char*)"Hello World!";
-    if (keyboard_state->state & KEY_STATE_SPACE) {
-        message = (char*)"Goodbye World!";
-    }
-    SkyText(message, rect, color, 1000, "Calibri.ttf");
+static void Update(GameState* game_state, KeyboardState* keyboard_state, int delta_time) {
+    DebugTextDisplay(&font_data, 1);
+
     return;
 }
