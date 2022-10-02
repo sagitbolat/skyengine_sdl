@@ -4,8 +4,7 @@
 // #include <math.h>
 // #define PI32 3.14159265f
 
-// TODO: Remove this at some point and implement your own random functions.
-#include <stdlib.h>
+
 #include <iostream>
 
 

@@ -10,6 +10,7 @@
 #endif
 #ifdef _WIN32
 // TODO: Include virutual alloc.
+#include <stdlib.h>
 #endif
 
 
@@ -20,7 +21,7 @@ int SCREEN_HEIGHT = 720;
 // SECTION: User Defined function declarations
 static void Init(int* width, int* height);
 static void Awake(GameMemory* game_memory);
-
+static void UserFree();
 // SECTION: Function declarations
 static void BlitToScreen(GameBitmapBuffer*, SDL_Texture*, SDL_Renderer*);
 
@@ -39,7 +40,7 @@ int main(int argc, char* argv[]) {
                         SDL_WINDOW_SHOWN);
 
     if (window == NULL) {
-        printf("Window failed to create.%c", '\n');
+        //printf("Window failed to create. %c", '\n');
     }
 
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -65,7 +66,7 @@ int main(int argc, char* argv[]) {
     game_memory.transient_storage_size = Gigabytes(1);
     
 #ifdef __linux__ 
-    printf("LINUX DETECTED%c", '\n');
+    //printf("LINUX DETECTED %c", '\n');
     game_memory.permanent_storage = mmap(
         nullptr, 
         game_memory.permanent_storage_size, 
@@ -84,6 +85,8 @@ int main(int argc, char* argv[]) {
 #endif
 #ifdef _WIN32
     // TODO: Windows virtual alloc page allocation for game_memory.
+	game_memory.permanent_storage = malloc(game_memory.permanent_storage_size);                                 
+    	game_memory.transient_storage = malloc(game_memory.transient_storage_size);
 #endif
 
     // NOTE: Initializing keyboard state.
@@ -175,7 +178,17 @@ int main(int argc, char* argv[]) {
         
     }
     
-
+    UserFree();    
+    free(graphics_buffer.memory);
+    
+#ifdef __linux__ 
+    munmap(game_memory.permanent_storage, game_memory.permanent_storage_size);
+    munmap(game_memory.transient_storage, game_memory.transient_storage_size);
+#endif
+#ifdef _WIN32
+	free(game_memory.permanent_storage);
+    free(game_memory.transient_storage);
+#endif
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

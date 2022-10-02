@@ -8,6 +8,8 @@ static void Init(int* w, int* h) {
 FontData font_data = {0};
 
 static void Awake(GameMemory* game_memory) {
+    
+    font_data.data = (uint8_t**)malloc(sizeof(uint8_t*)*128);
 
     LoadFont(game_memory, "pixel.ttf", &font_data);  
 
@@ -20,7 +22,13 @@ static void Start(GameState* game_state, KeyboardState* keyboard_state) {
 }
 
 static void Update(GameState* game_state, KeyboardState* keyboard_state, int delta_time) {
-    DebugTextDisplay(&font_data, 1);
+    DebugTextDisplay('A', &font_data, 10);
 
     return;
+}
+
+static void UserFree() {
+
+    free(font_data.data);
+
 }
