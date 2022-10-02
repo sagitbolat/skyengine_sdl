@@ -1,6 +1,7 @@
 # TODO (for later):
 
 ### Bugs
+* Font Writing, Underscore appears at the top of the char. Try fix.
 * Valgrind might be detecting calls to printf as a bug. Try removing all printf's and see if the error in valgrind stays.
 
 ### Additional Libraries
