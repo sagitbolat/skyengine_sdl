@@ -11,7 +11,7 @@ static void Awake(GameMemory* game_memory) {
     
     font_data.data = (uint8_t**)malloc(sizeof(uint8_t*)*128);
 
-    LoadFont(game_memory, "pixel.ttf", &font_data, 32);  
+    LoadFont(game_memory, "roboto.ttf", &font_data, 128);  
 
 }
 
@@ -22,7 +22,7 @@ static void Start(GameState* game_state, KeyboardState* keyboard_state) {
 }
 
 static void Update(GameState* game_state, KeyboardState* keyboard_state, int delta_time) {
-    DisplayText("_ P -", &font_data, 0, 0, 1, 0);
+    DisplayText("Hello, World!;':+=-_\" ", &font_data, 100, 100, 1, 0);
 
     return;
 }

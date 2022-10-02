@@ -48,22 +48,42 @@ size_t LoadFont(GameMemory* game_memory_arena, const char* font_file_name, FontD
     
 
 
+    font_data->bytes_per_pixel = 1;
+    font_data->pixel_height = height_in_pixels; 
+    
+
+
     // SECTION: load every ascii char into memory.
     // NOTE: Starts at 32 because 32 is the first relevant ascii char.
-    for (int c = 32; c < 127; ++c){ 
+    for (int c = 33; c < 127; ++c){ 
+
         int width, height, x_offset, y_offset;
         uint8_t* temp_bitmap = stbtt_GetCodepointBitmap(&font, 0, stbtt_ScaleForPixelHeight(&font, height_in_pixels), c, &width, &height, &x_offset, &y_offset);
 
         
+        // NOTE: Handle special charachters with different alignment. (such as - + ' " )
+        
+
+        // NOTE: add vertical padding for propper alignment.
+        int y_offset_to_top = height_in_pixels + y_offset;
         font_data->width[c] = width;
-        font_data->height[c] = height;
-        font_data->bytes_per_pixel = 1;
-        font_data->pixel_height = height_in_pixels; 
-        font_data->data[c] = (uint8_t*)(Arena::AllocateAsset(game_memory_arena, width*height));
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
+        font_data->height[c] = height + y_offset_to_top; 
+        font_data->data[c] = (uint8_t*)(Arena::AllocateAsset(game_memory_arena, font_data->width[c] * font_data->height[c]));
+        for (int y = 0; y < y_offset_to_top; ++y) {
+            for (int x = 0; x < width; ++x){
                 int i = (y * width) + x;
-                font_data->data[c][i] = temp_bitmap[i];
+                font_data->data[c][i] = (uint8_t)0;
+            }
+        }
+        
+
+
+        
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                int i = ((y + y_offset_to_top) * width) + x;
+                int j = (y * width) + x;
+                font_data->data[c][i] = temp_bitmap[j];
             }
         }
         font_memory_size += width*height;
@@ -100,14 +120,14 @@ void DisplayText(const char* text, FontData* font, int x_start, int y_start, int
         
 
         if (c == 32) {
-            if (word_spacing == 0) word_spacing = font->pixel_height; 
+            if (word_spacing == 0) word_spacing = (font->pixel_height * scale / 4); 
             w = word_spacing;
         }
 
 
         for (int y = y_start; y < (y_start + h); ++y) {
             for (int x = x_start; x < (x_start + w); ++x) {
-                int i = (y * w) + x;
+                int i = ((y - y_start) * w) + (x - x_start);
                 Color color = {0};
                 color.red = data[c][i];
                 color.green = data[c][i];
@@ -115,6 +135,6 @@ void DisplayText(const char* text, FontData* font, int x_start, int y_start, int
                 DrawRectangle(color.red, color.green, color.blue, x + x_offset, y, scale, scale);
             }
         }
-        x_offset += (w + scale);
+        x_offset += (w + (font->pixel_height * scale / 10));
     }
 }
