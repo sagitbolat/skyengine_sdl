@@ -11,6 +11,14 @@ struct ImageData {
     uint8_t* data;
 };
 
+
+ImageData Rotate(ImageData image, int angle) {
+    // SECTION: Get size of the rotated image:
+    // TODO: Need a general allocator for this.
+    
+}
+
+
 void GenerateBitmapImage(Color* image_data, int width_in_pixels, int height_in_pixels, char* image_file_name) {
     const int FILE_HEADER_SIZE = 14;
     const int INFO_HEADER_SIZE = 40;

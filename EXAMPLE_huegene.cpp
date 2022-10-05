@@ -44,6 +44,10 @@ static void Update(GameState* game_state, KeyboardState* keyboard_state, int del
     return;
 }
 
+static void UserFree() {
+    return;
+}
+
 // SECTION: Huegene
 static Color GetColorOfRandNeighbor(Color* cells, int x, int y, int max_x, int max_y) {
     Color color = {0};
