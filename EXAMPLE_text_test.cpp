@@ -11,7 +11,7 @@ static void Awake(GameMemory* game_memory) {
     
     font_data.data = (uint8_t**)malloc(sizeof(uint8_t*)*128);
 
-    LoadFont(game_memory, "roboto.ttf", &font_data, 128);  
+    LoadFont(&game_memory->asset_storage, "roboto.ttf", &font_data, 64);  
 
 }
 
@@ -22,7 +22,14 @@ static void Start(GameState* game_state, KeyboardState* keyboard_state) {
 }
 
 static void Update(GameState* game_state, KeyboardState* keyboard_state, int delta_time) {
-    DisplayText("Hello, World!;':+=-_\" ", &font_data, 100, 100, 1, 0);
+    DisplayText("POG WOG DOG FROG HOG LOG NOG SOG BOG", &font_data, 100, 100, 1, 0);
+    DisplayText("POG WOG DOG FROG HOG LOG NOG SOG BOG", &font_data, 100, 200, 1, 0);
+    DisplayText("POG WOG DOG FROG HOG LOG NOG SOG BOG", &font_data, 100, 300, 1, 0);
+    DisplayText("POG WOG DOG FROG HOG LOG NOG SOG BOG", &font_data, 100, 400, 1, 0);
+    DisplayText("POG WOG DOG FROG HOG LOG NOG SOG BOG", &font_data, 100, 500, 1, 0);
+    DisplayText("POG WOG DOG FROG HOG LOG NOG SOG BOG", &font_data, 100, 600, 1, 0);
+    DisplayText("POG WOG DOG FROG HOG LOG NOG SOG BOG", &font_data, 100, 700, 1, 0);
+    DisplayText("POG WOG DOG FROG HOG LOG NOG SOG BOG", &font_data, 100, 0, 1, 0);
 
     return;
 }

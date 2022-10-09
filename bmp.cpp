@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "skyengine.cpp"
-#include "arena_allocator.cpp"
+#include "allocation.cpp"
 
 struct ImageData {
     uint16_t width;
@@ -12,11 +12,11 @@ struct ImageData {
 };
 
 
-ImageData Rotate(ImageData image, int angle) {
+//ImageData Rotate(ImageData image, int angle) {
     // SECTION: Get size of the rotated image:
     // TODO: Need a general allocator for this.
     
-}
+//}
 
 
 void GenerateBitmapImage(Color* image_data, int width_in_pixels, int height_in_pixels, char* image_file_name) {
@@ -103,7 +103,7 @@ void GenerateBitmapImage(Color* image_data, int width_in_pixels, int height_in_p
 
 // NOTE: Do bitmap loading.
 // NOTE: Returns the address of the asset on the GameMemory->transient_storage Arena.
-size_t LoadBitmap(GameMemory* game_memory_arena, const char* image_file_name, ImageData* image_data) {
+size_t LoadBitmap(ArenaAllocator* asset_arena, const char* image_file_name, ImageData* image_data) {
     
     const int FILE_HEADER_SIZE = 14;
     const int INFO_HEADER_SIZE = 40;
@@ -159,7 +159,7 @@ size_t LoadBitmap(GameMemory* game_memory_arena, const char* image_file_name, Im
     image_data->width = image_width;
     image_data->height = image_height;
     image_data->bytes_per_pixel = BYTES_PER_PIXEL;
-    image_data->data = (uint8_t*)(Arena::AllocateAsset(game_memory_arena, image_size));
+    image_data->data = (uint8_t*)(ArenaAllocateAsset(asset_arena, image_size));
    
 
     //move to start of bitmap data

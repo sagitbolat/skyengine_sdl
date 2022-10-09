@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include "allocation.cpp"
 
 #define Kilobytes(value) ((value) * 1024)
 #define Megabytes(value) (Kilobytes(value) * 1024)
@@ -68,9 +69,8 @@ struct GameMemory {
     void* permanent_storage;            // Gamestate stuff
 
 
-    uint64_t transient_storage_size;    // Asset loading.
-    size_t transient_current_address;
-    void* transient_storage;
+    uint64_t asset_storage_size;    // Asset loading.
+    ArenaAllocator asset_storage;
 };
 
 // NOTE: The game state representation.

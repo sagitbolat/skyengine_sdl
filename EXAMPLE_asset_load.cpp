@@ -2,15 +2,15 @@
 #include "bmp.cpp"
 
 static void Init(int* w, int *h) {
-    *w = 640;
-    *h = 640;
+    *w = 1920;
+    *h = 1080;
     return;
 }
 
 ImageData image_data = {0};
 static void Awake(GameMemory* game_memory) {
     
-    size_t image_size = LoadBitmap(game_memory, "test_tilemap.bmp", &image_data);
+    size_t image_size = LoadBitmap(&game_memory->asset_storage, "background.bmp", &image_data);
     
     printf("Image size: %ld%c", image_size, '\n');
     
@@ -22,7 +22,7 @@ static void Start(GameState* game_state, KeyboardState* keyboard_state) {
     return;
 }
 
-static void Update(GameState* game_state, KeyboardState* keyboard_state) {
+static void Update(GameState* game_state, KeyboardState* keyboard_state, int delta_time) {
     int w = image_data.width;
     int h = image_data.height;
     uint8_t* data = image_data.data;
@@ -34,10 +34,14 @@ static void Update(GameState* game_state, KeyboardState* keyboard_state) {
             c.red  = data[i + 2];
             c.green = data[i + 1];
             c.blue   = data[i + 0];
-            DrawRectangle(c.red, c.green, c.blue, x, y, 20, 20);
+            DrawRectangle(c.red, c.green, c.blue, x, y, 1, 1);
         }
     }
 
     
+    return;
+}
+
+static void UserFree() {
     return;
 }

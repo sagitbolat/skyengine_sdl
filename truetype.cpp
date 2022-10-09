@@ -4,7 +4,7 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
 #include "skyengine.cpp"
-#include "arena_allocator.cpp"
+#include "allocation.cpp"
 
 
 struct FontData {
@@ -18,7 +18,7 @@ struct FontData {
 
 
 // NOTE: font_data.data must be allocated as a 128 long array of pointers.
-size_t LoadFont(GameMemory* game_memory_arena, const char* font_file_name, FontData* font_data, int height_in_pixels) {
+size_t LoadFont(ArenaAllocator* asset_arena, const char* font_file_name, FontData* font_data, int height_in_pixels) {
     
     // SECTION: Read the whole ttf file.
     FILE* font_file = fopen(font_file_name, "rb");
@@ -68,7 +68,7 @@ size_t LoadFont(GameMemory* game_memory_arena, const char* font_file_name, FontD
         int y_offset_to_top = height_in_pixels + y_offset;
         font_data->width[c] = width;
         font_data->height[c] = height + y_offset_to_top; 
-        font_data->data[c] = (uint8_t*)(Arena::AllocateAsset(game_memory_arena, font_data->width[c] * font_data->height[c]));
+        font_data->data[c] = (uint8_t*)(ArenaAllocateAsset(asset_arena, font_data->width[c] * font_data->height[c]));
         for (int y = 0; y < y_offset_to_top; ++y) {
             for (int x = 0; x < width; ++x){
                 int i = (y * width) + x;

@@ -63,7 +63,8 @@ int main(int argc, char* argv[]) {
     GameMemory game_memory = {0};
     game_memory.is_initialized = true;
     game_memory.permanent_storage_size = Megabytes(128);
-    game_memory.transient_storage_size = Gigabytes(1);
+    game_memory.asset_storage_size = Gigabytes(1);
+    game_memory.asset_storage = {0};
     
 #ifdef __linux__ 
     //printf("LINUX DETECTED %c", '\n');
@@ -75,9 +76,9 @@ int main(int argc, char* argv[]) {
         -1, 0
     );
                                          
-    game_memory.transient_storage = mmap(
+    game_memory.asset_storage.memory = mmap(
         nullptr, 
-        game_memory.transient_storage_size, 
+        game_memory.asset_storage_size, 
         PROT_READ | PROT_WRITE,
         MAP_PRIVATE | MAP_ANON | MAP_NORESERVE,
         -1, 0
@@ -86,7 +87,7 @@ int main(int argc, char* argv[]) {
 #ifdef _WIN32
     // TODO: Windows virtual alloc page allocation for game_memory.
 	game_memory.permanent_storage = malloc(game_memory.permanent_storage_size);                                 
-    	game_memory.transient_storage = malloc(game_memory.transient_storage_size);
+    game_memory.asset_storage.memory = malloc(game_memory.transient_storage_size);
 #endif
 
     // NOTE: Initializing keyboard state.
@@ -183,11 +184,11 @@ int main(int argc, char* argv[]) {
     
 #ifdef __linux__ 
     munmap(game_memory.permanent_storage, game_memory.permanent_storage_size);
-    munmap(game_memory.transient_storage, game_memory.transient_storage_size);
+    munmap(game_memory.asset_storage.memory, game_memory.asset_storage_size);
 #endif
 #ifdef _WIN32
 	free(game_memory.permanent_storage);
-    free(game_memory.transient_storage);
+    free(game_memory.asset_storage.memory);
 #endif
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);

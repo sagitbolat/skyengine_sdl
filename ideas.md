@@ -1,13 +1,15 @@
+# TODO NOW:
+* Finish the allocator refactoring. (URGENT).
+
 # TODO (for later):
 
-### Bugs
-* Font Writing, Underscore appears at the top of the char. Try fix.
-* Valgrind might be detecting calls to printf as a bug. Try removing all printf's and see if the error in valgrind stays.
-
-### Additional Libraries
+### Expanding current features:
+* For asset loading, implement a FIFO allocator. So that old assets can be flushed out in favour of new ones. In case asset size and level size are big, and not enough memory is
+available for the asset arena. 
+* Finish the keyboard input system. Also add mouse buttons and position to the input system. 
 * Add mersenne twister and permutated conguential generator(PCG64) to the PRNG module.
-* 
 
+### Bugs
 
 ### Assets
 * Create a converter that will convert bitmaps from assets (bmps and ttfs)
