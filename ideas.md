@@ -1,7 +1,20 @@
 # TODO NOW:
-* Finish the allocator refactoring. (URGENT).
+* Change so that game bitmap buffer gets passed as a param instead of being global.
 
 # TODO (for later):
+
+### Features to implement:
+* Log mouse input in the input buffer
+    * Position (x, y)
+    * Mouse buttons (left and right click)
+* More drawing methods (for primitives):
+    * Drawing individual pixel
+    * Drawing cirles and elipses
+    * Drawing lines of variable thickness
+    * Drawing Triangles
+* Add a method to blit a whole bitmap to the screen.
+* Rotation of bitmaps.
+* Sound
 
 ### Expanding current features:
 * For asset loading, implement a FIFO allocator. So that old assets can be flushed out in favour of new ones. In case asset size and level size are big, and not enough memory is
@@ -26,8 +39,9 @@ into a custom asset file.
 
 
 
+# Game ideas:
 
-# Map Generation
+## Map Generation
 
 ### Overworld Gen:
 #### Create a simulation of real world continent forming

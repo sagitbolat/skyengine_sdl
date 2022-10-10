@@ -13,8 +13,38 @@ inline int DeltaTimeToFps(int delta_time) {
 }
 
 
-// TODO: Make not global somehow.
+// TODO: Make not global by passing as parameter.
 static GameBitmapBuffer* graphics_buffer;
+
+
+
+// SECTION: Drawing.
+void DrawPixel(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uint8_t blue, int x, int y) {
+
+
+}
+
+void DrawLine(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uint8_t blue, int x0, int y0, int x1, int y1) {
+    int dx = x1 - x0;
+    int dy = y1 - y0;
+    int D = 2*dy - dx;
+    int y = y0;
+
+    for (int x = x0; x < x1; ++x) {
+        uint8_t* pixel = (uint8_t*)graphics_buffer->memory + 
+                     (x * graphics_buffer->bytes_per_pixel) + 
+                     (y * graphics_buffer->pitch);
+        pixel[0] = red;
+        pixel[1] = green;
+        pixel[2] = blue;
+        if (D > 0) {
+            ++y;
+            D -= 2*dx;
+        }
+        D += 2*dy;
+    }
+
+}
 
 void DrawRectangle(uint8_t red, uint8_t green, uint8_t blue, int x, int y, int width, int height) {
     int min_x = x * width;
@@ -50,9 +80,11 @@ void DrawRectangle(uint8_t red, uint8_t green, uint8_t blue, int x, int y, int w
 }
 
 // SECTION: User Defined Functions
+static void Init(int* width, int* height);
 static void Awake(GameMemory* game_memory);
 static void Start(GameState* game_state, KeyboardState* keyboard_state);
 static void Update(GameState* game_state, KeyboardState* keyboard_state, int delta_time);
+static void UserFree();
 
 static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* _graphics_buffer, KeyboardState* keyboard_state, int delta_time) {
 
