@@ -4,6 +4,7 @@
 # TODO (for later):
 
 ### Features to implement:
+* 2D collisions.
 * Log mouse input in the input buffer
     * Position (x, y)
     * Mouse buttons (left and right click)
@@ -13,6 +14,7 @@
     * Drawing lines of variable thickness
     * Drawing Triangles
 * Add a method to blit a whole bitmap to the screen.
+* Physics engine. (simple kinematics only for now).
 * Rotation of bitmaps.
 * Sound
 

@@ -20,8 +20,11 @@ static GameBitmapBuffer* graphics_buffer;
 
 // SECTION: Drawing.
 void DrawPixel(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uint8_t blue, int x, int y) {
-
-
+    int i = ((y * graphics_buffer->pitch) + (x * graphics_buffer->bytes_per_pixel));
+    uint8_t* pixel = (uint8_t*)(graphics_buffer->memory); 
+    pixel[i] = red;
+    pixel[i + 1] = green;
+    pixel[i + 2] = blue;
 }
 
 void DrawLine(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uint8_t blue, int x0, int y0, int x1, int y1) {
@@ -31,12 +34,13 @@ void DrawLine(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uin
     int y = y0;
 
     for (int x = x0; x < x1; ++x) {
-        uint8_t* pixel = (uint8_t*)graphics_buffer->memory + 
-                     (x * graphics_buffer->bytes_per_pixel) + 
-                     (y * graphics_buffer->pitch);
-        pixel[0] = red;
-        pixel[1] = green;
-        pixel[2] = blue;
+        //uint8_t* pixel = (uint8_t*)graphics_buffer->memory + 
+        //             (x * graphics_buffer->bytes_per_pixel) + 
+        //             (y * graphics_buffer->pitch);
+        //pixel[0] = red;
+        //pixel[1] = green;
+        //pixel[2] = blue;
+        DrawPixel(graphics_buffer, red, green, blue, x, y);
         if (D > 0) {
             ++y;
             D -= 2*dx;
@@ -77,6 +81,10 @@ void DrawRectangle(uint8_t red, uint8_t green, uint8_t blue, int x, int y, int w
         }
         row += graphics_buffer->pitch;
     }
+}
+
+void BlitBitmap(GameBitmapBuffer* graphics_buffer, void* bitmap, int x, int y) {
+
 }
 
 // SECTION: User Defined Functions
