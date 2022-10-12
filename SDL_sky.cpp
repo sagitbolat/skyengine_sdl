@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
 
     // NOTE: Initializing keyboard state.
     KeyboardState keyboard_state = {0};
-    keyboard_state.state = 0;
+    keyboard_state.state = {0};
 
     
     
@@ -116,22 +116,22 @@ int main(int argc, char* argv[]) {
                     SDL_Keycode pressed = e.key.keysym.sym;
                     switch (pressed) {
                         case SDLK_w:
-                            keyboard_state.state |= KEY_STATE_W;
+                            keyboard_state.state.W = 1;
                             break;
                         case SDLK_a:
-                            keyboard_state.state |= KEY_STATE_A;
+                            keyboard_state.state.A = 1;
                             break;
                         case SDLK_s:
-                            keyboard_state.state |= KEY_STATE_S;
+                            keyboard_state.state.S = 1;
                             break;
                         case SDLK_d:
-                            keyboard_state.state |= KEY_STATE_D;
+                            keyboard_state.state.D = 1;
                             break;
                         case SDLK_i:
-                            keyboard_state.state |= KEY_STATE_I;
+                            keyboard_state.state.I = 1;
                             break;
                         case SDLK_SPACE:
-                            keyboard_state.state |= KEY_STATE_SPACE;
+                            keyboard_state.state.SPACE = 1;
                             break;
                         default:
                             break;
@@ -141,22 +141,22 @@ int main(int argc, char* argv[]) {
                     SDL_Keycode pressed = e.key.keysym.sym;
                     switch (pressed) {
                         case SDLK_w:
-                            keyboard_state.state ^= KEY_STATE_W;
+                            keyboard_state.state.W = 0;
                             break;
                         case SDLK_a:
-                            keyboard_state.state ^= KEY_STATE_A;
+                            keyboard_state.state.A = 0;
                             break;
                         case SDLK_s:
-                            keyboard_state.state ^= KEY_STATE_S;
+                            keyboard_state.state.S = 0;
                             break;
                         case SDLK_d:
-                            keyboard_state.state ^= KEY_STATE_D;
+                            keyboard_state.state.D = 0;
                             break;
                         case SDLK_i:
-                            keyboard_state.state ^= KEY_STATE_I;
+                            keyboard_state.state.I = 0;
                             break;
                         case SDLK_SPACE:
-                            keyboard_state.state ^= KEY_STATE_SPACE;
+                            keyboard_state.state.SPACE = 0;
                             break;
                         default:
                             break;

@@ -18,10 +18,15 @@
 * Rotation of bitmaps.
 * Sound
 
-### Expanding current features:
+### Refactoring
+* Replace SDL with OpenGL. 
+    * OpenGL is good for 2D.
+    * Look into which version to use. Probably looks like 3.3 is good?
+    * Pair it with SDL for window management. 
+
 * For asset loading, implement a FIFO allocator. So that old assets can be flushed out in favour of new ones. In case asset size and level size are big, and not enough memory is
 available for the asset arena. 
-* Finish the keyboard input system. Also add mouse buttons and position to the input system. 
+
 * Add mersenne twister and permutated conguential generator(PCG64) to the PRNG module.
 
 ### Bugs
