@@ -156,6 +156,9 @@ struct GameState {
 
 
 // SECTION: Utils
+struct FRect {
+    float x, y, width, height;
+};
 struct Rect {
     uint16_t x, y, width, height;
 };

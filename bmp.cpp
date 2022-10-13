@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <stdio.h>
-#include "skyengine.cpp"
+#include "skyengine.h"
 #include "allocation.cpp"
 
 struct ImageData {
@@ -179,3 +179,102 @@ size_t LoadBitmap(ArenaAllocator* asset_arena, const char* image_file_name, Imag
     
     return image_size;
 }
+
+
+// SECTION: Drawing.
+void DrawPixel(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uint8_t blue, int x, int y) {
+    int i = ((y * graphics_buffer->pitch) + (x * graphics_buffer->bytes_per_pixel));
+    uint8_t* pixel = (uint8_t*)(graphics_buffer->memory); 
+    pixel[i] = blue;
+    pixel[i + 1] = green;
+    pixel[i + 2] = red;
+}
+
+void DrawLine(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uint8_t blue, int x0, int y0, int x1, int y1) {
+    int dx = x1 - x0;
+    int dy = y1 - y0;
+    int D = 2*dy - dx;
+    int y = y0;
+
+    for (int x = x0; x < x1; ++x) {
+        //uint8_t* pixel = (uint8_t*)graphics_buffer->memory + 
+        //             (x * graphics_buffer->bytes_per_pixel) + 
+        //             (y * graphics_buffer->pitch);
+        //pixel[0] = red;
+        //pixel[1] = green;
+        //pixel[2] = blue;
+        DrawPixel(graphics_buffer, red, green, blue, x, y);
+        if (D > 0) {
+            ++y;
+            D -= 2*dx;
+        }
+        D += 2*dy;
+    }
+
+}
+
+void DrawRectangle(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uint8_t blue, int x, int y, int width, int height) {
+    int min_x = x * width;
+    int min_y = y * height;
+    int max_x = min_x + width;
+    int max_y = min_y + height;
+    if (min_x < 0) {
+        min_x = 0;
+    }
+    if (min_y < 0) {
+        min_y = 0;
+    }
+    if (max_x > graphics_buffer->width) {
+        max_x = graphics_buffer->width;
+    }
+    if (max_y > graphics_buffer->height) {
+        max_y = graphics_buffer->height;
+    }
+
+    uint8_t* row = (uint8_t*)graphics_buffer->memory + 
+                     (min_x * graphics_buffer->bytes_per_pixel) + 
+                     (min_y * graphics_buffer->pitch);
+
+    for (int y = min_y; y < max_y; ++y) {
+       
+        uint32_t* pixel = (uint32_t*)row;
+        
+        for (int x = min_x; x < max_x; ++x) {
+            *pixel++ = ((red << 16) | (green << 8) | blue);
+        }
+        row += graphics_buffer->pitch;
+    }
+}
+
+void BlitBitmap(GameBitmapBuffer* graphics_buffer, ImageData* img_data, int x0, int y0, int scale, bool centered = true) {
+    int w = img_data->width;
+    int h = img_data->height;
+    uint8_t* data = img_data->data;
+    int bytes_per_pixel = img_data->bytes_per_pixel;
+
+
+    if (scale > 1) {
+        x0 /= scale;
+        y0 /= scale;
+    }
+    if (centered) {
+        x0 -= (w/2);
+        y0 -= (h/2);
+    }
+    for (int y = y0; y < y0+h; ++y) {
+        for (int x = x0; x < x0+w; ++x) {
+            int i = (((y - y0) * w) + (x - x0)) * bytes_per_pixel;
+            Color c = {0};
+            c.red = data[i + 2];
+            c.green = data[i + 1];
+            c.blue = data[i + 0];
+            if (scale == 1) {
+                DrawPixel(graphics_buffer, c.red, c.green, c.blue, x, y);
+            } else if (scale > 1) {
+                DrawRectangle(graphics_buffer, c.red, c.green, c.blue, x, y, scale, scale);
+            }
+        }
+    }
+}
+
+

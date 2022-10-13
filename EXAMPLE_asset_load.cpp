@@ -23,22 +23,7 @@ static void Start(GameState* game_state, KeyboardState* keyboard_state) {
 }
 
 static void Update(GameState* game_state, KeyboardState* keyboard_state, int delta_time) {
-    int w = image_data.width;
-    int h = image_data.height;
-    uint8_t* data = image_data.data;
-    
-    for (int y = 0; y < h; ++y) {
-        for (int x = 0; x < w; ++x) {
-            int i = ((y * w) + x)*image_data.bytes_per_pixel;
-            Color c = {0};
-            c.red  = data[i + 2];
-            c.green = data[i + 1];
-            c.blue   = data[i + 0];
-            DrawRectangle(c.red, c.green, c.blue, x, y, 1, 1);
-        }
-    }
-
-    
+    BlitBitmap(graphics_buffer, &image_data, 0, 0, 1);
     return;
 }
 

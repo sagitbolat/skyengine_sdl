@@ -19,6 +19,7 @@
 * Sound
 
 ### Refactoring
+* Take drawing code out into the bmp code.
 * Replace SDL with OpenGL. 
     * OpenGL is good for 2D.
     * Look into which version to use. Probably looks like 3.3 is good?
