@@ -254,7 +254,15 @@ void DrawRectangle(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green
 }
 
 
-
+// NOTE: If centered is false, the x0, y0 coordinate will be in the top left of the bitmap. If it is true, it will be in the center of the bitmap
+// NOTE: scale is the size taken up by each pixel in the bmp file on the graphics buffer. Scale = 1 means a 16x16 bitmap will be taking up 16x16 pixel space on screen.
+//          Scale = 2 means a 16x16 bitmap will be taking up 32x32 pixels on the screen. Etc.
+// NOTE: pos_scale is how the x0 and y0 coordinates of the bitmap will be positioned on the screen. 
+//          If x0 = 1, y0 = 1 and pos_scale = 1, then the bitmap will be positioned at (1,1) pixel on screen.
+//          If x0 = 1, y0 = 1 and pos_scale = 16, then the bitmap will be positioned at (16, 16) pixel on screen.
+// NOTE: centered refers to if the x0, y0 coords represent the center of the bitmap, or the top left corner. 
+//          If centered = false, then the x0 y0 coords are the top left of the bitmap.
+//          If centered = true, then the bitmap center will be at x0 y0.
 void BlitBitmapScaled (
     GameBitmapBuffer* graphics_buffer, 
     ImageData* img_data, 
@@ -269,6 +277,10 @@ void BlitBitmapScaled (
 
     if (pos_scale == scale) { 
         if (scale == 1) {
+            if (centered) {
+                x0 -= w/2;
+                y0 -= h/2;
+            }
             for (int y = y0; y < y0 + h; ++y) {
                 for (int x = x0; x < x0 + w; ++x) {
                     int i = (((y - y0) * w) + (x - x0)) * bytes_per_pixel;
@@ -281,6 +293,10 @@ void BlitBitmapScaled (
             }
         } else if (scale > 1) {
             
+            if (centered) {
+                x0 -= w*scale/2;
+                y0 -= h*scale/2;
+            }
             y0 *= pos_scale;
             x0 *= pos_scale;
 
@@ -306,6 +322,10 @@ void BlitBitmapScaled (
         if (scale == 1) {
             y0 *= pos_scale;
             x0 *= pos_scale;
+            if (centered) {
+                x0 -= w/2;
+                y0 -= h/2;
+            }
             for (int y = y0; y < y0 + h; ++y) {
                 for (int x = x0; x < x0 + w; ++x) {
                     int i = (((y - y0) * w) + (x - x0)) * bytes_per_pixel;
@@ -317,6 +337,10 @@ void BlitBitmapScaled (
                 }
             }
         } else if (scale > 1) {
+            if (centered) {
+                x0 -= w*scale/2;
+                y0 -= h*scale/2;
+            }
             y0 *= pos_scale;
             x0 *= pos_scale;
             
@@ -342,9 +366,6 @@ void BlitBitmapScaled (
     }
 }
 
-// NOTE: If centered is false, the x0, y0 coordinate will be in the top left of the bitmap. If it is true, it will be in the center of the bitmap
-// NOTE: If scale_position is true, x0, y0 will be scaled so that it is done in terms of the scale. 
-// So on a 300x300 canvas, a x0,y0 of 1, 1 with scale 10 will be at pixel 10,10.
 void BlitBitmap(GameBitmapBuffer* graphics_buffer, ImageData* img_data, int x0, int y0, int scale, bool centered = true, bool scale_position = false) {
     int w = img_data->width;
     int h = img_data->height;

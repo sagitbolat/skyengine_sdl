@@ -20,8 +20,8 @@ void Start(GameState* gs, KeyboardState* ks) {
     return;
 }
 
-int asteroid_x = 1;
-int asteroid_y = 1;
+int asteroid_x = 0;
+int asteroid_y = 0;
 
 void Update(GameState* gs, KeyboardState* ks, int dt) {
     
@@ -50,7 +50,8 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     //BlitBitmapScaled(graphics_buffer, &ship_sprite, 300, 300, 3, 1, true);
     int scale = 16;
     int pos_scale = 1;
-    BlitBitmapScaled(graphics_buffer, &asteroid_sprite, (int)(asteroid_x), (int)(asteroid_y), scale, pos_scale, false);
+    bool centered = true;
+    BlitBitmapScaled(graphics_buffer, &asteroid_sprite, (int)(asteroid_x), (int)(asteroid_y), scale, pos_scale, centered);
     //DrawRectangle(graphics_buffer, 255, 255, 255, 0, 0, 10, 10);
     //DrawRectangle(graphics_buffer, 255, 255, 255, 10, 10, 10, 10);
     return;
