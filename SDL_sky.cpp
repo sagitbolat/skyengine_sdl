@@ -20,9 +20,13 @@ int SCREEN_HEIGHT = 720;
 
 // SECTION: Function declarations
 static void BlitToScreen(GameBitmapBuffer*, SDL_Texture*, SDL_Renderer*);
+static void ClearBuffer(GameBitmapBuffer*);
+
 
 // TODO: remove from global space.
 SDL_Renderer* renderer;
+
+
 int main(int argc, char* argv[]) {
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
@@ -106,7 +110,12 @@ int main(int argc, char* argv[]) {
     int timer_end = SDL_GetTicks();
     
     while(running) {
+
+        // NOTE: Copying current state into previous state.
+        // TODO: Should I use memcpy or assignment here?
         keyboard_state.prev_state = keyboard_state.state;
+        //memcpy(&keyboard_state.prev_state, &keyboard_state.state, sizeof(KeyState));
+
         while (SDL_PollEvent(&e)) {
             switch(e.type) {
                 case SDL_QUIT:
@@ -172,7 +181,7 @@ int main(int argc, char* argv[]) {
         
         GameUpdateAndRender(&game_memory, &graphics_buffer, &keyboard_state, delta_time); 
         BlitToScreen(&graphics_buffer, texture, renderer);
-        
+        ClearBuffer(&graphics_buffer);    
     }
     
     UserFree();    
@@ -200,3 +209,7 @@ static void BlitToScreen(GameBitmapBuffer* graphics_buffer, SDL_Texture* texture
     SDL_RenderPresent(renderer);
 }
 
+static void ClearBuffer(GameBitmapBuffer* graphics_buffer) {
+    uint64_t buffer_size = (graphics_buffer->pitch) * graphics_buffer->height;
+    memset(graphics_buffer->memory, 0, buffer_size);
+}

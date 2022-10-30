@@ -1,10 +1,37 @@
+# Key:
+* [ ] - A todo tickbox
+    * [ ] - Did not start working on it
+    * [?] - Possible thing to do, need to think about it more
+    * [V] - Done.
+    * [O] - Working on it now or need to start working on it soon. 
+
 # TODO NOW:
-* Change so that game bitmap buffer gets passed as a param instead of being global.
+* [ ]Take out all struct and data types into a seperate "skytypes.h" that will be included in every file.
+* [ ]Change so that game bitmap buffer gets passed as a param instead of being global.
+
+* [O]Make dt more persise than just ms. Need more something like microseconds.
+
+* [O]Fix the BlitBitmap() method to work properly at different scales. Right now, higher scales cause jittery movement, 
+    likely because we are bitting at large pixel-steps (the whole scale is one step).
+
+* [V]Change the rendering code (and drawing code) so that if user tries to draw outside the bounds, we handle it instead of having segmentation fault.
+* [ ]Rotation of bitmaps. Do the rotation code inside the BlitBitmap function.
+    * The bitmap gets rotated when it is blitted, not beforehand.
+        * Maybe find a way to save a rotated bitmap's data as well, in case we need to cache the rotated bitmap (if a rotation shows up alot, best to just save it).
+
+* [?]Also try and make a second coordinate system for objects that appear outside the screen (such as asteroids spawning offscreen).
+* [?]Add a virtual camera module, so that you can specify where in world coordinates your virtual camera is. 
 
 # TODO (for later):
 
+
+# DONE:
+
+
 ### Features to implement:
 * 2D collisions.
+* 2D kinematics.
+* Add an alpha channel when storing bitmaps, so they can have transparency when rendering.
 * Log mouse input in the input buffer
     * Position (x, y)
     * Mouse buttons (left and right click)
@@ -15,11 +42,9 @@
     * Drawing Triangles
 * Add a method to blit a whole bitmap to the screen.
 * Physics engine. (simple kinematics only for now).
-* Rotation of bitmaps.
 * Sound
 
 ### Refactoring
-* Take drawing code out into the bmp code.
 * Replace SDL with OpenGL. 
     * OpenGL is good for 2D.
     * Look into which version to use. Probably looks like 3.3 is good?
@@ -48,6 +73,21 @@ into a custom asset file.
 
 
 # Game ideas:
+
+## Graphical styles:
+* Instead of having bitmaps such that pixels are adjacent, leave a gap between the pixels, so that the seperation between pixels is visible. It looks like a cool way to render pixels.
+* Example of a 3x3 bitmap(P represents a filled pixel, and O represents an empty space):
+    P O P O P
+    O O O O O
+    P O P O P
+    O O O O O
+    P O P O P
+* as opposed to:
+    P P P
+    P P P
+    P P P
+
+
 
 ## Map Generation
 

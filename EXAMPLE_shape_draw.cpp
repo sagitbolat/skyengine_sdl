@@ -1,4 +1,5 @@
 #include "SDL_sky.cpp"
+#include "bmp.cpp"
 
 static void Init(int* w, int* h) {
     *w = 1920;
@@ -14,7 +15,7 @@ static void Start(GameState* gs, KeyboardState* ks) {
 }
 
 static void Update(GameState* gs, KeyboardState* ks, int dt) {
-    DrawLine(graphics_buffer, 255, 255, 255, 0, 0, 100, 100);
+    DrawLine(graphics_buffer, 255, 255, 255, 0, 0, 1920, 1080);
 }
 
 static void UserFree() {

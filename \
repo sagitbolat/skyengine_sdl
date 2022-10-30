@@ -1,0 +1,90 @@
+help nvim-from-vim
+call mkdir(stdpath('config'), 'p')
+exe 'edit '.stdpath('config').'/init.vim'
+:wq
+GlowStatus
+GlowPreview
+glow
+help
+GlowInstall
+Glow
+PlugStatus
+colorscheme
+colorscheme peachpuff
+c
+colorscheme synthwave
+set conceallevel = 3
+set conceallevel=5
+sub
+mdsub
+submd
+<sub
+md_
+md^
+help mappig
+help mapping
+MDsb
+MDsp
+@_
+set conceallevel=3
+set so=99
+edit styles.css
+edit theme.lua
+edit rc.lua
+edit util.py
+1
+PlugInit
+Plug
+Catppuccin mocha
+MarkDownPreview
+edit lec2.md
+PlugClear
+PlugClean
+PlugUpdate
+MarkdownPreview
+q~
+s
+edit search.py
+edit build.sh
+edit SDL_sky/cpp
+edit arena_allocator
+edit asset_load
+edit arena_allocator.cpp
+w\
+edit huegene.cpp
+edit asset_load.cpp
+edit text_test.cpp
+edit anorexia.pcf
+PlugInstall
+!q
+edit debug.sh
+ww
+edit stb_truetype.h
+qw
+edit ideas.md
+edit EXAMPLE_text_test
+edit allocaton.cpp
+edit allocation.cpp
+edit truetype.cpp
+edit EXAMPLE_text_test.cpp
+edit EXAMPLE_shape_draw.cpp
+!
+s/<</>>/g
+%s/<</>>/g
+edit EXAMPLE_asset_load.cpp
+edit skyengine.cpp
+Wq
+edit draw.cpp
+q!
+edit bmp.cpp
+edit 
+q
+s%/#d65d0e/var(--accent_color)
+%s/#d65d0e/var(-accent_color)/g
+%s/1/2
+edit skyengine.h
+wq
+W
+w
+edit SDL_sky.cpp
+

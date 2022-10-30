@@ -182,12 +182,19 @@ size_t LoadBitmap(ArenaAllocator* asset_arena, const char* image_file_name, Imag
 
 
 // SECTION: Drawing.
-void DrawPixel(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uint8_t blue, int x, int y) {
+// Returns: 1 if successful, 0 if outside bounds.
+int DrawPixel(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uint8_t blue, int x, int y) {
     int i = ((y * graphics_buffer->pitch) + (x * graphics_buffer->bytes_per_pixel));
-    uint8_t* pixel = (uint8_t*)(graphics_buffer->memory); 
+    uint8_t* pixel = (uint8_t*)(graphics_buffer->memory);
+    int max_i = ((graphics_buffer->width * graphics_buffer->bytes_per_pixel) + 
+                (graphics_buffer->height * graphics_buffer->pitch));
+    if (i < 0 || i >= max_i) {
+        return 0;
+    }
     pixel[i] = blue;
     pixel[i + 1] = green;
     pixel[i + 2] = red;
+    return 1;
 }
 
 void DrawLine(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uint8_t blue, int x0, int y0, int x1, int y1) {
@@ -213,9 +220,9 @@ void DrawLine(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uin
 
 }
 
-void DrawRectangle(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uint8_t blue, int x, int y, int width, int height) {
-    int min_x = x * width;
-    int min_y = y * height;
+void DrawRectangle(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uint8_t blue, int x0, int y0, int width, int height) {
+    int min_x = x0;
+    int min_y = y0;
     int max_x = min_x + width;
     int max_y = min_y + height;
     if (min_x < 0) {
@@ -224,10 +231,10 @@ void DrawRectangle(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green
     if (min_y < 0) {
         min_y = 0;
     }
-    if (max_x > graphics_buffer->width) {
+    if (max_x >= graphics_buffer->width) {
         max_x = graphics_buffer->width;
     }
-    if (max_y > graphics_buffer->height) {
+    if (max_y >= graphics_buffer->height) {
         max_y = graphics_buffer->height;
     }
 
@@ -246,14 +253,106 @@ void DrawRectangle(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green
     }
 }
 
-void BlitBitmap(GameBitmapBuffer* graphics_buffer, ImageData* img_data, int x0, int y0, int scale, bool centered = true) {
+
+
+void BlitBitmapScaled (
+    GameBitmapBuffer* graphics_buffer, 
+    ImageData* img_data, 
+    int x0, int y0, 
+    int scale, int pos_scale, 
+    bool centered
+) {
+    int w = img_data->width;
+    int h = img_data->height;
+    uint8_t* data = img_data->data;
+    int bytes_per_pixel = img_data->bytes_per_pixel;
+
+    if (pos_scale == scale) { 
+        if (scale == 1) {
+            for (int y = y0; y < y0 + h; ++y) {
+                for (int x = x0; x < x0 + w; ++x) {
+                    int i = (((y - y0) * w) + (x - x0)) * bytes_per_pixel;
+                    Color c = {0};
+                    c.red = data[i + 2];
+                    c.green = data[i + 1];
+                    c.blue = data[i + 0];
+                    DrawPixel(graphics_buffer, c.red, c.green, c.blue, x, y);
+                }
+            }
+        } else if (scale > 1) {
+            
+            y0 *= pos_scale;
+            x0 *= pos_scale;
+
+            int ymax = y0 + (h * scale);
+            int xmax = x0 + (w * scale);
+
+            int yi = y0;
+            for (int y = y0; y < ymax; y+=scale) {
+                int xi = x0;
+                for (int x = x0; x < xmax; x+=scale) {
+                    int i = (((yi - y0) * w) + (xi - x0)) * bytes_per_pixel;
+                    Color c = {0};
+                    c.red = data[i + 2];
+                    c.green = data[i + 1];
+                    c.blue = data[i + 0];
+                    DrawRectangle(graphics_buffer, c.red, c.green, c.blue, x, y, scale, scale);
+                    ++xi;
+                }
+                ++yi;
+            }
+        }
+    } else { // NOTE: pos_scale != scale
+        if (scale == 1) {
+            y0 *= pos_scale;
+            x0 *= pos_scale;
+            for (int y = y0; y < y0 + h; ++y) {
+                for (int x = x0; x < x0 + w; ++x) {
+                    int i = (((y - y0) * w) + (x - x0)) * bytes_per_pixel;
+                    Color c = {0};
+                    c.red = data[i + 2];
+                    c.green = data[i + 1];
+                    c.blue = data[i + 0];
+                    DrawPixel(graphics_buffer, c.red, c.green, c.blue, x, y);
+                }
+            }
+        } else if (scale > 1) {
+            y0 *= pos_scale;
+            x0 *= pos_scale;
+            
+            int ymax = y0 + (h * scale);
+            int xmax = x0 + (w * scale);
+
+            int yi = y0;
+            for (int y = y0; y < ymax; y+=scale) {
+                int xi = x0;
+                for (int x = x0; x < xmax; x+=scale) {
+                    int i = (((yi - y0) * w) + (xi - x0)) * bytes_per_pixel;
+                    Color c = {0};
+                    c.red = data[i + 2];
+                    c.green = data[i + 1];
+                    c.blue = data[i + 0];
+                    DrawRectangle(graphics_buffer, c.red, c.green, c.blue, x, y, scale, scale);
+                    ++xi;
+                }
+                ++yi;
+            }
+        }
+    
+    }
+}
+
+// NOTE: If centered is false, the x0, y0 coordinate will be in the top left of the bitmap. If it is true, it will be in the center of the bitmap
+// NOTE: If scale_position is true, x0, y0 will be scaled so that it is done in terms of the scale. 
+// So on a 300x300 canvas, a x0,y0 of 1, 1 with scale 10 will be at pixel 10,10.
+void BlitBitmap(GameBitmapBuffer* graphics_buffer, ImageData* img_data, int x0, int y0, int scale, bool centered = true, bool scale_position = false) {
     int w = img_data->width;
     int h = img_data->height;
     uint8_t* data = img_data->data;
     int bytes_per_pixel = img_data->bytes_per_pixel;
 
 
-    if (scale > 1) {
+    if (scale > 1 && scale_position) {
         x0 /= scale;
         y0 /= scale;
     }
