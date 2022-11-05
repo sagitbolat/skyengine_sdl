@@ -10,8 +10,9 @@
 * [ ]Change so that game bitmap buffer gets passed as a param instead of being global.
 
 * [O]Make dt more persise than just ms. Need more something like microseconds.
+    
 
-* [O]Fix the BlitBitmap() method to work properly at different scales. Right now, higher scales cause jittery movement, 
+* [V]Fix the BlitBitmap() method to work properly at different scales. Right now, higher scales cause jittery movement, 
     likely because we are bitting at large pixel-steps (the whole scale is one step).
 
 * [V]Change the rendering code (and drawing code) so that if user tries to draw outside the bounds, we handle it instead of having segmentation fault.

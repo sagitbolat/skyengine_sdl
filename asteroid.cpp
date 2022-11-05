@@ -20,8 +20,8 @@ void Start(GameState* gs, KeyboardState* ks) {
     return;
 }
 
-int asteroid_x = 0;
-int asteroid_y = 0;
+int asteroid_x = 1280/2;
+int asteroid_y = 720/2;
 
 void Update(GameState* gs, KeyboardState* ks, int dt) {
     
@@ -51,7 +51,9 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     int scale = 16;
     int pos_scale = 1;
     bool centered = true;
-    BlitBitmapScaled(graphics_buffer, &asteroid_sprite, (int)(asteroid_x), (int)(asteroid_y), scale, pos_scale, centered);
+    ImageData asteroid_rotated = RotateBitmap(asteroid_sprite, 0);
+
+    BlitBitmapScaled(graphics_buffer, &asteroid_rotated, (int)(asteroid_x), (int)(asteroid_y), scale, pos_scale, centered);
     //DrawRectangle(graphics_buffer, 255, 255, 255, 0, 0, 10, 10);
     //DrawRectangle(graphics_buffer, 255, 255, 255, 10, 10, 10, 10);
     return;

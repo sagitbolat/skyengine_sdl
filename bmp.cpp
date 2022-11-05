@@ -4,6 +4,9 @@
 #include "skyengine.h"
 #include "allocation.cpp"
 
+//NOTE: For cos and sin in RotateBitmap:
+#include "skyintrinsics.h"
+
 struct ImageData {
     uint16_t width;
     uint16_t height;
@@ -11,12 +14,67 @@ struct ImageData {
     uint8_t* data;
 };
 
+// NOTE: Assumes angle is in Degrees
+ImageData RotateBitmap(ImageData image, float angle) {
+    // SECTION: Cache the sine and cosine of angle values.
+    float sine = SinDeg(angle);
+    float cosine = CosDeg(angle);
+    // SECTION: Cache the width and height.
+    int w = image.width;
+    int h = image.height;
 
-//ImageData Rotate(ImageData image, int angle) {
     // SECTION: Get size of the rotated image:
     // TODO: Need a general allocator for this.
-    
-//}
+    if (angle == 0 ) { 
+        return image; 
+    } else {
+        // SECTION: Calculate the size of the rotated image.
+        int rotated_width = w;
+        int rotated_height = h;
+        if (angle < 90) {
+            rotated_width = (w * cosine) + (h * sine);
+            rotated_height = (w * sine) + (h * cosine);
+        } else if (angle == 90) {
+            rotated_width = h;
+            rotated_height = w;
+        }
+        } else if (angle < 180) {
+            int h_prime = w;
+            int w_prime = h;
+            float theta = angle - 90;
+            
+            float cos_theta = CosDeg(theta);
+            float sin_theta = SinDeg(theta);
+
+            rotated_width = (w_prime * cos_theta) + (h_prime * sin_theta);
+            rotated_height = (w_prime * sin_theta) + (h_prime * cos_theta);
+        } else if (angle == 180) {
+           // NOTE: Do nothing, since rotating by 180 degrees does not change size. 
+        } else if (angle < 270) {
+            // TODO ...
+        } else if (angle == 270) {
+            rotated_width = h;
+            rotated_height = w;
+        } else {
+            // TODO ...
+        }
+        
+
+
+        int w = img_data->width;
+        int h = img_data->height;
+        uint8_t* data = img_data->data;
+        int bytes_per_pixel = img_data->bytes_per_pixel;
+                
+        for (int y = 0; y < h; ++y) {
+            for (int x = 0; x < w; ++x) {
+                
+                // NOTE: Rotate the pixel about the z axis by angle
+
+            }
+        }
+    }
+}
 
 
 void GenerateBitmapImage(Color* image_data, int width_in_pixels, int height_in_pixels, char* image_file_name) {
