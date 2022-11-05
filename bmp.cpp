@@ -51,12 +51,24 @@ ImageData RotateBitmap(ImageData image, float angle) {
         } else if (angle == 180) {
            // NOTE: Do nothing, since rotating by 180 degrees does not change size. 
         } else if (angle < 270) {
-            // TODO ...
+            int h_prime = *w;
+            int w_prime = *h;
+            float theta = 180 - (angle - 180) - 90;
+            
+            float cos_theta = CosDeg(theta);
+            float sin_theta = SinDeg(theta);
+
+            rotated_width = (w_prime * cos_theta) + (h_prime * sin_theta);
+            rotated_height = (w_prime * sin_theta) + (h_prime * cos_theta);
         } else if (angle == 270) {
             rotated_width = h;
             rotated_height = w;
         } else {
-            // TODO ...
+            float theta = 360.0f - angle;
+            float cosine_prime = CosDeg(theta);
+            float sine_prime = SinDeg(theta);
+            rotated_width = (*w * cosine_prime) + (*h * sine_prime);
+            rotated_height = (*w * sine_prime) + (*h * cosine_prime);
         }
         
 
