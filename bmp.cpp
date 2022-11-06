@@ -15,13 +15,14 @@ struct ImageData {
 };
 
 // NOTE: Assumes angle is in Degrees
-ImageData RotateBitmap(ImageData image, float angle) {
+ImageData RotateBitmap(ArenaAllocator* frame_arena, ImageData image, float angle) {
     // SECTION: Cache the sine and cosine of angle values.
     float sine = SinDeg(angle);
     float cosine = CosDeg(angle);
     // SECTION: Cache the width and height.
     int w = image.width;
     int h = image.height;
+    
 
     // SECTION: Get size of the rotated image:
     // TODO: Need a general allocator for this.
@@ -37,7 +38,6 @@ ImageData RotateBitmap(ImageData image, float angle) {
         } else if (angle == 90) {
             rotated_width = h;
             rotated_height = w;
-        }
         } else if (angle < 180) {
             int h_prime = w;
             int w_prime = h;
@@ -51,8 +51,8 @@ ImageData RotateBitmap(ImageData image, float angle) {
         } else if (angle == 180) {
            // NOTE: Do nothing, since rotating by 180 degrees does not change size. 
         } else if (angle < 270) {
-            int h_prime = *w;
-            int w_prime = *h;
+            int h_prime = w;
+            int w_prime = h;
             float theta = 180 - (angle - 180) - 90;
             
             float cos_theta = CosDeg(theta);
@@ -67,24 +67,36 @@ ImageData RotateBitmap(ImageData image, float angle) {
             float theta = 360.0f - angle;
             float cosine_prime = CosDeg(theta);
             float sine_prime = SinDeg(theta);
-            rotated_width = (*w * cosine_prime) + (*h * sine_prime);
-            rotated_height = (*w * sine_prime) + (*h * cosine_prime);
+            rotated_width = (w * cosine_prime) + (h * sine_prime);
+            rotated_height = (w * sine_prime) + (h * cosine_prime);
         }
+       
+
+        // NOTE: Allocated the new image data.
+        ImageData new_image = {0};
+        new_image.width = rotated_width;
+        new_image.height = rotated_height;
+        new_image.bytes_per_pixel = image.bytes_per_pixel;
+        uint64_t image_size = image.width * image.height * image.bytes_per_pixel;
+        new_image.data = (uint8_t*)(ArenaAllocateAsset(frame_arena, image_size));
         
 
+        int center_y = h / 2;
+        int center_x = w / 2;
 
-        int w = img_data->width;
-        int h = img_data->height;
-        uint8_t* data = img_data->data;
-        int bytes_per_pixel = img_data->bytes_per_pixel;
-                
-        for (int y = 0; y < h; ++y) {
-            for (int x = 0; x < w; ++x) {
-                
+        for (int y = 0; y < rotated_height; ++y) {
+            for (int x = 0; x < rotated_width; ++x) {
                 // NOTE: Rotate the pixel about the z axis by angle
+                int x1 = ((x - center_x) * cosine) - ((y - center_y) * sine) + center_x;
+                int y1 = ((x - center_x) * sine) + ((y - center_y) * cosine) + center_y;
+                
+                // NOTE: Now set the new_image data at x y to be equal to old image data at x1 y1
+                // NOTE: Or should the x y and x1 y1 be the other way around?? IDK try both.
 
             }
         }
+
+        return new_image;
     }
 }
 

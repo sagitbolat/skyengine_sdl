@@ -142,7 +142,7 @@ struct KeyboardState {
 struct GameMemory {
     bool is_initialized;
     uint64_t permanent_storage_size;
-    void* permanent_storage;            // Gamestate stuff
+    ArenaAllocator permanent_storage;            // Gamestate stuff
 
 
     uint64_t asset_storage_size;    // Asset loading.

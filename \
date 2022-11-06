@@ -4,6 +4,15 @@
 #include "skyengine.cpp" 
 
 
+// NOTE: System-dependant page memory allocation for arena
+#ifdef __linux__
+#include <sys/mman.h>
+#endif
+#ifdef _WIN32
+// TODO: Include virutual alloc.
+#include <stdlib.h>
+#endif
+
 
 // SECTION: Window Size
 int SCREEN_WIDTH = 1280;
@@ -57,8 +66,31 @@ int main(int argc, char* argv[]) {
     game_memory.asset_storage_size = Gigabytes(1);
     game_memory.asset_storage = {0};
     
-    InitArena(&game_memory.permanent_storage, game_memory.permanent_storage_size);
-    InitArena(&game_memory.asset_storage, game_memory.asset_storage_size);
+    InitArena(game_memory.permanent_storage, game_memory.permanent_storage_size);
+    InitArena(game_memory.asset_storage, game_memory.asset_storage_size);
+#ifdef __linux__ 
+    //printf("LINUX DETECTED %c", '\n');
+    game_memory.permanent_storage = mmap(
+        nullptr, 
+        game_memory.permanent_storage_size, 
+        PROT_READ | PROT_WRITE,
+        MAP_PRIVATE | MAP_ANON | MAP_NORESERVE,
+        -1, 0
+    );
+                                         
+    game_memory.asset_storage.memory = mmap(
+        nullptr, 
+        game_memory.asset_storage_size, 
+        PROT_READ | PROT_WRITE,
+        MAP_PRIVATE | MAP_ANON | MAP_NORESERVE,
+        -1, 0
+    );
+#endif
+#ifdef _WIN32
+    // TODO: Windows virtual alloc page allocation for game_memory.
+	game_memory.permanent_storage = malloc(game_memory.permanent_storage_size);                                 
+    game_memory.asset_storage.memory = malloc(game_memory.transient_storage_size);
+#endif
 
     // NOTE: Initializing keyboard state.
     KeyboardState keyboard_state = {0};
@@ -158,11 +190,11 @@ int main(int argc, char* argv[]) {
     free(graphics_buffer.memory);
     
 #ifdef __linux__ 
-    munmap(game_memory.permanent_storage.memory, game_memory.permanent_storage_size);
+    munmap(game_memory.permanent_storage, game_memory.permanent_storage_size);
     munmap(game_memory.asset_storage.memory, game_memory.asset_storage_size);
 #endif
 #ifdef _WIN32
-	free(game_memory.permanent_storage.memory);
+	free(game_memory.permanent_storage);
     free(game_memory.asset_storage.memory);
 #endif
     SDL_DestroyTexture(texture);

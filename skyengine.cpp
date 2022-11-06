@@ -26,7 +26,7 @@ static void UserFree();
 static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* _graphics_buffer, KeyboardState* keyboard_state, int delta_time) {
 
     graphics_buffer = _graphics_buffer;
-    GameState* game_state = (GameState*)memory->permanent_storage;
+    GameState* game_state = (GameState*)memory->permanent_storage.memory;
 
     if (!memory->is_initialized) {
         memory->is_initialized = true;

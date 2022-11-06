@@ -10,15 +10,19 @@
 * [ ]Change so that game bitmap buffer gets passed as a param instead of being global.
 
 * [O]Make dt more persise than just ms. Need more something like microseconds.
-    
+    * apparently that is not easy to do, since CPUs work off ms not microseconds.
+    * I can try to LIMIT the FPS to be 60 frames, and have a system that is similar to FixedUpdate() in unity. This way I have constant dt to fall back onto.
 
 * [V]Fix the BlitBitmap() method to work properly at different scales. Right now, higher scales cause jittery movement, 
     likely because we are bitting at large pixel-steps (the whole scale is one step).
 
 * [V]Change the rendering code (and drawing code) so that if user tries to draw outside the bounds, we handle it instead of having segmentation fault.
-* [ ]Rotation of bitmaps. Do the rotation code inside the BlitBitmap function.
+* [O]Rotation of bitmaps. Do the rotation code inside the BlitBitmap function.
     * The bitmap gets rotated when it is blitted, not beforehand.
         * Maybe find a way to save a rotated bitmap's data as well, in case we need to cache the rotated bitmap (if a rotation shows up alot, best to just save it).
+    * figure out where to store the rotated bitmap data. Do I make a new frame-wide Arena and allocate rotated image data there? Maybe? Idk.
+        * I added a [USER DEFINED] frame-arena, which is a memory arena with a lifetime of a frame. Maybe I should move the frame arena to be part of the game_memory struct??
+        * On the other hand, I might not need frame arenas all the time, but it seems universally useful. Will need to think about it.
 
 * [?]Also try and make a second coordinate system for objects that appear outside the screen (such as asteroids spawning offscreen).
 * [?]Add a virtual camera module, so that you can specify where in world coordinates your virtual camera is. 

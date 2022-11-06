@@ -10,9 +10,15 @@ void Init(int* w, int* h) {
 ImageData asteroid_sprite = {0};
 ImageData ship_sprite = {0};
 
+
+// NOTE: An arena allocator with lifetime of one frame.
+ArenaAllocator frame_arena = {0};
+uint64_t frame_arena_size = Kilobytes(4);
+
 void Awake(GameMemory* gm) {
     LoadBitmap(&gm->asset_storage, "asteroid.bmp", &asteroid_sprite);
     LoadBitmap(&gm->asset_storage, "ship.bmp", &ship_sprite);
+    InitArena(&frame_arena, frame_arena_size);
     return;
 }
 
@@ -24,7 +30,10 @@ int asteroid_x = 1280/2;
 int asteroid_y = 720/2;
 
 void Update(GameState* gs, KeyboardState* ks, int dt) {
-    
+    // SECTION: zero out the frame_arena
+    MemsetArena(&frame_arena, 0);
+
+
     //printf("%d \n", dt);
     //float delta_time = (float)dt / 1000;
     //asteroid_x += (velocity * delta_time);
@@ -51,12 +60,14 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     int scale = 16;
     int pos_scale = 1;
     bool centered = true;
-    ImageData asteroid_rotated = RotateBitmap(asteroid_sprite, 0);
+    ImageData asteroid_rotated = RotateBitmap(&frame_arena, asteroid_sprite, 1);
 
     BlitBitmapScaled(graphics_buffer, &asteroid_rotated, (int)(asteroid_x), (int)(asteroid_y), scale, pos_scale, centered);
+    BlitBitmapScaled(graphics_buffer, &asteroid_sprite, (int)(0), (int)(0), scale, pos_scale, false);
     //DrawRectangle(graphics_buffer, 255, 255, 255, 0, 0, 10, 10);
     //DrawRectangle(graphics_buffer, 255, 255, 255, 10, 10, 10, 10);
     return;
+
 }
 
 void UserFree() {
