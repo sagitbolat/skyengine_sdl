@@ -28,6 +28,7 @@ void Start(GameState* gs, KeyboardState* ks) {
 
 int asteroid_x = 1280/2;
 int asteroid_y = 720/2;
+int angle = 0; 
 
 void Update(GameState* gs, KeyboardState* ks, int dt) {
     // SECTION: zero out the frame_arena
@@ -60,8 +61,13 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     int scale = 16;
     int pos_scale = 1;
     bool centered = true;
-    ImageData asteroid_rotated = RotateBitmap(&frame_arena, asteroid_sprite, 1);
+    if (
+        ks->state.W == 1 
+    ) {
+        angle += 1;
+    } 
 
+    ImageData asteroid_rotated = RotateBitmap(&frame_arena, asteroid_sprite, angle);
     BlitBitmapScaled(graphics_buffer, &asteroid_rotated, (int)(asteroid_x), (int)(asteroid_y), scale, pos_scale, centered);
     BlitBitmapScaled(graphics_buffer, &asteroid_sprite, (int)(0), (int)(0), scale, pos_scale, false);
     //DrawRectangle(graphics_buffer, 255, 255, 255, 0, 0, 10, 10);

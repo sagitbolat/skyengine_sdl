@@ -81,8 +81,9 @@ ImageData RotateBitmap(ArenaAllocator* frame_arena, ImageData image, float angle
         new_image.data = (uint8_t*)(ArenaAllocateAsset(frame_arena, image_size));
         
 
-        int center_y = h / 2;
-        int center_x = w / 2;
+        int center_y = rotated_height / 2;
+        int center_x = rotated_width / 2;
+        int bytes_per_pixel = image.bytes_per_pixel;
 
         for (int y = 0; y < rotated_height; ++y) {
             for (int x = 0; x < rotated_width; ++x) {
@@ -92,6 +93,19 @@ ImageData RotateBitmap(ArenaAllocator* frame_arena, ImageData image, float angle
                 
                 // NOTE: Now set the new_image data at x y to be equal to old image data at x1 y1
                 // NOTE: Or should the x y and x1 y1 be the other way around?? IDK try both.
+                if (
+                    x1 >= w || y1 >= h || x < 0 || y < 0 || 
+                    x >= rotated_width || y >= rotated_height || x1 < 0 || y1 < 0
+                ) {
+                    //printf("[RotateBitmap Error] Out of bounds of original bitmap when rotating. Coordinates (%d, %d).\n", x1, y1);
+                    continue;
+                }
+                int i_original = (y1 * w * bytes_per_pixel) + (x1 * bytes_per_pixel);
+                int i_new =  (y * rotated_width * bytes_per_pixel) + (x * bytes_per_pixel);
+                
+                new_image.data[i_new] = image.data[i_original];
+                new_image.data[i_new + 1] = image.data[i_original + 1];
+                new_image.data[i_new + 2] = image.data[i_original + 2];
 
             }
         }
