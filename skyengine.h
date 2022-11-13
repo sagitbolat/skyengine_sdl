@@ -163,7 +163,7 @@ struct Rect {
     uint16_t x, y, width, height;
 };
 struct Color {
-    uint8_t a, red, green, blue;
+    uint8_t alpha, red, green, blue;
 };
 
 static void GameUpdateAndRender(GameMemory*, GameBitmapBuffer*, KeyboardState*, int delta_time);

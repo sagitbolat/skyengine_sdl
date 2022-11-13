@@ -10,13 +10,12 @@ void Init(int* w, int* h) {
 ImageData asteroid_sprite = {0};
 ImageData ship_sprite = {0};
 
-
 // NOTE: An arena allocator with lifetime of one frame.
 ArenaAllocator frame_arena = {0};
 uint64_t frame_arena_size = Kilobytes(4);
 
 void Awake(GameMemory* gm) {
-    LoadBitmap(&gm->asset_storage, "asteroid.bmp", &asteroid_sprite);
+    LoadBitmap(&gm->asset_storage, "colortile.bmp", &asteroid_sprite);
     LoadBitmap(&gm->asset_storage, "ship.bmp", &ship_sprite);
     InitArena(&frame_arena, frame_arena_size);
     return;
@@ -61,12 +60,17 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     int scale = 16;
     int pos_scale = 1;
     bool centered = true;
-    if (
-        ks->state.W == 1 
-    ) {
+    if (ks->state.W == 1) {
         angle += 1;
-    } 
+    } else if (ks->state.S == 1) {
+        angle = 360;
+    } else if (ks->state.A == 1 && ks->prev_state.A == 0) {
+        angle -= 10;
+    } else if (ks->state.D == 1 && ks->prev_state.D == 0) {
+        angle += 10;
+    }
 
+    
     ImageData asteroid_rotated = RotateBitmap(&frame_arena, asteroid_sprite, angle);
     BlitBitmapScaled(graphics_buffer, &asteroid_rotated, (int)(asteroid_x), (int)(asteroid_y), scale, pos_scale, centered);
     BlitBitmapScaled(graphics_buffer, &asteroid_sprite, (int)(0), (int)(0), scale, pos_scale, false);

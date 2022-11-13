@@ -23,10 +23,11 @@ ImageData RotateBitmap(ArenaAllocator* frame_arena, ImageData image, float angle
     int w = image.width;
     int h = image.height;
     
+    angle = FloatMod(angle, 360.0); 
 
     // SECTION: Get size of the rotated image:
     // TODO: Need a general allocator for this.
-    if (angle == 0 ) { 
+    if (angle < 0.1 || angle > 359.9 ) { 
         return image; 
     } else {
         // SECTION: Calculate the size of the rotated image.
@@ -70,46 +71,57 @@ ImageData RotateBitmap(ArenaAllocator* frame_arena, ImageData image, float angle
             rotated_width = (w * cosine_prime) + (h * sine_prime);
             rotated_height = (w * sine_prime) + (h * cosine_prime);
         }
-       
 
+        if (rotated_width % 2 == 1) {
+            ++rotated_width;
+        }
+        if (rotated_height % 2 == 1) {
+            ++rotated_height;
+        }
         // NOTE: Allocated the new image data.
         ImageData new_image = {0};
         new_image.width = rotated_width;
         new_image.height = rotated_height;
         new_image.bytes_per_pixel = image.bytes_per_pixel;
         uint64_t image_size = image.width * image.height * image.bytes_per_pixel;
-        new_image.data = (uint8_t*)(ArenaAllocateAsset(frame_arena, image_size));
-        
+        new_image.data = (uint8_t*)(ArenaAllocateAsset(frame_arena, image_size)); 
 
-        int center_y = rotated_height / 2;
-        int center_x = rotated_width / 2;
+        
+        
+        int center_y = h / 2;
+        int center_x = w / 2;
         int bytes_per_pixel = image.bytes_per_pixel;
+        
+        int y_shift = (rotated_height - h) / 2;
+        int x_shift = (rotated_width - w) / 2;
 
         for (int y = 0; y < rotated_height; ++y) {
             for (int x = 0; x < rotated_width; ++x) {
                 // NOTE: Rotate the pixel about the z axis by angle
-                int x1 = ((x - center_x) * cosine) - ((y - center_y) * sine) + center_x;
-                int y1 = ((x - center_x) * sine) + ((y - center_y) * cosine) + center_y;
+                int x1 = ((x - x_shift - center_x) * cosine) - ((y - y_shift - center_y) * sine) + center_x;
+                int y1 = ((x - x_shift - center_x) * sine) + ((y - y_shift - center_y) * cosine) + center_y;
                 
+                if (x == center_x && y == center_y)
+                printf("%f (%d, %d) (%d, %d)\n", angle, center_x, center_y, x_shift, y_shift);
                 // NOTE: Now set the new_image data at x y to be equal to old image data at x1 y1
                 // NOTE: Or should the x y and x1 y1 be the other way around?? IDK try both.
                 if (
                     x1 >= w || y1 >= h || x < 0 || y < 0 || 
                     x >= rotated_width || y >= rotated_height || x1 < 0 || y1 < 0
                 ) {
-                    //printf("[RotateBitmap Error] Out of bounds of original bitmap when rotating. Coordinates (%d, %d).\n", x1, y1);
+                    //printf("[RotateBitmap Error] Out of bounds of original bitmap when rotating. Coordinates (%d>=%d, %d>=%d) or (%d>=%d, %d>=%d).\n", x1, w, y1, h, x, rotated_width, y, rotated_height);
                     continue;
                 }
                 int i_original = (y1 * w * bytes_per_pixel) + (x1 * bytes_per_pixel);
                 int i_new =  (y * rotated_width * bytes_per_pixel) + (x * bytes_per_pixel);
-                
+
                 new_image.data[i_new] = image.data[i_original];
                 new_image.data[i_new + 1] = image.data[i_original + 1];
                 new_image.data[i_new + 2] = image.data[i_original + 2];
 
             }
         }
-
+        
         return new_image;
     }
 }
