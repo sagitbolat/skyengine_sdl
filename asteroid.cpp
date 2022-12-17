@@ -65,9 +65,9 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     } else if (ks->state.S == 1) {
         angle = 360;
     } else if (ks->state.A == 1 && ks->prev_state.A == 0) {
-        angle -= 10;
+        angle -= 15;
     } else if (ks->state.D == 1 && ks->prev_state.D == 0) {
-        angle += 10;
+        angle += 15;
     }
 
     

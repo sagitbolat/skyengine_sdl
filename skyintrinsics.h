@@ -29,6 +29,13 @@ inline float SinDeg(float deg) {
 	return sin((M_PI / 180) * deg);
 }
 
+inline float TanRad(float rad) {
+    return tan(rad);
+}
+
+inline float TanDeg(float deg) {
+    return tan((M_PI / 180) * deg);
+}
 
 // NOTE: ModFloats. Different from fmod. This does not return negative numbers at all.
 inline float FloatMod(float a, float b) {

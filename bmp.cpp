@@ -14,116 +14,80 @@ struct ImageData {
     uint8_t* data;
 };
 
+
+// NOTE: Assumes angle is in Degrees
+void Shear(float angle, int x, int y, int* new_x, int* new_y) {
+    
+    // NOTE: Shear 1
+    float tangent = TanDeg(angle/2);
+    *new_x = round(x-(y*tangent));
+    *new_y = y;
+
+    //NOTE: Shear 2
+    *new_y = round(*new_x * SinDeg(angle) + *new_y);
+
+    //NOTE: Shear 3
+    *new_x = round(*new_x - *new_y * tangent);
+
+}
+
 // NOTE: Assumes angle is in Degrees
 ImageData RotateBitmap(ArenaAllocator* frame_arena, ImageData image, float angle) {
-    // SECTION: Cache the sine and cosine of angle values.
-    float sine = SinDeg(angle);
-    float cosine = CosDeg(angle);
-    // SECTION: Cache the width and height.
-    int w = image.width;
-    int h = image.height;
     
-    angle = FloatMod(angle, 360.0); 
+    if (angle < 0.01 || angle > 359.99) return image;
 
-    // SECTION: Get size of the rotated image:
-    // TODO: Need a general allocator for this.
-    if (angle < 0.1 || angle > 359.9 ) { 
-        return image; 
-    } else {
-        // SECTION: Calculate the size of the rotated image.
-        int rotated_width = w;
-        int rotated_height = h;
-        if (angle < 90) {
-            rotated_width = (w * cosine) + (h * sine);
-            rotated_height = (w * sine) + (h * cosine);
-        } else if (angle == 90) {
-            rotated_width = h;
-            rotated_height = w;
-        } else if (angle < 180) {
-            int h_prime = w;
-            int w_prime = h;
-            float theta = angle - 90;
+    float cosine = CosDeg(angle);
+    float sine = SinDeg(angle);
+
+    int height = image.height;
+    int width = image.width;
+
+    int new_height = round(fabs(height * cosine) + fabs(width * sine)) + 1;
+    int new_width = round(fabs(width * cosine) + fabs(height * sine)) + 1;
+
+    
+    ImageData new_image = {0};
+    new_image.width = new_width;
+    new_image.height = new_height;
+    new_image.bytes_per_pixel = image.bytes_per_pixel;
+    size_t image_size = image.width * image.height * image.bytes_per_pixel;
+
+    // TODO: FIND A BETTER WAY OF ALLOCATING ROTATED ASSET. THIS NEEDS TO BE DELETED EVERY FRAME SO NEEDS TO BE A PART OF A DYNAMIC ALLOCATOR.
+    new_image.data = (uint8_t*)(ArenaAllocateAsset(frame_arena, image_size));
+
+
+
+    int original_center_height = round(((height+1)/2)-1);
+    int original_center_width  = round(((width+1)/2)-1);
+
+    int new_center_height = round(((new_height+1)/2)-1);
+    int new_center_width  = round(((new_width+1)/2)-1);
+
+    for (int i = 0; i < height; ++i) {
+        for (int j = 0; j < width; ++j) {
+            int y = height - 1 - i - original_center_height;
+            int x = width  - 1 - j - original_center_width;
             
-            float cos_theta = CosDeg(theta);
-            float sin_theta = SinDeg(theta);
+            int new_y = 0;
+            int new_x = 0;
 
-            rotated_width = (w_prime * cos_theta) + (h_prime * sin_theta);
-            rotated_height = (w_prime * sin_theta) + (h_prime * cos_theta);
-        } else if (angle == 180) {
-           // NOTE: Do nothing, since rotating by 180 degrees does not change size. 
-        } else if (angle < 270) {
-            int h_prime = w;
-            int w_prime = h;
-            float theta = 180 - (angle - 180) - 90;
+            Shear(angle, x, y, &new_x, &new_y);
+
+            new_y = new_center_height - new_y;
+            new_x = new_center_width - new_x;
             
-            float cos_theta = CosDeg(theta);
-            float sin_theta = SinDeg(theta);
+            int i_original = (y * width * image.bytes_per_pixel) + (x * image.bytes_per_pixel);
+            int i_new =  (new_y * new_width * image.bytes_per_pixel) + (new_x * image.bytes_per_pixel);
+            printf("(%d, %d)", y, x);
+            new_image.data[i_new] = image.data[i_original];
+            new_image.data[i_new + 1] = image.data[i_original + 1];
+            new_image.data[i_new + 2] = image.data[i_original + 2];
 
-            rotated_width = (w_prime * cos_theta) + (h_prime * sin_theta);
-            rotated_height = (w_prime * sin_theta) + (h_prime * cos_theta);
-        } else if (angle == 270) {
-            rotated_width = h;
-            rotated_height = w;
-        } else {
-            float theta = 360.0f - angle;
-            float cosine_prime = CosDeg(theta);
-            float sine_prime = SinDeg(theta);
-            rotated_width = (w * cosine_prime) + (h * sine_prime);
-            rotated_height = (w * sine_prime) + (h * cosine_prime);
         }
-
-        if (rotated_width % 2 == 1) {
-            ++rotated_width;
-        }
-        if (rotated_height % 2 == 1) {
-            ++rotated_height;
-        }
-        // NOTE: Allocated the new image data.
-        ImageData new_image = {0};
-        new_image.width = rotated_width;
-        new_image.height = rotated_height;
-        new_image.bytes_per_pixel = image.bytes_per_pixel;
-        uint64_t image_size = image.width * image.height * image.bytes_per_pixel;
-        new_image.data = (uint8_t*)(ArenaAllocateAsset(frame_arena, image_size)); 
-
-        
-        
-        int center_y = h / 2;
-        int center_x = w / 2;
-        int bytes_per_pixel = image.bytes_per_pixel;
-        
-        int y_shift = (rotated_height - h) / 2;
-        int x_shift = (rotated_width - w) / 2;
-
-        for (int y = 0; y < rotated_height; ++y) {
-            for (int x = 0; x < rotated_width; ++x) {
-                // NOTE: Rotate the pixel about the z axis by angle
-                int x1 = ((x - x_shift - center_x) * cosine) - ((y - y_shift - center_y) * sine) + center_x;
-                int y1 = ((x - x_shift - center_x) * sine) + ((y - y_shift - center_y) * cosine) + center_y;
-                
-                if (x == center_x && y == center_y)
-                printf("%f (%d, %d) (%d, %d)\n", angle, center_x, center_y, x_shift, y_shift);
-                // NOTE: Now set the new_image data at x y to be equal to old image data at x1 y1
-                // NOTE: Or should the x y and x1 y1 be the other way around?? IDK try both.
-                if (
-                    x1 >= w || y1 >= h || x < 0 || y < 0 || 
-                    x >= rotated_width || y >= rotated_height || x1 < 0 || y1 < 0
-                ) {
-                    //printf("[RotateBitmap Error] Out of bounds of original bitmap when rotating. Coordinates (%d>=%d, %d>=%d) or (%d>=%d, %d>=%d).\n", x1, w, y1, h, x, rotated_width, y, rotated_height);
-                    continue;
-                }
-                int i_original = (y1 * w * bytes_per_pixel) + (x1 * bytes_per_pixel);
-                int i_new =  (y * rotated_width * bytes_per_pixel) + (x * bytes_per_pixel);
-
-                new_image.data[i_new] = image.data[i_original];
-                new_image.data[i_new + 1] = image.data[i_original + 1];
-                new_image.data[i_new + 2] = image.data[i_original + 2];
-
-            }
-        }
-        
-        return new_image;
     }
+
+    return new_image;
+
 }
 
 
