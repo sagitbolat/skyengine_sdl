@@ -27,7 +27,7 @@ void Start(GameState* gs, KeyboardState* ks) {
 
 int asteroid_x = 1280/2;
 int asteroid_y = 720/2;
-int angle = 0; 
+float angle = 0; 
 
 void Update(GameState* gs, KeyboardState* ks, int dt) {
     // SECTION: zero out the frame_arena
@@ -69,13 +69,16 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     } else if (ks->state.D == 1 && ks->prev_state.D == 0) {
         angle += 15;
     }
-
-    
+    //printf("%f\n", angle);
+     
     ImageData asteroid_rotated = RotateBitmap(&frame_arena, asteroid_sprite, angle);
     BlitBitmapScaled(graphics_buffer, &asteroid_rotated, (int)(asteroid_x), (int)(asteroid_y), scale, pos_scale, centered);
     BlitBitmapScaled(graphics_buffer, &asteroid_sprite, (int)(0), (int)(0), scale, pos_scale, false);
     //DrawRectangle(graphics_buffer, 255, 255, 255, 0, 0, 10, 10);
     //DrawRectangle(graphics_buffer, 255, 255, 255, 10, 10, 10, 10);
+    if (ks->state.I == 1 && ks->prev_state.I == 0) {
+       GenerateBitmapImage((Color*)asteroid_rotated.data, asteroid_rotated.width, asteroid_rotated.height, "RotatedTest"); 
+    }
     return;
 
 }

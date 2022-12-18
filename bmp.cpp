@@ -20,21 +20,34 @@ void Shear(float angle, int x, int y, int* new_x, int* new_y) {
     
     // NOTE: Shear 1
     float tangent = TanDeg(angle/2);
-    *new_x = round(x-(y*tangent));
-    *new_y = y;
+    
+    int nx = *new_x;
+    int ny = *new_y;
+    
+
+
+    nx = round(x-(y*tangent));
+    ny = y;
 
     //NOTE: Shear 2
-    *new_y = round(*new_x * SinDeg(angle) + *new_y);
+    ny = round(nx * SinDeg(angle) + ny);
 
     //NOTE: Shear 3
-    *new_x = round(*new_x - *new_y * tangent);
-
+    nx = round(nx - ny * tangent);
+    
+    *new_x = nx;
+    *new_y = ny;
 }
 
 // NOTE: Assumes angle is in Degrees
 ImageData RotateBitmap(ArenaAllocator* frame_arena, ImageData image, float angle) {
     
+    angle = FloatMod(angle, 360.0);
+
     if (angle < 0.01 || angle > 359.99) return image;
+   
+
+    angle *= -1;
 
     float cosine = CosDeg(angle);
     float sine = SinDeg(angle);
@@ -52,16 +65,15 @@ ImageData RotateBitmap(ArenaAllocator* frame_arena, ImageData image, float angle
     new_image.bytes_per_pixel = image.bytes_per_pixel;
     size_t image_size = image.width * image.height * image.bytes_per_pixel;
 
-    // TODO: FIND A BETTER WAY OF ALLOCATING ROTATED ASSET. THIS NEEDS TO BE DELETED EVERY FRAME SO NEEDS TO BE A PART OF A DYNAMIC ALLOCATOR.
     new_image.data = (uint8_t*)(ArenaAllocateAsset(frame_arena, image_size));
 
 
 
-    int original_center_height = round(((height+1)/2)-1);
-    int original_center_width  = round(((width+1)/2)-1);
+    int original_center_height = round((((float)(height+1))/2)-1);
+    int original_center_width  = round((((float)(width+1))/2)-1);
 
-    int new_center_height = round(((new_height+1)/2)-1);
-    int new_center_width  = round(((new_width+1)/2)-1);
+    int new_center_height = round((((float)(new_height+1))/2)-1);
+    int new_center_width  = round((((float)(new_width+1))/2)-1);
 
     for (int i = 0; i < height; ++i) {
         for (int j = 0; j < width; ++j) {
@@ -76,13 +88,19 @@ ImageData RotateBitmap(ArenaAllocator* frame_arena, ImageData image, float angle
             new_y = new_center_height - new_y;
             new_x = new_center_width - new_x;
             
-            int i_original = (y * width * image.bytes_per_pixel) + (x * image.bytes_per_pixel);
+            if (y < 0) y = height - y - 1;
+            if (x < 0) x = width - x - 1;
+            if (new_y < 0) new_y = new_height - new_y - 1;
+            if (new_x < 0) new_x = new_width - new_x - 1;
+
+            int i_original = (i * width * image.bytes_per_pixel) + (j * image.bytes_per_pixel);
             int i_new =  (new_y * new_width * image.bytes_per_pixel) + (new_x * image.bytes_per_pixel);
-            printf("(%d, %d)", y, x);
+            //printf("(%d, %d)", y, x);
             new_image.data[i_new] = image.data[i_original];
             new_image.data[i_new + 1] = image.data[i_original + 1];
             new_image.data[i_new + 2] = image.data[i_original + 2];
-
+            //new_image.data[i_new + 3] = image.data[i_original + 3];
+            //printf("i_o %d i_n %d\n", i_original / image.bytes_per_pixel, i_new / new_image.bytes_per_pixel);
         }
     }
 
