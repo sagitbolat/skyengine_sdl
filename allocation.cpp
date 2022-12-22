@@ -8,6 +8,7 @@
 #endif
 #ifdef _WIN32
 // TODO: Include virutual alloc instead of stdlib when changing code from malloc to VirtualAlloc.
+#include <string.h>
 #include <stdlib.h>
 #endif
 

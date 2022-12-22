@@ -77,7 +77,8 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     //DrawRectangle(graphics_buffer, 255, 255, 255, 0, 0, 10, 10);
     //DrawRectangle(graphics_buffer, 255, 255, 255, 10, 10, 10, 10);
     if (ks->state.I == 1 && ks->prev_state.I == 0) {
-       GenerateBitmapImage((Color*)asteroid_rotated.data, asteroid_rotated.width, asteroid_rotated.height, "RotatedTest"); 
+	GenerateBitmapImage(asteroid_rotated, "RotatedTest.bmp"); 
+    	printf("Exporting Bitmap\n");
     }
     return;
 
