@@ -122,19 +122,19 @@ namespace Noise {
         
     }
 
-    float simplex_fractal(size_t octaves, float x, float y) {
-    	float out = 0.f;
-	float freq = frequency;
-	float amp = amplitude;
-	float total_amp = amp;	
-	for (size_t oct = 0; oct < octaves; ++oct) {
-	    out += (amplitude * simplex(x * freq, y * freq));
-	    freq *= lacunarity;
-	    amp *= persistence;
-	    total_amp += amp;
-	}
+    float simplex_fractal(size_t octaves, float x, float y, float offset = 0) {
+        float out = 0.f;
+        float freq = frequency;
+        float amp = amplitude;
+        float total_amp = amp;	
+        for (size_t oct = 0; oct < octaves; ++oct) {
+            out += (amplitude * simplex((x + oct * offset) * freq, (y + oct * offset) * freq));
+            freq *= lacunarity;
+            amp *= persistence;
+            total_amp += amp;
+        }
 
-	return out / total_amp;
+        return out / total_amp;
     }
 
 

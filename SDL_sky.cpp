@@ -85,6 +85,10 @@ int main(int argc, char* argv[]) {
         // TODO: Should I use memcpy or assignment here?
         keyboard_state.prev_state = keyboard_state.state;
         //memcpy(&keyboard_state.prev_state, &keyboard_state.state, sizeof(KeyState));
+        
+        
+        // NOTE: Use SDL2's keyboard state struct:
+        const uint8_t* SDL_keyboard_state = SDL_GetKeyboardState(NULL);
 
         while (SDL_PollEvent(&e)) {
             switch(e.type) {
@@ -92,54 +96,26 @@ int main(int argc, char* argv[]) {
                     running = SDL_FALSE;
                     break;
                 case SDL_KEYDOWN: {
-                    SDL_Keycode pressed = e.key.keysym.sym;
-                    switch (pressed) {
-                        case SDLK_w:
-                            keyboard_state.state.W = 1;
-                            break;
-                        case SDLK_a:
-                            keyboard_state.state.A = 1;
-                            break;
-                        case SDLK_s:
-                            keyboard_state.state.S = 1;
-                            break;
-                        case SDLK_d:
-                            keyboard_state.state.D = 1;
-                            break;
-                        case SDLK_i:
-                            keyboard_state.state.I = 1;
-                            break;
-                        case SDLK_SPACE:
-                            keyboard_state.state.SPACE = 1;
-                            break;
-                        default:
-                            break;
-                    }
+                    if (SDL_keyboard_state[SDL_SCANCODE_Q]) keyboard_state.state.Q = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_W]) keyboard_state.state.W = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_E]) keyboard_state.state.E = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_R]) keyboard_state.state.R = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_A]) keyboard_state.state.A = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_S]) keyboard_state.state.S = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_D]) keyboard_state.state.D = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_F]) keyboard_state.state.F = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_SPACE]) keyboard_state.state.SPACE = 1;    
                 } break;
                 case SDL_KEYUP: {
-                    SDL_Keycode pressed = e.key.keysym.sym;
-                    switch (pressed) {
-                        case SDLK_w:
-                            keyboard_state.state.W = 0;
-                            break;
-                        case SDLK_a:
-                            keyboard_state.state.A = 0;
-                            break;
-                        case SDLK_s:
-                            keyboard_state.state.S = 0;
-                            break;
-                        case SDLK_d:
-                            keyboard_state.state.D = 0;
-                            break;
-                        case SDLK_i:
-                            keyboard_state.state.I = 0;
-                            break;
-                        case SDLK_SPACE:
-                            keyboard_state.state.SPACE = 0;
-                            break;
-                        default:
-                            break;
-                    }
+                    if (!SDL_keyboard_state[SDL_SCANCODE_Q]) keyboard_state.state.Q = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_W]) keyboard_state.state.W = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_E]) keyboard_state.state.E = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_R]) keyboard_state.state.R = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_A]) keyboard_state.state.A = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_S]) keyboard_state.state.S = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_D]) keyboard_state.state.D = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_F]) keyboard_state.state.F = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_SPACE]) keyboard_state.state.SPACE = 0;    
                 } break;
                 default:
                     break;

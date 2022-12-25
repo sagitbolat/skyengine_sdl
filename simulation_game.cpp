@@ -10,7 +10,7 @@ int ArrMin(int* arr, size_t len) {
     int imin = INT_MAX;
     for (size_t i = 0; i < len; ++i) {
         if (arr[i] < imin) {
-	    imin = arr[i];
+            imin = arr[i];
         }
     }
     return imin; 
@@ -19,28 +19,28 @@ int ArrMax(int* arr, size_t len) {
     int imax = INT_MIN;
     for (size_t i = 0; i < len; ++i) {
         if (arr[i] > imax) {
-	    imax = arr[i];
+            imax = arr[i];
         }
     }
     return imax; 
 }
 int ArrMin(float* arr, size_t len) {
-    float imin = FLT_MAX;
+    float fmin = FLT_MAX;
     for (size_t i = 0; i < len; ++i) {
-        if (arr[i] < imin) {
-	    imin = arr[i];
+        if (arr[i] < fmin) {
+            fmin = arr[i];
         }
     }
-    return imin; 
+    return fmin; 
 }
 int ArrMax(float* arr, size_t len) {
-    float imax = FLT_MIN;
+    float fmax = FLT_MIN;
     for (size_t i = 0; i < len; ++i) {
-        if (arr[i] > imax) {
-	    imax = arr[i];
+        if (arr[i] > fmax) {
+            fmax = arr[i];
         }
     }
-    return imax; 
+    return fmax; 
 }
 
 
@@ -50,13 +50,13 @@ int cells_height = 720;
 int* cells;
 
 
-
-void GenerateCells(int octaves) {
+// Octaves >= 1, magnification != integer value.
+void GenerateCells(int octaves, float magnification, float elevation_cutoff = 0) {
     for (int y = 0; y < cells_height; ++y) {
     	for (int x = 0; x < cells_width; ++x) {
 	    int val = 0;
-    	    if (Noise::simplex_fractal(octaves, (float)x * 0.001f, (float)y * 0.001f) > 0) {
-		val = 255;
+    	if (Noise::simplex_fractal(octaves, (float)x / magnification, (float)y / magnification, 1280.0f / magnification) > elevation_cutoff) {
+		    val = 255;
 	    }
 	    cells[y * cells_width + x] = val;
 	}	
@@ -75,7 +75,7 @@ void Awake(GameMemory* gm) {
 }
 
 void Start(GameState* gs, KeyboardState* ks) {
-    GenerateCells(1);
+    GenerateCells(1, 1000.0f);
     int imin = ArrMin(cells, cells_width * cells_height);
     int imax = ArrMax(cells, cells_width * cells_height);
     printf("Min: %d\n", imin);
@@ -84,25 +84,56 @@ void Start(GameState* gs, KeyboardState* ks) {
 
 void Update(GameState* gs, KeyboardState* ks, int dt) {
     static int octaves = 1;
+    static float mag = 1000.0f;
+    static float elev_cutoff = 0.0f;
     if (ks->state.D == 1 && ks->prev_state.D == 0) {
     	octaves += 1;
-	printf("Current octaves: %d\n", octaves);
+        GenerateCells(octaves, mag, elev_cutoff);
+	    printf("Current octaves: %d\n", octaves);
     } else if (ks->state.A == 1 && ks->prev_state.A == 0) {
     	octaves -= 1;
-	printf("Current octaves: %d\n", octaves);
+        GenerateCells(octaves, mag, elev_cutoff);
+	    printf("Current octaves: %d\n", octaves);
     }
-    GenerateCells(octaves);
+    if (ks->state.W == 1 && ks->prev_state.W == 0) {
+        Noise::lacunarity += 0.1f;
+        GenerateCells(octaves, mag, elev_cutoff);
+        printf("Current lacunarity: %f\n", Noise::lacunarity);
+    } else if (ks->state.S == 1 && ks->prev_state.S == 0 && Noise::lacunarity >= 1.1f) {
+        Noise::lacunarity -= 0.1f;
+        GenerateCells(octaves, mag, elev_cutoff);
+        printf("Current lacunarity: %f\n", Noise::lacunarity);
+    }
+    if (ks->state.E == 1 && ks->prev_state.E == 0) {
+        elev_cutoff += 0.1f;
+        GenerateCells(octaves, mag, elev_cutoff);
+        printf("Current elevation is: %f\n", elev_cutoff);
+    } else if (ks->state.Q == 1 && ks->prev_state.Q == 0) {
+        elev_cutoff -= 0.1f;
+        GenerateCells(octaves, mag, elev_cutoff);
+        printf("Current elevation is: %f\n", elev_cutoff);
+    }
+    if (ks->state.R == 1 && ks->prev_state.R == 0) {
+        mag += 10.0f;
+        GenerateCells(octaves, mag, elev_cutoff);
+        printf("Current magnification: %f\n", mag);
+    } else if (ks->state.F == 1 && ks->prev_state.F == 0) {
+        mag -= 10.0f;
+        GenerateCells(octaves, mag, elev_cutoff);
+        printf("Current magnification: %f\n", mag);
+    }
 	
     for (int y = 0; y < cells_height; ++y) {
     	for (int x = 0; x < cells_width; ++x) {
-	    int val = cells[y * cells_width + x];
-	    if (val > 1 || val < -1) {
-	    	//printf("%f\n", val);
-	    } 
-	    DrawPixel(graphics_buffer, (uint8_t) (val), (uint8_t) (val), (uint8_t) (val), x, y);	
+            int val = cells[y * cells_width + x];
+            if (val > 1 || val < -1) {
+                //printf("%f\n", val);
+            } 
+            DrawPixel(graphics_buffer, (uint8_t) (val), (uint8_t) (val), (uint8_t) (val), x, y);	
 	
-	}
+	    }
     }
+
 }
 
 void UserFree() {
