@@ -24,7 +24,7 @@
         * I added a [USER DEFINED] frame-arena, which is a memory arena with a lifetime of a frame. Maybe I should move the frame arena to be part of the game_memory struct??
         * On the other hand, I might not need frame arenas all the time, but it seems universally useful. Will need to think about it.
 
-* [O]Exporting of bitmaps. Make it work with 32-bit colors instead of 24-bit colors.
+* [V]Exporting of bitmaps. Make it work with 32-bit colors instead of 24-bit colors.
 
 * [?]Also try and make a second coordinate system for objects that appear outside the screen (such as asteroids spawning offscreen).
 * [?]Add a virtual camera module, so that you can specify where in world coordinates your virtual camera is. 

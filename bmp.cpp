@@ -1,8 +1,11 @@
 #pragma once
 #include <stdint.h>
 #include <stdio.h>
+#include <cstring>
+
 #include "skyengine.h"
 #include "allocation.cpp"
+
 
 //NOTE: For cos and sin in RotateBitmap:
 #include "skyintrinsics.h"
@@ -16,96 +19,56 @@ struct ImageData {
 
 
 // NOTE: Assumes angle is in Degrees
-void Shear(float angle, int x, int y, int* new_x, int* new_y) {
-    
-    // NOTE: Shear 1
-    float tangent = TanDeg(angle/2);
-    
-    int nx = *new_x;
-    int ny = *new_y;
-    
-
-
-    nx = round(x-(y*tangent));
-    ny = y;
-
-    //NOTE: Shear 2
-    ny = round(nx * SinDeg(angle) + ny);
-
-    //NOTE: Shear 3
-    nx = round(nx - ny * tangent);
-    
-    *new_x = nx;
-    *new_y = ny;
-}
-
-// NOTE: Assumes angle is in Degrees
 ImageData RotateBitmap(ArenaAllocator* frame_arena, ImageData image, float angle) {
-    
-    angle = FloatMod(angle, 360.0);
+    constexpr int TRANSPARENT_COLOR = 0x00000000; 
+    // Convert the angle from degrees to radians
+    float radians = angle * M_PI / 180.0f;
 
-    if (angle < 0.01 || angle > 359.99) return image;
-   
+    // Pre-compute the sine and cosine values for the angle
+    float sinVal = std::sin(radians);
+    float cosVal = std::cos(radians);
 
-    angle *= -1;
+    // Calculate the size of the rotated image
+    int rotatedWidth = (int) (fabs(cosVal * image.width) + fabs(sinVal * image.height));
+    int rotatedHeight = (int) (fabs(sinVal * image.width) + fabs(cosVal * image.height));
 
-    float cosine = CosDeg(angle);
-    float sine = SinDeg(angle);
-
-    int height = image.height;
-    int width = image.width;
-
-    int new_height = round(fabs(height * cosine) + fabs(width * sine)) + 1;
-    int new_width = round(fabs(width * cosine) + fabs(height * sine)) + 1;
-
-    
-    ImageData new_image = {0};
-    new_image.width = new_width;
-    new_image.height = new_height;
-    new_image.bytes_per_pixel = image.bytes_per_pixel;
+    // Create a new array to store the rotated image data
+    ImageData rotatedImageData = {0};
+    rotatedImageData.height = rotatedHeight;
+    rotatedImageData.width = rotatedWidth;
+    rotatedImageData.bytes_per_pixel = image.bytes_per_pixel;
     size_t image_size = image.width * image.height * image.bytes_per_pixel;
 
-    new_image.data = (uint8_t*)(ArenaAllocateAsset(frame_arena, image_size));
+    rotatedImageData.data = (uint8_t*)(ArenaAllocateAsset(frame_arena, image_size));
+
+    // Initialize the rotated image data to transparent pixels
+    for (int i = 0; i < rotatedWidth * rotatedHeight * image.bytes_per_pixel; i += image.bytes_per_pixel) {
+        std::memcpy(&rotatedImageData.data[i], &TRANSPARENT_COLOR, image.bytes_per_pixel);
+    }
 
 
+    float x_shear = -sinVal;
+    float y_shear = cosVal / sinVal;
 
-    int original_center_height = round((((float)(height+1))/2)-1);
-    int original_center_width  = round((((float)(width+1))/2)-1);
 
-    int new_center_height = round((((float)(new_height+1))/2)-1);
-    int new_center_width  = round((((float)(new_width+1))/2)-1);
-
-    for (int i = 0; i < height; ++i) {
-        for (int j = 0; j < width; ++j) {
-            int y = height - 1 - i - original_center_height;
-            int x = width  - 1 - j - original_center_width;
-            
-            int new_y = 0;
-            int new_x = 0;
-
-            Shear(angle, x, y, &new_x, &new_y);
-
-            new_y = new_center_height - new_y;
-            new_x = new_center_width - new_x;
-            
-            if (y < 0) y = height - y - 1;
-            if (x < 0) x = width - x - 1;
-            if (new_y < 0) new_y = new_height - new_y - 1;
-            if (new_x < 0) new_x = new_width - new_x - 1;
-
-            int i_original = (i * width * image.bytes_per_pixel) + (j * image.bytes_per_pixel);
-            int i_new =  (new_y * new_width * image.bytes_per_pixel) + (new_x * image.bytes_per_pixel);
-            //printf("(%d, %d)", y, x);
-            new_image.data[i_new] = image.data[i_original];
-            new_image.data[i_new + 1] = image.data[i_original + 1];
-            new_image.data[i_new + 2] = image.data[i_original + 2];
-            //new_image.data[i_new + 3] = image.data[i_original + 3];
-            //printf("i_o %d i_n %d\n", i_original / image.bytes_per_pixel, i_new / new_image.bytes_per_pixel);
+    // Iterate over each pixel in the image
+    for (int y = 0; y < image.height; ++y) {
+        for (int x = 0; x < image.width; ++x) {
+            int srcX = (int) ((x + y * x_shear) * cosVal + image.width / 2 - rotatedWidth / 2);
+            int srcY = (int) ((y + x * y_shear) * sinVal + image.height / 2 - rotatedHeight / 2);
+            if (srcX >= 0 && srcX < image.width && srcY >= 0 && srcY < image.height) {
+                // Copy the pixel from the original image to the rotated image
+                int srcIndex = (srcY * image.width + srcX) * image.bytes_per_pixel;
+                int dstIndex = (y * rotatedWidth + x) * rotatedImageData.bytes_per_pixel;
+                rotatedImageData.data[dstIndex] = image.data[srcIndex];
+                rotatedImageData.data[dstIndex + 1] = image.data[srcIndex + 1];
+                rotatedImageData.data[dstIndex + 2] = image.data[srcIndex + 2];
+            }
         }
     }
 
-    return new_image;
-
+    return rotatedImageData;
+    
 }
 
 
@@ -190,15 +153,18 @@ void GenerateBitmapImage(ImageData image_data, const char* image_file_name) {
 // i is the index of the first int8.
 #define INT8ARRAY_TO_INT32(arr, i) (arr[i]) + (arr[i+1] << 8) + (arr[i+2] << 16) + (arr[i+3] << 24)
 
-// NOTE: Do bitmap loading.
-// NOTE: Returns the address of the asset on the GameMemory->transient_storage Arena.
-size_t LoadBitmap(ArenaAllocator* asset_arena, const char* image_file_name, ImageData* image_data) {
-    
+
+// Import BMP file
+size_t ImportBMP (
+    const char* image_file_name, FILE* image_file,
+    uint32_t* image_width, uint32_t* image_height, 
+    uint32_t* bytes_per_pixel, uint32_t* byte_offset,
+    uint32_t* padding_size 
+) {
     const int FILE_HEADER_SIZE = 14;
     const int INFO_HEADER_SIZE = 40;
-    int BYTES_PER_PIXEL = 3;
+    uint8_t BYTES_PER_PIXEL = 3;
     
-    FILE* image_file = fopen(image_file_name, "rb");
     
 
 
@@ -209,66 +175,130 @@ size_t LoadBitmap(ArenaAllocator* asset_arena, const char* image_file_name, Imag
     // NOTE: Error checking
     if (fh_size != FILE_HEADER_SIZE) {
         // TODO: Error
-        printf("LoadBitmap Error. File header sizes do not match. Possible EOF error or wrong format.%c", '\n');
+        printf("ImportBMP Error. File header sizes do not match. Possible EOF error or wrong format.%c", '\n');
     }
     if (fh[0] != 'B' && fh[1] != 'M') {
         // TODO: Filetype Error
-        printf("LoadBitmap Error. Incorrect filetype. Filetype must be of type bmp.%c", '\n');
+        printf("ImportBMP Error. Incorrect filetype. Filetype must be of type bmp.%c", '\n');
     }
     // TODO: Might be unnecessary to save file size
     //uint32_t file_size = INT8ARRAY_TO_INT32(fh, 2);
-    uint32_t byte_offset = INT8ARRAY_TO_INT32(fh, 10);
+    *byte_offset = INT8ARRAY_TO_INT32(fh, 10);
 
     
     // SECTION: info_header
     uint8_t ih[INFO_HEADER_SIZE];
     size_t ih_size = fread(ih, 1, INFO_HEADER_SIZE, image_file);
     
-    uint32_t image_width   = INT8ARRAY_TO_INT32(ih, 4);
-    uint32_t image_height  = INT8ARRAY_TO_INT32(ih, 8);
+    *image_width   = INT8ARRAY_TO_INT32(ih, 4);
+    *image_height  = INT8ARRAY_TO_INT32(ih, 8);
     uint8_t bits_per_pixel = ih[14]; 
     // NOTE: Error checking
     if (ih_size != INFO_HEADER_SIZE) {
         // TODO: Error
-        printf("LoadBitmap Error. Info header sizes do not match. Possible EOF error or wrong format.%c", '\n');
+        printf("ImportBMP Error. Info header sizes do not match. Possible EOF error or wrong format.%c", '\n');
     }
     if (BYTES_PER_PIXEL * 8 != bits_per_pixel) {
         // TODO: Pixel Resolution Error
         BYTES_PER_PIXEL = bits_per_pixel / 8;
-        printf("LoadBitmap Warning. %d bits per pixel. Does not match 24. Will attempt to adjust to %d.%c", bits_per_pixel, BYTES_PER_PIXEL*8, '\n');
+        printf("ImportBMP Warning. %d bits per pixel. Does not match 24. Will attempt to adjust to %d.%c", bits_per_pixel, BYTES_PER_PIXEL*8, '\n');
     }
-
+    *bytes_per_pixel = BYTES_PER_PIXEL;
 
     // SECTION: image data
-    int width_in_bytes = image_width * BYTES_PER_PIXEL;
-    int padding_size = (4 - (width_in_bytes) % 4) % 4;
+    uint32_t width_in_bytes = (*image_width) * BYTES_PER_PIXEL;
+    *padding_size = (4 - (width_in_bytes) % 4) % 4;
 
-    size_t image_size = image_width * image_height * BYTES_PER_PIXEL;
+    size_t image_size = (*image_width) * (*image_height) * BYTES_PER_PIXEL;
+    return image_size;
+}
+
+
+// NOTE: Do bitmap loading.
+// NOTE: Returns the address of the asset on the GameMemory->transient_storage Arena.
+size_t LoadBitmap(ArenaAllocator* asset_arena, const char* image_file_name, ImageData* image_data) {
+  
+    FILE* image_file = fopen(image_file_name, "rb");
+    uint32_t image_width = 0;
+    uint32_t image_height = 0;
+    uint32_t bytes_per_pixel = 0;
+    uint32_t byte_offset = 0; // NOTE: The offset in bytes from the start of the file to the image data.
+    uint32_t padding_size = 0; // NOTE: The padding at the end of each line of the bmp data. 
+    size_t image_size = ImportBMP(image_file_name, image_file, &image_width, &image_height, &bytes_per_pixel, &byte_offset, &padding_size);
+     
 
     image_data->width = image_width;
     image_data->height = image_height;
-    image_data->bytes_per_pixel = BYTES_PER_PIXEL;
+    image_data->bytes_per_pixel = bytes_per_pixel;
     image_data->data = (uint8_t*)(ArenaAllocateAsset(asset_arena, image_size));
-   
+     
 
     //move to start of bitmap data
     fseek(image_file, byte_offset, SEEK_SET);
     //read the data
-    for (int h = image_height - 1; h >= 0; --h) {
+    for (uint32_t h = 0; h < image_height; ++h) {
         for (uint32_t w = 0; w < image_width; ++w) {
-            uint32_t i = ((h * image_width) + w) * BYTES_PER_PIXEL;
-            for (int k = 0; k < BYTES_PER_PIXEL; ++k) {
+            uint32_t i = ((h * image_width) + w) * bytes_per_pixel;
+            for (uint32_t k = 0; k < bytes_per_pixel; ++k) {
                 fread(&(image_data->data[i+k]), 1, 1, image_file);
             }
         }
-        fseek(image_file, padding_size, SEEK_CUR);         
+        if (padding_size > 0) fseek(image_file, padding_size, SEEK_CUR);         
     }
-        
     fclose(image_file);
     
     return image_size;
 }
 
+
+// NOTE: bitmap tilemap loading
+// returns size of the entire tilemap allocation.
+size_t LoadTilemap (
+    ArenaAllocator* asset_arena, 
+    const char* image_file_name, 
+    int tile_width, int tile_height, 
+    ImageData tile_array[]
+) {
+    ImageData tilemap_image = {0};
+    size_t tilemap_size = LoadBitmap(asset_arena, image_file_name, &tilemap_image);
+     
+    int image_width = tilemap_image.width;
+    int image_height = tilemap_image.height; 
+    int bytes_per_pixel = tilemap_image.bytes_per_pixel;
+
+    int height_in_tiles = image_height / tile_height;
+    int width_in_tiles = image_width / tile_width;
+    int num_tiles = width_in_tiles * height_in_tiles;
+    
+    // NOTE: Allocate the ImageDatas array
+    tile_array = (ImageData*)(ArenaAllocateAsset(asset_arena, sizeof(ImageData) * num_tiles));
+    for (int tile_h = 0; tile_h < height_in_tiles; ++tile_h) {
+        for (int tile_w = 0; tile_w < width_in_tiles; ++tile_w) {
+            int tile_i = (tile_h * width_in_tiles) + tile_w;
+
+            tile_array[tile_i].width = tile_width;
+            tile_array[tile_i].height = tile_height;
+            tile_array[tile_i].bytes_per_pixel = bytes_per_pixel;
+            tile_array[tile_i].data = (uint8_t*)(ArenaAllocateAsset(asset_arena, tile_width * tile_height * bytes_per_pixel));
+            
+            int y_offset = tile_h * tile_height;
+            int x_offset = tile_w * tile_width;
+            for (int h = y_offset; h < tile_height + y_offset; ++h) {
+                for (int w = x_offset; w < tile_width + x_offset; ++w) {
+                    int image_i = (h * image_width) + w;
+                    int i = ((h - y_offset) * tile_width) + (w - x_offset);
+                    for (int k = 0; k < bytes_per_pixel; ++k) {
+                        tile_array[tile_i].data[i+k] = tilemap_image.data[image_i+k];
+                    } 
+                }
+
+            }
+        
+        } 
+    }
+    
+    return tilemap_size; 
+}
 
 // SECTION: Drawing.
 // Returns: 1 if successful, 0 if outside bounds.
