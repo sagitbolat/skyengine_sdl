@@ -17,6 +17,7 @@
 struct ArenaAllocator {
     uint64_t offset_pointer;
     void* memory;
+    size_t total_size;
 };
 
 // Returns address of allocation.
@@ -40,6 +41,7 @@ void InitArena(ArenaAllocator* arena, uint64_t alloc_size) {
     // TODO: Change to call VirtualAlloc() instead of malloc?
     arena->memory = malloc(alloc_size);
 #endif
+    arena->total_size = alloc_size;
     arena->offset_pointer = 0;
 }
 
@@ -55,6 +57,18 @@ void MemsetArena(ArenaAllocator* arena, int value) {
     arena->offset_pointer = 0;
 }
 
+// NOTE: Returns 0 if successful, -1 otherwise
+int FreeArena(ArenaAllocator* arena) {
+int ret = 0;
+#ifdef __linux__
+    ret = munmap(arena->memory, arena->total_size); 
+#endif
+#ifdef _WIN32
+    // TODO: Change to call VirtualAlloc() instead of malloc and free?
+    free(arena->memory);
+#endif
+    return ret;
+}
 
 // SECTION: Free-List allocator (general purpose)
 

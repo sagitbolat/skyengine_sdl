@@ -9,14 +9,20 @@
 * [ ]Take out all struct and data types into a seperate "skytypes.h" that will be included in every file.
 * [ ]Change so that game bitmap buffer gets passed as a param instead of being global.
 
+* [O]Refactor allocation:
+    * Rename ArenaAllocator to BumpArena and FreeListAllocator to FreeListArena
+    * Make a dedicated alloc method that you can pass any arena too and it will allocate to it based on what type of arena it is (function overloading)
+    * Make a dedicated free method that will free an arena
+    * Make a dedicated memset method that will memset an arena's memory to a value (such as clearing all memory to 0)
+    * Make a dedicated InitArena method that will init whatever arena is passed to it. 
+
+* [ ] Refactor all image data to have an alpha channel as well.
+
 * [O]Make dt more persise than just ms. Need more something like microseconds.
     * apparently that is not easy to do, since CPUs work off ms not microseconds.
     * I can try to LIMIT the FPS to be 60 frames, and have a system that is similar to FixedUpdate() in unity. This way I have constant dt to fall back onto.
 
-* [V]Fix the BlitBitmap() method to work properly at different scales. Right now, higher scales cause jittery movement, 
-    likely because we are bitting at large pixel-steps (the whole scale is one step).
 
-* [V]Change the rendering code (and drawing code) so that if user tries to draw outside the bounds, we handle it instead of having segmentation fault.
 * [O]Rotation of bitmaps. Do the rotation code inside the BlitBitmap function.
     * The bitmap gets rotated when it is blitted, not beforehand.
         * Maybe find a way to save a rotated bitmap's data as well, in case we need to cache the rotated bitmap (if a rotation shows up alot, best to just save it).
@@ -24,7 +30,6 @@
         * I added a [USER DEFINED] frame-arena, which is a memory arena with a lifetime of a frame. Maybe I should move the frame arena to be part of the game_memory struct??
         * On the other hand, I might not need frame arenas all the time, but it seems universally useful. Will need to think about it.
 
-* [V]Exporting of bitmaps. Make it work with 32-bit colors instead of 24-bit colors.
 
 * [?]Also try and make a second coordinate system for objects that appear outside the screen (such as asteroids spawning offscreen).
 * [?]Add a virtual camera module, so that you can specify where in world coordinates your virtual camera is. 
@@ -33,6 +38,12 @@
 
 
 # DONE:
+* [V]Fix the BlitBitmap() method to work properly at different scales. Right now, higher scales cause jittery movement, 
+    likely because we are bitting at large pixel-steps (the whole scale is one step).
+
+* [V]Change the rendering code (and drawing code) so that if user tries to draw outside the bounds, we handle it instead of having segmentation fault.
+
+* [V]Exporting of bitmaps. Make it work with 32-bit colors instead of 24-bit colors.
 
 
 ### Features to implement:
