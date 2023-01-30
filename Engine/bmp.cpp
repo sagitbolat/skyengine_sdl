@@ -17,13 +17,6 @@ struct ImageData {
     uint8_t* data;
 };
 
-struct TilemapData {
-    uint16_t tile_width;
-    uint16_t tile_height;
-    uint16_t num_tiles;
-    ImageData* tiles;
-};
-
 // NOTE: Assumes angle is in Degrees
 ImageData RotateBitmap(ArenaAllocator* frame_arena, ImageData image, float angle) {
     constexpr int TRANSPARENT_COLOR = 0x00000000; 
@@ -256,115 +249,7 @@ size_t LoadBitmap(ArenaAllocator* asset_arena, const char* image_file_name, Imag
     return image_size;
 }
 
-size_t LoadTilemap (
-    ArenaAllocator* asset_arena, 
-    const char* image_file_name, 
-    int tile_width,
-    int tile_height,
-    TilemapData* tilemap
-) {
-    
-    printf("Working...");
 
-    FILE* image_file = fopen(image_file_name, "rb");
-    uint32_t image_width = 0;
-    uint32_t image_height = 0;
-    uint32_t bytes_per_pixel = 0;
-    uint32_t byte_offset = 0; // NOTE: The offset in bytes from the start of the file to the image data.
-    uint32_t padding_size = 0; // NOTE: The padding at the end of each line of the bmp data. 
-    size_t image_size = ImportBMP(image_file_name, image_file, &image_width, &image_height, &bytes_per_pixel, &byte_offset, &padding_size);
-    
-    printf("Working...");
-    int height_in_tiles = image_height / tile_height;
-    int width_in_tiles = image_width / tile_width;
-    int num_tiles = width_in_tiles * height_in_tiles;
-    
-    tilemap->tile_width = tile_width;
-    tilemap->tile_height = tile_height;
-    tilemap->num_tiles = num_tiles; 
-    tilemap->tiles = (ImageData*)(ArenaAllocateAsset(asset_arena, sizeof(ImageData) * num_tiles));
-    
-    printf("Working...");
-    for (int i = 0; i < num_tiles; ++i) {
-        tilemap->tiles[i].width = tile_width;
-        tilemap->tiles[i].height = tile_height;
-        tilemap->tiles[i].bytes_per_pixel = bytes_per_pixel;
-        tilemap->tiles[i].data = (uint8_t*)(ArenaAllocateAsset(asset_arena, tile_height * tile_width * bytes_per_pixel));
-    }    
-    
-    printf("Working...");
-    //move to start of bitmap data
-    fseek(image_file, byte_offset, SEEK_SET);
-    //read the data
-    printf("Working...");
-    for (uint32_t h = 0; h < image_height; ++h) {
-        for (uint32_t w = 0; w < image_width; ++w) {
-            int tilemap_h = h / tile_height;
-            int tilemap_w = w / tile_width;
-            int tilemap_i = (tilemap_h * width_in_tiles) + tilemap_w;
-            int tile_h = h % tile_height;
-            int tile_w = w % tile_width;
-            int tile_i = ((tile_h * tile_width) + tile_w) * bytes_per_pixel;
-            for (uint32_t k = 0; k < bytes_per_pixel; ++k) {
-                fread(&(tilemap->tiles[tilemap_i].data[tile_i+k]), 1, 1, image_file);
-            }
-        }
-        if (padding_size > 0) fseek(image_file, padding_size, SEEK_CUR);         
-    }
-    fclose(image_file);
-    
-    printf("Working...");
-    return image_size;
-}
-
-// NOTE: bitmap tilemap loading
-// returns size of the entire tilemap allocation.
-size_t LoadTilemapOld (
-    ArenaAllocator* asset_arena, 
-    const char* image_file_name, 
-    int tile_width, int tile_height, 
-    ImageData tile_array[]
-) {
-    ImageData tilemap_image = {0};
-    size_t tilemap_size = LoadBitmap(asset_arena, image_file_name, &tilemap_image);
-     
-    int image_width = tilemap_image.width;
-    int image_height = tilemap_image.height; 
-    int bytes_per_pixel = tilemap_image.bytes_per_pixel;
-
-    int height_in_tiles = image_height / tile_height;
-    int width_in_tiles = image_width / tile_width;
-    int num_tiles = width_in_tiles * height_in_tiles;
-    
-    // NOTE: Allocate the ImageDatas array
-    tile_array = (ImageData*)(ArenaAllocateAsset(asset_arena, sizeof(ImageData) * num_tiles));
-    for (int tile_h = 0; tile_h < height_in_tiles; ++tile_h) {
-        for (int tile_w = 0; tile_w < width_in_tiles; ++tile_w) {
-            int tile_i = (tile_h * width_in_tiles) + tile_w;
-
-            tile_array[tile_i].width = tile_width;
-            tile_array[tile_i].height = tile_height;
-            tile_array[tile_i].bytes_per_pixel = bytes_per_pixel;
-            tile_array[tile_i].data = (uint8_t*)(ArenaAllocateAsset(asset_arena, tile_width * tile_height * bytes_per_pixel));
-            
-            int y_offset = tile_h * tile_height;
-            int x_offset = tile_w * tile_width;
-            for (int h = y_offset; h < tile_height + y_offset; ++h) {
-                for (int w = x_offset; w < tile_width + x_offset; ++w) {
-                    int image_i = (h * image_width) + w;
-                    int i = ((h - y_offset) * tile_width) + (w - x_offset);
-                    for (int k = 0; k < bytes_per_pixel; ++k) {
-                        tile_array[tile_i].data[i+k] = tilemap_image.data[image_i+k];
-                    } 
-                }
-
-            }
-        
-        } 
-    }
-    
-    return tilemap_size; 
-}
 
 // SECTION: Drawing.
 // Returns: 1 if successful, 0 if outside bounds.
