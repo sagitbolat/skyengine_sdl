@@ -303,8 +303,8 @@ size_t LoadTilemap (
             int tilemap_w = w / tile_width;
             int tilemap_i = (tilemap_h * width_in_tiles) + tilemap_w;
             int tile_h = h % tile_height;
-            int tile_w = w % tile_w;
-            int tile_i = (tile_h * tile_width) + tile_w;
+            int tile_w = w % tile_width;
+            int tile_i = ((tile_h * tile_width) + tile_w) * bytes_per_pixel;
             for (uint32_t k = 0; k < bytes_per_pixel; ++k) {
                 fread(&(tilemap->tiles[tilemap_i].data[tile_i+k]), 1, 1, image_file);
             }

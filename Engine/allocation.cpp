@@ -58,30 +58,42 @@ void MemsetArena(ArenaAllocator* arena, int value) {
 
 // SECTION: Free-List allocator (general purpose)
 
-namespace Internal {
-    struct FreeListAllocationHeader {
-        size_t block_size;
-        size_t padding;
-    };
-    struct FreeListNode {
-        FreeListNode* next;
-        size_t block_size;
-    };
-}
-
-struct FreeListAllocator {
+struct FreeListAllocatorBlock {
     // TODO: add free-list implementation
     size_t size;
     size_t used;
 
     void* memory;
-    bool use_first; // NOTE: If this is true, then allocation will go to the first suitable node. If false, will go to best suited node instead.
 
-    Internal::FreeListNode* head;
+    FreeListAllocatorBlock* next;
+};
+struct FreeListAllocator {
+    FreeListAllocatorBlock* head;
+    FreeListAllocatorBlock* tail;
 };
 
+// NOTE: Aligns the size by the machine word.
+inline size_t align(size_t n) {
+    return (n + sizeof(intptr_t) - 1) & ~(sizeof(intptr_t) - 1);
+}
+
 void* FreeListAlloc(FreeListAllocator* allocator, size_t allocation_size) {
+    allocation_size = align(allocation_size);
+    FreeListAllocatorBlock block = {0};
+    block.size = allocation_size;
+    block.used = true;
+    if (allocator->head == nullptr) {
+        allocator->head = &block;
+    }
     return nullptr;
 }
 
+
+void InitFreeList(FreeListAllocator* arena, uint64_t alloc_size) {
+#ifdef __linux__
+#endif
+#ifdef _WIN32
+    // TODO: Change to call VirtualAlloc() instead of malloc?
+#endif
+}
 

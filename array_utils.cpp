@@ -40,3 +40,8 @@ int ArrMax(float* arr, size_t len) {
 }
 
 
+struct Array2D { // NOTE: Represents a 2 dimensional non-jagged array.
+    int width; // NOTE: The width of one line
+    int size; // NOTE: Equivalent to width * height of the array
+    void* array_data;
+};
