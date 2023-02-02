@@ -9,6 +9,17 @@
 * [ ]Take out all struct and data types into a seperate "skytypes.h" that will be included in every file.
 * [ ]Change so that game bitmap buffer gets passed as a param instead of being global.
 
+* [O]Implement common data sctuctures and put them in the "Engine/Datastructs/.." folder as includes for the user:
+    * Dynamic Array
+        * Make a 2D version?
+    * Linked list
+        * Singly-linked
+        * Doubly-linked
+    * Graph 
+        * Directed
+        * Undirected
+    * Trees
+        * Binary
 * [O]Refactor allocation:
     * Rename ArenaAllocator to BumpArena and FreeListAllocator to FreeListArena
     * Make a dedicated alloc method that you can pass any arena too and it will allocate to it based on what type of arena it is (function overloading)
