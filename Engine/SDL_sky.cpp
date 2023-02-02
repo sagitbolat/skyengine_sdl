@@ -14,6 +14,20 @@ static void BlitToScreen(GameBitmapBuffer*, SDL_Texture*, SDL_Renderer*);
 static void ClearBuffer(GameBitmapBuffer*);
 
 
+// SECTION: Util functions:
+// NOTE: Stores the x and y coordinate of the mouse cursor
+struct MousePosition {
+    int x;
+    int y;
+    // TODO: Maybe add button state.
+};
+// NOTE: Returns the x and y of the mouse cursor, in pixels. 0,0 is top left of the window
+MousePosition GetMousePosition() {
+    MousePosition pos = {0};
+    SDL_GetMouseState(&pos.x, &pos.y);
+    return pos;
+}
+
 // TODO: remove from global space.
 SDL_Renderer* renderer;
 

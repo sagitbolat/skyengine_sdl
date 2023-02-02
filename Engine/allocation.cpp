@@ -82,8 +82,9 @@ struct FreeListAllocatorBlock {
     FreeListAllocatorBlock* next;
 };
 struct FreeListAllocator {
-    FreeListAllocatorBlock* head;
-    FreeListAllocatorBlock* tail;
+    FreeListAllocatorBlock* free_list_head;
+    void* m_start_ptr = nullptr; 
+    size_t total_alloc_size = 0;
 };
 
 // NOTE: Aligns the size by the machine word.
@@ -103,11 +104,37 @@ void* FreeListAlloc(FreeListAllocator* allocator, size_t allocation_size) {
 }
 
 
-void InitFreeList(FreeListAllocator* arena, uint64_t alloc_size) {
+void InitFreeList(FreeListAllocator* arena, uint64_t total_alloc_size) {
+    // NOTE: Reset the memory pointer and unmap the memory if it is already mapped
+    // and allocate new memory, setting the memeory pointer. 
 #ifdef __linux__
+    if (m_start_ptr != nullptr) {
+        munmap(m_start_ptr, arena->total_alloc_size);
+        m_start_ptr = nullptr;
+    }
+    m_start_ptr = mmap(nullptr, total_alloc_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_NORESERVE, -1, 0);
 #endif
 #ifdef _WIN32
     // TODO: Change to call VirtualAlloc() instead of malloc?
+    if (m_start_ptr != nullptr) {
+        free(m_start_ptr);
+        m_start_ptr = nullptr;
+    }
+    m_start_ptr = malloc(total_alloc_size);
 #endif
+
+    // NOTE: Save the total allocation size
+    arena->total_alloc_size = total_alloc_size; 
+    
+    // NOTE: Reset the freelist
+    // and place it at the start of the allocated memeory pointer location
+    arena->mem_used = 0;
+    arena->mem_peak = 0;
+    FreeListAllocatorBlock* first_block = (FreeListAllocatorBlock*)m_start+ptr;
+    first_block->size = total_alloc_size;
+    first_block->next = nullptr;
+    // TODO: FINISH IMPLEMENTATION LIKE IN THE GITHUB:
+    // https://github.com/mtrebi/memory-allocators/blob/master/src/FreeListAllocator.cpp
+
 }
 
