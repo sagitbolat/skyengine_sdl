@@ -173,11 +173,29 @@ FreeListNode* FreeListFindFirst(FreeList* free_list, size_t size, size_t alignme
 }
 
 // NOTE: Free List insertion and removal
-void FreeListInsert() {
-
+void FreeListInsert(FreeListNode** phead, FreeListNode* prev_node, FreeListNode* new_node) {
+    if (prev_node == NULL) {
+        if (*phead != NULL) {
+            new_node->nest = *phead;
+        } else {
+            *phead = new_node;
+        }
+    } else {
+        if (prev_node->next == NULL) {
+            prev_node->next = new_node;
+            new_node->next = NULL
+        } else {
+            new_node->net = prev_node->next;
+            prev_node->next = new_node;
+        }
+    }
 }
-void FreeListRemove() {
-
+void FreeListRemove(FreeListNode** phead, FreeListNode* prev_node, FreeListNode* del_node) {
+    if (prev_node == NULL) {
+        *phead = del_node->next;
+    } else {
+        prev_node->next = del_node->next;
+    }
 }
 
 // NOTE: Allocates on the freelist allocator. 
