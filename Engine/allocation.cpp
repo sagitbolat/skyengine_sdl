@@ -281,3 +281,23 @@ void FreeListFree(FreeList* free_list, void* ptr) {
     free_list->used = free_node->block_size;
     FreeListCoalescence(free_list, prev_node, free_node);
 }
+
+
+
+// SECTION: General Alloc and General Free:
+namespace skymem { 
+    bool freelist_init = false;
+    size_t alignment = 64;
+    FreeList free_list;
+
+    void init(size_t init_size, size_t a) {
+        FreeListInit(&free_list, init_size);
+        alignment = a;
+    }
+    void* alloc(size_t size) {
+        return FreeListAlloc(&free_list, size, alignment); 
+    }
+    void free(void* ptr) {
+        FreeListFree(&free_list, ptr);
+    }
+}

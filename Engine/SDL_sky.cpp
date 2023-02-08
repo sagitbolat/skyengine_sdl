@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
 
     Init(&SCREEN_WIDTH, &SCREEN_HEIGHT);
-
+    
     SDL_Window* window = SDL_CreateWindow("Sky Engine",
                         SDL_WINDOWPOS_UNDEFINED,
                         SDL_WINDOWPOS_UNDEFINED,
@@ -63,6 +63,13 @@ int main(int argc, char* argv[]) {
     graphics_buffer.memory = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 32);
     memset(graphics_buffer.memory, 0, SCREEN_WIDTH * SCREEN_HEIGHT * 32);
 
+    // NOTE: Initialize the freelist allocator
+    size_t alignment = 64; // TODO: Change to reflect the machine architecture.
+#ifdef ALLOCATOR_SIZE
+    skymem::init((size_t)ALLOCATOR_SIZE, alignment);
+#else
+    skymem::init((size_t)Megabytes(128), alignment);
+#endif
     
     // NOTE: Initializing game state memory
     GameMemory game_memory = {0};
