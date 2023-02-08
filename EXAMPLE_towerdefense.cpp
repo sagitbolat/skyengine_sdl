@@ -1,6 +1,9 @@
+#define ALLOCATOR_SIZE 67108864
+
 #include "Engine/SDL_sky.cpp"
 #include "Engine/bmp.cpp"
 #include "Engine/tilemaps.cpp"
+#include "Engine/pathfinding.cpp"
 #include "array_utils.cpp"
 
 
