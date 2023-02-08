@@ -140,9 +140,9 @@ size_t PadWithHeader(uintptr_t ptr, uintptr_t alignment, size_t header_size) {
     if (padding < needed_space) {
         needed_space -= padding;
         if ((needed_space & (alignment - 1)) != 0) {
-            padding += a * (1 + (needed_space/a));
+            padding += alignment * (1 + (needed_space/alignment));
         } else {
-            padding += a * (needed_space/a);
+            padding += alignment * (needed_space/alignment);
         }
     }
     return (size_t)padding;
@@ -164,7 +164,7 @@ FreeListNode* FreeListFindFirst(FreeList* free_list, size_t size, size_t alignme
         node = node->next;
     }
     if (p_padding) {
-        *p_padding = padding
+        *p_padding = padding;
     }
     if (p_prev_node) {
         *p_prev_node = prev_node; 
@@ -176,16 +176,16 @@ FreeListNode* FreeListFindFirst(FreeList* free_list, size_t size, size_t alignme
 void FreeListInsert(FreeListNode** phead, FreeListNode* prev_node, FreeListNode* new_node) {
     if (prev_node == NULL) {
         if (*phead != NULL) {
-            new_node->nest = *phead;
+            new_node->next = *phead;
         } else {
             *phead = new_node;
         }
     } else {
         if (prev_node->next == NULL) {
             prev_node->next = new_node;
-            new_node->next = NULL
+            new_node->next = NULL;
         } else {
-            new_node->net = prev_node->next;
+            new_node->next = prev_node->next;
             prev_node->next = new_node;
         }
     }
@@ -229,7 +229,7 @@ void* FreeListAlloc(FreeList* free_list, size_t size, size_t alignment) {
         new_node->block_size = remaining;
         FreeListInsert(&free_list->head, prev_node, new_node);
     }
-    FreeListRemove(&free_list->head, prev_node, node;
+    FreeListRemove(&free_list->head, prev_node, node);
 
     header_ptr = (FreeListHeader*)((char*)node + alignment_padding);
     header_ptr->block_size = required_space; 
@@ -240,70 +240,44 @@ void* FreeListAlloc(FreeList* free_list, size_t size, size_t alignment) {
     return (void*)((char*)header_ptr + sizeof(FreeListHeader));
 }
 
+// NOTE: Freeing and Coalescence
+void FreeListCoalescence(FreeList* free_list, FreeListNode* prev_node, FreeListNode* free_node) {
+    if (free_node->next != NULL && (void*)((char*)free_node + free_node->block_size) == free_node->next) {
+        free_node->block_size += free_node->next->block_size;
+        FreeListRemove(&free_list->head, free_node, free_node->next);
+    }
 
-// NOTE: Old 
-/*
-struct FreeListAllocatorBlock {
-    // TODO: add free-list implementation
-    size_t size;
-    size_t used;
-
-    void* memory;
-
-    FreeListAllocatorBlock* next;
-};
-struct FreeListAllocator {
-    FreeListAllocatorBlock* free_list_head;
-    void* m_start_ptr = nullptr; 
-    size_t total_alloc_size = 0;
-};
-
-// NOTE: Aligns the size by the machine word.
-inline size_t align(size_t n) {
-    return (n + sizeof(intptr_t) - 1) & ~(sizeof(intptr_t) - 1);
+    if (prev_node->next != NULL && (void*)((char*)prev_node + prev_node->block_size) == free_node) {
+        prev_node->block_size += free_node->next->block_size;
+        FreeListRemove(&free_list->head, prev_node, free_node);
+    }
 }
 
-void* FreeListAlloc(FreeListAllocator* allocator, size_t allocation_size) {
-    allocation_size = align(allocation_size);
-    FreeListAllocatorBlock block = {0};
-    block.size = allocation_size;
-    block.used = true;
-    if (allocator->free_list_head == nullptr) {
-        allocator->free_list_head = &block;
-    }
-    return nullptr;
-}
-
-
-void InitFreeList(FreeListAllocator* arena, uint64_t total_alloc_size) {
-    // NOTE: Reset the memory pointer and unmap the memory if it is already mapped
-    // and allocate new memory, setting the memeory pointer. 
-#ifdef __linux__
-    if (arena->m_start_ptr != nullptr) {
-        munmap(arena->m_start_ptr, arena->total_alloc_size);
-        arena->m_start_ptr = nullptr;
-    }
-    arena->m_start_ptr = mmap(nullptr, total_alloc_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_NORESERVE, -1, 0);
-#endif
-#ifdef _WIN32
-    // TODO: Change to call VirtualAlloc() instead of malloc?
-    if (arena->m_start_ptr != nullptr) {
-        free(m_start_ptr);
-        arena->m_start_ptr = nullptr;
-    }
-    arena->m_start_ptr = malloc(total_alloc_size);
-#endif
-
-    // NOTE: Save the total allocation size
-    arena->total_alloc_size = total_alloc_size; 
+void FreeListFree(FreeList* free_list, void* ptr) {
+    FreeListHeader* header;
+    FreeListNode* free_node;
+    FreeListNode* node;
+    FreeListNode* prev_node = NULL;
     
-    // NOTE: Reset the freelist
-    // and place it at the start of the allocated memeory pointer location
-    //arena->mem_used = 0;
-    //arena->mem_peak = 0;
-    FreeListAllocatorBlock* first_block = (FreeListAllocatorBlock*)arena->m_start_ptr;
-    first_block->size = total_alloc_size;
-    first_block->next = nullptr;
-    arena->free_list_head = first_block; 
+    if (ptr == NULL) {
+        return;
+    }
+
+    header = (FreeListHeader*)((char*)ptr - sizeof(FreeListHeader));
+    free_node = (FreeListNode*)header;
+    free_node->block_size = header->block_size + header->padding;
+    free_node->next = NULL;
+    
+    node = free_list->head;
+    while (node != NULL) {
+        if (ptr < node) {
+            FreeListInsert(&free_list->head, prev_node, free_node);
+            break;
+        }
+        prev_node = node;
+        node = node->next;
+    }
+    
+    free_list->used = free_node->block_size;
+    FreeListCoalescence(free_list, prev_node, free_node);
 }
-*/
