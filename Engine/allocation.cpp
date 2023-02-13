@@ -1,6 +1,6 @@
 #pragma once
 #include <stdint.h>
-
+#include "skyintrinsics.h"
 
 // SECTION: System-dependant page memory allocation for arena
 #ifdef __linux__
@@ -293,6 +293,7 @@ namespace skymem {
     void init(size_t init_size, size_t a) {
         FreeListInit(&free_list, init_size);
         alignment = a;
+        freelist_init = true;
     }
     void* alloc(size_t size) {
         return FreeListAlloc(&free_list, size, alignment); 
@@ -300,4 +301,12 @@ namespace skymem {
     void free(void* ptr) {
         FreeListFree(&free_list, ptr);
     }
+    /*void* realloc(void* ptr, size_t old_size, size_t new_size) {
+        void* newptr;
+
+        int msize;
+        msize
+
+    }*/
+
 }

@@ -41,3 +41,12 @@ inline float TanDeg(float deg) {
 inline float FloatMod(float a, float b) {
     return (a - b * floor(a/b));
 }
+
+// NOTE: Returns the min of a and b. If a == b then Returns a.
+inline int IntMin(int a, int b) {
+    return a<b?a:b;
+}
+// NOTE: Returns the max of a and b. If a == b then Returns a.
+inline int IntMax(int a, int b) {
+    return a>=b?a:b;
+}

@@ -160,7 +160,8 @@ struct FRect {
     float x, y, width, height;
 };
 struct Rect {
-    uint16_t x, y, width, height;
+    int x, y;
+    unsigned int width, height;
 };
 struct Color {
     uint8_t alpha, red, green, blue;
