@@ -1,5 +1,5 @@
-#include "SDL_sky.cpp"
-#include "bmp.cpp"
+#include "Engine/SDL_sky.cpp"
+#include "Engine/bmp.cpp"
 
 void Init(int* w, int* h) {
     *w = 1280;
