@@ -1,4 +1,4 @@
-`````````````````````````````````````````````````````````````````````````````````````````#pragma once
+#pragma once
 #include <stdint.h>
 #include "allocation.cpp"
 
@@ -156,12 +156,26 @@ struct GameState {
 
 
 // SECTION: Utils
-struct FRect {
-    float x, y, width, height;
+struct Vector2 {
+    float x, y;
+};
+struct Vector2Int {
+    int x, y;
 };
 struct Rect {
+    float x, y, width, height;
+};
+struct RectInt {
     int x, y;
     unsigned int width, height;
+};
+struct Circle {
+    float x, y; //NOTE: Center of circle
+    float radius;
+};
+struct CircleInt {
+    int x, y;
+    float radius;
 };
 struct Color {
     uint8_t alpha, red, green, blue;
