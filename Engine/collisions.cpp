@@ -29,7 +29,7 @@ bool PointCircleCollision(Circle c, Vector2 v) {
 }
 
 // SECTION: Rect to Rect
-bool RectCollison(Rect r1, Rect r2) {
+bool RectCollision(Rect r1, Rect r2) {
     if (r1.x < r2.x + r2.width && 
         r1.x + r1.width > r2.x &&
         r1.y < r2.y + r2.height &&
