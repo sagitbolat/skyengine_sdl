@@ -106,7 +106,7 @@ size_t LoadFont(ArenaAllocator* asset_arena, const char* font_file_name, FontDat
 
 
 // NOTE: Displays text at the x and y location
-void DisplayText(const char* text, FontData* font, int x_start, int y_start, int scale, int word_spacing) {
+void DisplayText(GameBitmapBuffer* graphics_buffer, const char* text, FontData* font, int x_start, int y_start, int scale, int word_spacing) {
     // scale = 1 means that a 12px loaded font will be 12px.
     // scale = 2 means that a 12px loaded font will be 24px. 
     // etc
@@ -132,7 +132,7 @@ void DisplayText(const char* text, FontData* font, int x_start, int y_start, int
                 color.red = data[c][i];
                 color.green = data[c][i];
                 color.blue = data[c][i];
-                DrawRectangle(color.red, color.green, color.blue, x + x_offset, y, scale, scale);
+                DrawRectangle(graphics_buffer, color.red, color.green, color.blue, x + x_offset, y, scale, scale);
             }
         }
         x_offset += (w + (font->pixel_height * scale / 10));

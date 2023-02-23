@@ -14,7 +14,7 @@ static void Awake(GameMemory* game_memory) {
     LoadFont(&game_memory->asset_storage, "roboto.ttf", &font_data, 64);  
 
 }
-
+&f
 static void Start(GameState* game_state, KeyboardState* keyboard_state) {
     
     
