@@ -124,17 +124,20 @@ void DisplayText(GameBitmapBuffer* graphics_buffer, const char* text, FontData* 
             w = word_spacing;
         }
 
-
-        for (int y = y_start; y < (y_start + h); ++y) {
-            for (int x = x_start; x < (x_start + w); ++x) {
-                int i = ((y - y_start) * w) + (x - x_start);
+        int yi = y_start;
+        for (int y = y_start; y < (y_start + (h * scale)); y+=scale) {
+            int xi = x_start;
+            for (int x = x_start; x < (x_start + (w * scale)); x+=scale) {
+                int i = (((yi - y_start) * w) + (xi - x_start));
                 Color color = {0};
                 color.red = data[c][i];
                 color.green = data[c][i];
                 color.blue = data[c][i];
                 DrawRectangle(graphics_buffer, color.red, color.green, color.blue, x + x_offset, y, scale, scale);
+                ++xi;
             }
+            ++yi;
         }
-        x_offset += (w + (font->pixel_height * scale / 10));
+        x_offset += (w + (font->pixel_height/ 10))* scale;
     }
 }
