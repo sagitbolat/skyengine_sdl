@@ -4,7 +4,7 @@
 #include "Engine/collisions.cpp"
 #include "Engine/truetype.cpp"
 #include "Engine/sky_random.cpp"
-
+#include "Engine/UI/button.cpp"
 
 	
 int SCREEN_H = 720;
@@ -21,19 +21,32 @@ ImageData player_sprite = {0};
 ImageData bullet_sprite = {0};
 ImageData enemy_sprite = {0};
 
+ImageData menu_button_sprite = {0};
+ImageData menu_hovered_button_sprite = {0};
+RectButton start_button;
+
 FontData font = {0};
+FontData med_font = {0};
 FontData large_font={0};
 
 void Awake(GameMemory* gm) {
     LoadBitmap(&gm->asset_storage, "ship.bmp", &player_sprite); 
     LoadBitmap(&gm->asset_storage, "bullet.bmp", &bullet_sprite);
     LoadBitmap(&gm->asset_storage, "enemy.bmp", &enemy_sprite);
-    
+    LoadBitmap(&gm->asset_storage, "button.bmp", &menu_button_sprite);
+    LoadBitmap(&gm->asset_storage, "button_hovered.bmp", &menu_hovered_button_sprite);
+
+
     font.data = (uint8_t**)malloc(sizeof(uint8_t*)*128); // NOTE: Allocate all the glyph pointers.
     LoadFont(&gm->asset_storage, "roboto.ttf", &font, 64);
+    med_font.data = (uint8_t**)malloc(sizeof(uint8_t*)*128); // NOTE: Allocate all the glyph pointers.
+    LoadFont(&gm->asset_storage, "roboto.ttf", &med_font, 128);
     large_font.data = (uint8_t**)malloc(sizeof(uint8_t*)*128); // NOTE: Allocate all the glyph pointers.
     LoadFont(&gm->asset_storage, "roboto.ttf", &large_font, 256);
     
+    InitButton(&start_button, SCREEN_W/2, 360, 5, menu_button_sprite, menu_hovered_button_sprite, menu_button_sprite);
+
+
     sky_srand(69); // NOTE: random seed set.
 }
 
@@ -59,12 +72,19 @@ void Start(GameState* gs, KeyboardState* ks) {
 }
 
 
+enum scene {
+    main_menu = 0,
+    game = 1,
+    game_over = 2
+};
 
 void Update(GameState* gs, KeyboardState* ks, int dt) {
     
     // SECTION: All The static data
     static int total_time = 0;
-    
+   
+    static enum scene curr_scene = main_menu;
+
     const float INIT_PLAYER_POS_X = SCREEN_W/2; 
     const float INIT_PLAYER_POS_Y = SCREEN_H/2 + 200; 
     static float x_pos = INIT_PLAYER_POS_X;
@@ -87,12 +107,32 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
 
     // SECTION: Timekeeping and mouse position caching
     total_time += dt;
-    //Vector2Int mouse_pos = GetMousePosition();
+    Vector2Int mouse_pos = GetMousePosition();
 
     
 
-    // SECTION: Game Over state.
-    if (player_health <= 0) {
+    // SECTION: Main Menu Scene
+    if (curr_scene == main_menu) {
+        if (PointRectCollision(start_button.collider, mouse_pos))
+        {
+            if (ks->state.SPACE) {
+                start_button.state = active;
+                curr_scene = game;
+                return;
+            }
+            start_button.state = hovered;
+        } else {
+            start_button.state = inactive;
+        }
+        DisplayText(graphics_buffer, "Space Shooter", &med_font, 325, 20, 1, 0);
+        BlitButton(graphics_buffer, &start_button);
+        return;
+    } 
+    
+    
+    
+    // SECTION: Game Over Scene
+    if (curr_scene == game_over) {
         DisplayText(graphics_buffer, "GAME OVER", &large_font, 150, 100, 1, 0);
         DisplayText(graphics_buffer, "Press [SPACE] to restart", &font, 400, 600, 1, 0);
         if (ks->state.SPACE && !ks->prev_state.SPACE) {
@@ -115,6 +155,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
                 enemy_position_pool[e].x = -100;
                 enemy_position_pool[e].y = -100;
             }
+            curr_scene = game;
         }
         return;
     }
@@ -261,7 +302,11 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
             }
         }
     }
+    
+    
 
+    // SECTION: If player dies, switch scene to gameover
+    if(player_health <= 0) curr_scene = game_over;
 
 
     // SECTION: Rendering enemies

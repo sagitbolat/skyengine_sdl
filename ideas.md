@@ -9,6 +9,10 @@
 * [ ]Take out all struct and data types into a seperate "skytypes.h" that will be included in every file.
 * [ ]Change so that game bitmap buffer gets passed as a param instead of being global.
 
+* [O]ADD MOUSE BUTTON SUPPORT INTO INPUT SYSTEM.
+
+* [O]Make DisplayText work with centered text (right now can only place text from a top left corner coordinate).
+
 * [O]Implement common data sctuctures and put them in the "Engine/Datastructs/.." folder as includes for the user:
     * Dynamic Array
         * Make a 2D version?
