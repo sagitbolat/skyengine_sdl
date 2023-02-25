@@ -11,6 +11,10 @@
 
 * [O]ADD MOUSE BUTTON SUPPORT INTO INPUT SYSTEM.
 
+* [O]Change alpha to work with continuous alpha values (eg. 0.1, 0.332) instead of a binary alpha value (0 or 1 only).
+
+* [O]Make DisplayText work with colors.
+
 * [O]Make DisplayText work with centered text (right now can only place text from a top left corner coordinate).
 
 * [O]Implement common data sctuctures and put them in the "Engine/Datastructs/.." folder as includes for the user:
@@ -31,7 +35,8 @@
     * Make a dedicated memset method that will memset an arena's memory to a value (such as clearing all memory to 0)
     * Make a dedicated InitArena method that will init whatever arena is passed to it. 
 
-* [ ] Refactor all image data to have an alpha channel as well.
+
+
 
 * [O]Make dt more persise than just ms. Need more something like microseconds.
     * apparently that is not easy to do, since CPUs work off ms not microseconds.
@@ -60,6 +65,7 @@
 
 * [V]Exporting of bitmaps. Make it work with 32-bit colors instead of 24-bit colors.
 
+* [V] Refactor all image data to have an alpha channel as well.
 
 ### Features to implement:
 * 2D collisions.

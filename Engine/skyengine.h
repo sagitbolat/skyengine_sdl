@@ -167,7 +167,7 @@ struct Rect {
 };
 struct RectInt {
     int x, y;
-    unsigned int width, height;
+    int width, height;
 };
 struct Circle {
     float x, y; //NOTE: Center of circle

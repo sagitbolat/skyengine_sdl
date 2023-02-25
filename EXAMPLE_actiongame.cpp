@@ -34,7 +34,7 @@ void Awake(GameMemory* gm) {
     LoadBitmap(&gm->asset_storage, "bullet.bmp", &bullet_sprite);
     LoadBitmap(&gm->asset_storage, "enemy.bmp", &enemy_sprite);
     LoadBitmap(&gm->asset_storage, "button.bmp", &menu_button_sprite);
-    LoadBitmap(&gm->asset_storage, "button_hovered.bmp", &menu_hovered_button_sprite);
+    LoadBitmap(&gm->asset_storage, "button_hover.bmp", &menu_hovered_button_sprite);
 
 
     font.data = (uint8_t**)malloc(sizeof(uint8_t*)*128); // NOTE: Allocate all the glyph pointers.
@@ -80,9 +80,15 @@ enum scene {
 
 void Update(GameState* gs, KeyboardState* ks, int dt) {
     
+    // SECTION: Default text colors;
+    Color text_color = {0};
+    text_color.red = 99;
+    text_color.green = 155;
+    text_color.blue = 255;
+
     // SECTION: All The static data
     static int total_time = 0;
-   
+
     static enum scene curr_scene = main_menu;
 
     const float INIT_PLAYER_POS_X = SCREEN_W/2; 
@@ -124,8 +130,9 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
         } else {
             start_button.state = inactive;
         }
-        DisplayText(graphics_buffer, "Space Shooter", &med_font, 325, 20, 1, 0);
+        DisplayText(graphics_buffer, "Space Shooter", &med_font, text_color, 325, 20, 1, 0);
         BlitButton(graphics_buffer, &start_button);
+        DisplayText(graphics_buffer, "Start", &med_font, text_color, SCREEN_W/2 - 125, 265, 1, 0);
         return;
     } 
     
@@ -133,8 +140,8 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     
     // SECTION: Game Over Scene
     if (curr_scene == game_over) {
-        DisplayText(graphics_buffer, "GAME OVER", &large_font, 150, 100, 1, 0);
-        DisplayText(graphics_buffer, "Press [SPACE] to restart", &font, 400, 600, 1, 0);
+        DisplayText(graphics_buffer, "GAME OVER", &large_font, text_color, 150, 100, 1, 0);
+        DisplayText(graphics_buffer, "Press [SPACE] to restart", &font, text_color, 400, 600, 1, 0);
         if (ks->state.SPACE && !ks->prev_state.SPACE) {
             player_health = MAX_HEALTH;
             SPAWNRATE = INIT_SPAWNRATE;
@@ -339,10 +346,10 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     // SECTION: Render Score and health text:
     char score_str[100];
     snprintf(score_str, 100, "Score: %d", player_score);
-    DisplayText(graphics_buffer, score_str, &font, 1000, 0, 1, 0);
+    DisplayText(graphics_buffer, score_str, &font, text_color, 1000, 0, 1, 0);
     char health_str[100];
     snprintf(health_str, 100, "Health: %d", player_health);
-    DisplayText(graphics_buffer, health_str, &font, 0, 0, 1, 0);
+    DisplayText(graphics_buffer, health_str, &font, text_color, 0, 0, 1, 0);
 
 
     // SECTION: Print frame deltatime

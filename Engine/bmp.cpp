@@ -253,21 +253,26 @@ size_t LoadBitmap(ArenaAllocator* asset_arena, const char* image_file_name, Imag
 
 // SECTION: Drawing.
 // Returns: 1 if successful, 0 if outside bounds.
-int DrawPixel(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uint8_t blue, int x, int y) {
-    int i = ((y * graphics_buffer->pitch) + (x * graphics_buffer->bytes_per_pixel));
+int DrawPixel(GameBitmapBuffer* graphics_buffer, Color color, Vector2Int pos) {
+    int i = ((pos.y * graphics_buffer->pitch) + (pos.x * graphics_buffer->bytes_per_pixel));
     uint8_t* pixel = (uint8_t*)(graphics_buffer->memory);
     int max_i = ((graphics_buffer->width * graphics_buffer->bytes_per_pixel) + 
                 (graphics_buffer->height * graphics_buffer->pitch));
     if (i < 0 || i >= max_i) {
         return 0;
     }
-    pixel[i] = blue;
-    pixel[i + 1] = green;
-    pixel[i + 2] = red;
+    pixel[i] = color.blue;
+    pixel[i + 1] = color.green;
+    pixel[i + 2] = color.red;
     return 1;
 }
 
-void DrawLine(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uint8_t blue, int x0, int y0, int x1, int y1) {
+void DrawLine(GameBitmapBuffer* graphics_buffer, Color color, Vector2Int pos0, Vector2Int pos1) {
+    int x0 = pos0.x;
+    int y0 = pos0.y;
+    int x1 = pos1.x;
+    int y1 = pos1.y;
+
     int dx = x1 - x0;
     int dy = y1 - y0;
     int D = 2*dy - dx;
@@ -280,7 +285,10 @@ void DrawLine(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uin
         //pixel[0] = red;
         //pixel[1] = green;
         //pixel[2] = blue;
-        DrawPixel(graphics_buffer, red, green, blue, x, y);
+        Vector2Int pos = {0};
+        pos.x = x;
+        pos.y = y;
+        DrawPixel(graphics_buffer, color, pos);
         if (D > 0) {
             ++y;
             D -= 2*dx;
@@ -290,11 +298,21 @@ void DrawLine(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uin
 
 }
 
-void DrawRectangle(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green, uint8_t blue, int x0, int y0, int width, int height) {
-    int min_x = x0;
-    int min_y = y0;
+// NOTE: For now only supports binary alpha values (i.e. 0 or non-zero.)
+void DrawRectangle(GameBitmapBuffer* graphics_buffer, Color color, RectInt pos_and_size) {
+    // NOTE: When refactoring to support continuous alpha values, remove this line
+    if (color.alpha == 0) return;
+    
+
+
+    int min_x = pos_and_size.x;
+    int min_y = pos_and_size.y;
+    int width = pos_and_size.width;
+    int height = pos_and_size.height;
+
     int max_x = min_x + width;
     int max_y = min_y + height;
+
     if (min_x < 0) {
         min_x = 0;
     }
@@ -311,13 +329,13 @@ void DrawRectangle(GameBitmapBuffer* graphics_buffer, uint8_t red, uint8_t green
     uint8_t* row = (uint8_t*)graphics_buffer->memory + 
                      (min_x * graphics_buffer->bytes_per_pixel) + 
                      (min_y * graphics_buffer->pitch);
-
+    
     for (int y = min_y; y < max_y; ++y) {
        
         uint32_t* pixel = (uint32_t*)row;
         
         for (int x = min_x; x < max_x; ++x) {
-            *pixel++ = ((red << 16) | (green << 8) | blue);
+            *pixel++ = ((color.red << 16) | (color.green << 8) | color.blue);
         }
         row += graphics_buffer->pitch;
     }
@@ -355,10 +373,14 @@ void BlitBitmapScaled (
                 for (int x = x0; x < x0 + w; ++x) {
                     int i = (((y - y0) * w) + (x - x0)) * bytes_per_pixel;
                     Color c = {0};
+                    if (bytes_per_pixel > 3) c.alpha = data[i+3];
                     c.red = data[i + 2];
                     c.green = data[i + 1];
                     c.blue = data[i + 0];
-                    DrawPixel(graphics_buffer, c.red, c.green, c.blue, x, y);
+                    Vector2Int pos = {0};
+                    pos.x = x;
+                    pos.y = y;
+                    DrawPixel(graphics_buffer, c, pos);
                 }
             }
         } else if (scale > 1) {
@@ -379,10 +401,18 @@ void BlitBitmapScaled (
                 for (int x = x0; x < xmax; x+=scale) {
                     int i = (((yi - y0) * w) + (xi - x0)) * bytes_per_pixel;
                     Color c = {0};
+                    if (bytes_per_pixel > 3) c.alpha = data[i + 3];
+                    else c.alpha = 1;
                     c.red = data[i + 2];
                     c.green = data[i + 1];
                     c.blue = data[i + 0];
-                    DrawRectangle(graphics_buffer, c.red, c.green, c.blue, x, y, scale, scale);
+                    RectInt pos_and_size = {0};
+                    pos_and_size.x = x;
+                    pos_and_size.y = y;
+                    pos_and_size.width = scale;
+                    pos_and_size.height = scale;
+
+                    DrawRectangle(graphics_buffer, c, pos_and_size);
                     ++xi;
                 }
                 ++yi;
@@ -400,10 +430,15 @@ void BlitBitmapScaled (
                 for (int x = x0; x < x0 + w; ++x) {
                     int i = (((y - y0) * w) + (x - x0)) * bytes_per_pixel;
                     Color c = {0};
+                    if (bytes_per_pixel > 3) c.alpha = data[i + 3];
+                    else c.alpha = 1;
                     c.red = data[i + 2];
                     c.green = data[i + 1];
                     c.blue = data[i + 0];
-                    DrawPixel(graphics_buffer, c.red, c.green, c.blue, x, y);
+                    Vector2Int pos = {0};
+                    pos.x = x;
+                    pos.y = y;
+                    DrawPixel(graphics_buffer, c, pos);
                 }
             }
         } else if (scale > 1) {
@@ -423,10 +458,17 @@ void BlitBitmapScaled (
                 for (int x = x0; x < xmax; x+=scale) {
                     int i = (((yi - y0) * w) + (xi - x0)) * bytes_per_pixel;
                     Color c = {0};
+                    if (bytes_per_pixel > 3) c.alpha = data[i + 3];
+                    else c.alpha = 1;
                     c.red = data[i + 2];
                     c.green = data[i + 1];
                     c.blue = data[i + 0];
-                    DrawRectangle(graphics_buffer, c.red, c.green, c.blue, x, y, scale, scale);
+                    RectInt pos_and_size = {0};
+                    pos_and_size.x = x;
+                    pos_and_size.y = y;
+                    pos_and_size.width = scale;
+                    pos_and_size.height = scale;
+                    DrawRectangle(graphics_buffer, c, pos_and_size);
                     ++xi;
                 }
                 ++yi;
@@ -435,7 +477,7 @@ void BlitBitmapScaled (
     
     }
 }
-
+/*
 void BlitBitmap(GameBitmapBuffer* graphics_buffer, ImageData* img_data, int x0, int y0, int scale, bool centered = true, bool scale_position = false) {
     int w = img_data->width;
     int h = img_data->height;
@@ -466,5 +508,5 @@ void BlitBitmap(GameBitmapBuffer* graphics_buffer, ImageData* img_data, int x0, 
         }
     }
 }
-
+*/
 
