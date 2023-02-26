@@ -119,6 +119,7 @@ int main(int argc, char* argv[]) {
                     if (SDL_keyboard_state[SDL_SCANCODE_D]) keyboard_state.state.D = 1;    
                     if (SDL_keyboard_state[SDL_SCANCODE_F]) keyboard_state.state.F = 1;    
                     if (SDL_keyboard_state[SDL_SCANCODE_SPACE]) keyboard_state.state.SPACE = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_RETURN]) keyboard_state.state.ENTER = 1;    
                 } break;
                 case SDL_KEYUP: {
                     if (!SDL_keyboard_state[SDL_SCANCODE_Q]) keyboard_state.state.Q = 0;    
@@ -130,6 +131,7 @@ int main(int argc, char* argv[]) {
                     if (!SDL_keyboard_state[SDL_SCANCODE_D]) keyboard_state.state.D = 0;    
                     if (!SDL_keyboard_state[SDL_SCANCODE_F]) keyboard_state.state.F = 0;    
                     if (!SDL_keyboard_state[SDL_SCANCODE_SPACE]) keyboard_state.state.SPACE = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_RETURN]) keyboard_state.state.ENTER = 0;    
                 } break;
                 default:
                     break;

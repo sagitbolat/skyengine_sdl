@@ -38,11 +38,11 @@ void Awake(GameMemory* gm) {
 
 
     font.data = (uint8_t**)malloc(sizeof(uint8_t*)*128); // NOTE: Allocate all the glyph pointers.
-    LoadFont(&gm->asset_storage, "roboto.ttf", &font, 64);
+    LoadFont(&gm->asset_storage, "pixel.ttf", &font, 64);
     med_font.data = (uint8_t**)malloc(sizeof(uint8_t*)*128); // NOTE: Allocate all the glyph pointers.
-    LoadFont(&gm->asset_storage, "roboto.ttf", &med_font, 128);
+    LoadFont(&gm->asset_storage, "pixel.ttf", &med_font, 128);
     large_font.data = (uint8_t**)malloc(sizeof(uint8_t*)*128); // NOTE: Allocate all the glyph pointers.
-    LoadFont(&gm->asset_storage, "roboto.ttf", &large_font, 256);
+    LoadFont(&gm->asset_storage, "pixel.ttf", &large_font, 256);
     
     InitButton(&start_button, SCREEN_W/2, 360, 5, menu_button_sprite, menu_hovered_button_sprite, menu_button_sprite);
 
@@ -107,9 +107,26 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     static int SPAWNRATE = INIT_SPAWNRATE;
     static int spawn_timer = 0;
     static int spawn_counter = 0;
+    
+    static float enemy_speed = 0.7;
+    static float bullet_speed = 1.0;
+    static float player_speed = 0.5;
 
     const int FIRERATE = 200; // NOTE: How often the bullet will shoot in ms.
     static int fire_timer = 0;
+
+
+    // SECTION: Slow motion
+    if (ks->state.SPACE) {
+        dt /= 2;
+        fire_timer -= dt/2; //NOTE: No shooting when in slowmo.
+    }
+    // SECTION: Fast motion
+    if (ks->state.ENTER) {
+        dt *= 2;
+        fire_timer += dt; //NOTE: Shooting twice as fast when in fast motion.
+    }
+
 
     // SECTION: Timekeeping and mouse position caching
     total_time += dt;
@@ -177,7 +194,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
         if (enemy_position_pool[e].x < -50 || enemy_position_pool[e].y < -50) {
             continue;
         }
-        enemy_position_pool[e].y += (float)(dt) * 0.5;
+        enemy_position_pool[e].y += (float)(dt) * enemy_speed; 
 
         if (enemy_position_pool[e].y < -50 || 
             enemy_position_pool[e].y > SCREEN_H + 10 ||
@@ -202,7 +219,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
         if (bullet_position_pool[b].x < 0 || bullet_position_pool[b].y < 0) {
             continue;
         }
-        bullet_position_pool[b].y -= (float)(dt) * 1.0;
+        bullet_position_pool[b].y -= (float)(dt) * bullet_speed;
 
         if (bullet_position_pool[b].y > SCREEN_H + 10) {
             bullet_position_pool[b].y = -100;
@@ -222,16 +239,16 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
 
     // SECTION: handling player movement with keystates
     if (ks->state.S && y_pos < SCREEN_H) {
-        y_pos += dt * 0.5;
+        y_pos += dt * player_speed;
     }
     if (ks->state.D && x_pos < SCREEN_W) {
-        x_pos += dt * 0.5;
+        x_pos += dt * player_speed;
     }
     if (ks->state.W && y_pos > 0) {
-        y_pos -= dt * 0.5;
+        y_pos -= dt * player_speed;
     }
     if (ks->state.A && x_pos > 0) {
-        x_pos -= dt * 0.5;
+        x_pos -= dt * player_speed;
     }
     
    
@@ -254,7 +271,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
 
     // SECTION: Shooting
     fire_timer += dt;
-    if (ks->state.SPACE && fire_timer > FIRERATE) {
+    if (fire_timer > FIRERATE) {
         fire_timer = 0;
         bullet_position_pool[curr_bullet_pointer].y = y_pos;
         bullet_position_pool[curr_bullet_pointer].x = x_pos;
