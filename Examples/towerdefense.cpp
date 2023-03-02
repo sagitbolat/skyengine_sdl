@@ -3,7 +3,7 @@
 #include "Engine/tilemaps.cpp"
 #include "Engine/pathfinding.cpp"
 #include "Engine/button.cpp"
-#include "array_utils.cpp"
+#include "Engine/array_utils.cpp"
 
 
 // SECTION: main

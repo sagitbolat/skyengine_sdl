@@ -1,10 +1,10 @@
-#include "Engine/SDL_sky.cpp"
-#include "Engine/bmp.cpp"
-#include "Engine/tilemaps.cpp"
-#include "Engine/collisions.cpp"
-#include "Engine/truetype.cpp"
-#include "Engine/sky_random.cpp"
-#include "Engine/UI/button.cpp"
+#include "../Engine/SDL_sky.cpp"
+#include "../Engine/bmp.cpp"
+#include "../Engine/tilemaps.cpp"
+#include "../Engine/collisions.cpp"
+#include "../Engine/truetype.cpp"
+#include "../Engine/sky_random.cpp"
+#include "../Engine/UI/button.cpp"
 
 	
 int SCREEN_H = 720;
