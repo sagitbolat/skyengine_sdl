@@ -16,11 +16,11 @@ void Init(int* w, int* h) {
     *h = SCREEN_H;
 }
 
-
-
+Scene curr_scene;
 
 void Awake(GameMemory* gm) {
-    
+    curr_scene = 0;
+ 
 }
 
 void Start(GameState* gs, KeyboardState* ks) {
