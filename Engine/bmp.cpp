@@ -135,9 +135,9 @@ void GenerateBitmapImage(ImageData image_data, const char* image_file_name) {
     for (int h = image_data.height - 1; h >= 0; --h) {
         for (int w = 0; w < image_data.width; ++w) {
             int i = (h * image_data.width * image_data.bytes_per_pixel) + (w * image_data.bytes_per_pixel);
-	    for (int b = 0; b < image_data.bytes_per_pixel; ++b) {    
-		fwrite(&(image_data.data[i+b]), 1, 1, image_file);
-	    }
+            for (int b = 0; b < image_data.bytes_per_pixel; ++b) {    
+                fwrite(&(image_data.data[i+b]), 1, 1, image_file);
+            }
         }
         fwrite(padding, 1, padding_size, image_file);
     }
@@ -235,10 +235,10 @@ size_t LoadBitmap(ArenaAllocator* asset_arena, const char* image_file_name, Imag
     //move to start of bitmap data
     fseek(image_file, byte_offset, SEEK_SET);
     //read the data
-    for (uint32_t h = 0; h < image_height; ++h) {
-        for (uint32_t w = 0; w < image_width; ++w) {
-            uint32_t i = ((h * image_width) + w) * bytes_per_pixel;
-            for (uint32_t k = 0; k < bytes_per_pixel; ++k) {
+    for (int h = (int)image_height - 1; h >= 0; --h) {
+        for (int w = 0; w < (int)image_width; ++w) {
+            int i = ((h * (int)image_width) + w) * (int)bytes_per_pixel;
+            for (int k = 0; k < (int)bytes_per_pixel; ++k) {
                 fread(&(image_data->data[i+k]), 1, 1, image_file);
             }
         }

@@ -9,6 +9,7 @@
 int SCREEN_H = 720;
 int SCREEN_W = 1280;
 
+
 // SECTION: main
 void Init(int* w, int* h) {
     *w = SCREEN_W;
@@ -16,13 +17,16 @@ void Init(int* w, int* h) {
 }
 
 
-TilemapData tilemap;
+Tileset tileset;
+Tilemap tilemap;
 const int TILE_SIZE = 16;
 
+
 void Awake(GameMemory* gm) {
-    LoadTilemap(&gm->asset_storage, "assets/tileset_overworld.bmp", TILE_SIZE, TILE_SIZE, &tilemap);
-    
+    LoadTileset(&gm->asset_storage, "assets/tileset_overworld.bmp", TILE_SIZE, TILE_SIZE, &tileset);
+    tilemap = LoadTilemap(levels/level1.lvl);
 }
+
 
 void Start(GameState* gs, KeyboardState* ks) {
 
@@ -33,10 +37,11 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     static int pixel_scale = 5;  
     for (int y = 0; y < SCREEN_H / TILE_SIZE; ++y) {
         for (int x = 0; x < SCREEN_W / TILE_SIZE; ++x) {
-            BlitBitmapScaled(graphics_buffer, &tilemap.tiles[9], x, y, pixel_scale, pixel_scale * TILE_SIZE, false); 
+            BlitBitmapScaled(graphics_buffer, &tileset.tiles[9], x, y, pixel_scale, pixel_scale * TILE_SIZE, false); 
         }
     } 
 }
+
 
 void UserFree() {
   

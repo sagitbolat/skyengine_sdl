@@ -5,19 +5,19 @@
 
 
 
-struct TilemapData {
+struct Tileset {
     uint16_t tile_width;
     uint16_t tile_height;
     uint16_t num_tiles;
     ImageData* tiles;
 };
 
-size_t LoadTilemap (
+size_t LoadTileset (
     ArenaAllocator* asset_arena, 
     const char* image_file_name, 
     int tile_width,
     int tile_height,
-    TilemapData* tilemap
+    Tileset* tilemap
 ) {
     
     printf("Working...");
@@ -53,15 +53,15 @@ size_t LoadTilemap (
     fseek(image_file, byte_offset, SEEK_SET);
     //read the data
     printf("Working...");
-    for (uint32_t h = 0; h < image_height; ++h) {
-        for (uint32_t w = 0; w < image_width; ++w) {
-            int tilemap_h = h / tile_height;
-            int tilemap_w = w / tile_width;
-            int tilemap_i = (tilemap_h * width_in_tiles) + tilemap_w;
-            int tile_h = h % tile_height;
-            int tile_w = w % tile_width;
-            int tile_i = ((tile_h * tile_width) + tile_w) * bytes_per_pixel;
-            for (uint32_t k = 0; k < bytes_per_pixel; ++k) {
+    for (int h = (int)image_height - 1; h >= 0; --h) {
+        for (int w = 0; w < (int)image_width; ++w) {
+            int tilemap_h = h / (int)tile_height;
+            int tilemap_w = w / (int)tile_width;
+            int tilemap_i = (tilemap_h * (int)width_in_tiles) + tilemap_w;
+            int tile_h = h % (int)tile_height;
+            int tile_w = w % (int)tile_width;
+            int tile_i = ((tile_h * (int)tile_width) + tile_w) * (int)bytes_per_pixel;
+            for (int k = 0; k < (int)bytes_per_pixel; ++k) {
                 fread(&(tilemap->tiles[tilemap_i].data[tile_i+k]), 1, 1, image_file);
             }
         }
@@ -75,7 +75,7 @@ size_t LoadTilemap (
 
 
 
-struct LevelTiledata {
+struct Tilemap {
     int width;
     int height;
     uint8_t* tile_data;
@@ -93,14 +93,14 @@ struct LevelTiledata {
  * 1001
  * 1111
  */
-LevelTiledata LoadLevel(const char* level_name) {
+Tilemap LoadTilemap(const char* level_name) {
     FILE *file = fopen(level_name, "r");
     uint8_t width = fgetc(file);
     uint8_t height = fgetc(file);
     
     fseek(file, 1, SEEK_CUR);
 
-    LevelTiledata level_data = {0};
+    Tilemap level_data = {0};
     level_data.tile_data = (uint8_t*)malloc(sizeof(uint8_t) * width * height);
     level_data.width = width;
     level_data.height = height;
