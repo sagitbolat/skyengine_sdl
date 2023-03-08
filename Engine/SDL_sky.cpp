@@ -21,6 +21,13 @@ Vector2Int GetMousePosition() {
     return pos;
 }
 
+// NOTE: Pass true to enable the mouse cursor and false to disable the mouse cursor.
+void SetCursorVisibility(bool toggle) {
+    if (toggle) SDL_ShowCursor(SDL_ENABLE);
+    else SDL_ShowCursor(SDL_DISABLE);
+}
+
+
 // TODO: remove from global space.
 SDL_Renderer* renderer;
 
@@ -109,6 +116,16 @@ int main(int argc, char* argv[]) {
                 case SDL_QUIT:
                     running = SDL_FALSE;
                     break;
+                case SDL_MOUSEBUTTONDOWN: {
+                    if (e.button.button == SDL_BUTTON_LEFT) keyboard_state.state.MBL = 1;
+                    if (e.button.button == SDL_BUTTON_RIGHT) keyboard_state.state.MBR = 1;
+                    if (e.button.button == SDL_BUTTON_MIDDLE) keyboard_state.state.MBM = 1;
+                } break;
+                case SDL_MOUSEBUTTONUP: {
+                    if (e.button.button == SDL_BUTTON_LEFT) keyboard_state.state.MBL = 0;
+                    if (e.button.button == SDL_BUTTON_RIGHT) keyboard_state.state.MBR = 0;
+                    if (e.button.button == SDL_BUTTON_MIDDLE) keyboard_state.state.MBM = 0;
+                } break;
                 case SDL_KEYDOWN: {
                     if (SDL_keyboard_state[SDL_SCANCODE_Q]) keyboard_state.state.Q = 1;    
                     if (SDL_keyboard_state[SDL_SCANCODE_W]) keyboard_state.state.W = 1;    

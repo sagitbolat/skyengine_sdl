@@ -40,6 +40,9 @@ struct GameBitmapBuffer {
 
 // NOTE: KeyboardState data
 struct KeyState {
+    unsigned int MBL : 1; // NOTE: left mouse button
+    unsigned int MBR : 1; // NOTE: right mouse button
+    unsigned int MBM : 1; // NOTE: middle mouse button
     unsigned int Q : 1;                   
     unsigned int W : 1;
     unsigned int E : 1; 
@@ -128,11 +131,11 @@ struct KeyState {
     unsigned int PAGEDOWN : 1;  
 };
 
+
 struct KeyboardState {
     KeyState state;
     KeyState prev_state;
 };
-// NOTE: input data for 4 controllers
 
 
 // SECTION: Memory. This is the persistant memory that

@@ -1,20 +1,23 @@
 #include "../Engine/SDL_sky.cpp"
 #include "../Engine/bmp.cpp"
 #include "../Engine/tilemaps.cpp"
+#include "../Engine/collisions.cpp"
 #include "stdio.h"
 
 
-int SCREEN_H = 720;
+int SCREEN_H = 727;
 int SCREEN_W = 1280;
 
 
 Tileset font = {0};
 Tileset ui_set = {0};
+Tileset cursor_set = {0};
 
 // SECTION: main
 void Init(int* w, int* h) {
     *w = SCREEN_W;
     *h = SCREEN_H;
+    SetCursorVisibility(false);
 }
 
 
@@ -23,6 +26,9 @@ void Init(int* w, int* h) {
 void Awake(GameMemory* gm) {
     LoadTileset(&gm->asset_storage, "assets/font_light.bmp", 8, 8, &font);
     LoadTileset(&gm->asset_storage, "assets/UI_tileset.bmp", 8, 8, &ui_set);
+    LoadTileset(&gm->asset_storage, "assets/cursor_tileset.bmp", 8, 8, &cursor_set);
+
+    
 }
 
 
@@ -63,18 +69,17 @@ void RenderTextButton(GameBitmapBuffer* gb, const char* text, int x, int y, int 
 }
 
 enum Tool {
-    paint = 0,
-    erase = 1,
-    fill = 2,
-    select = 3
+    PAINT_TOOL = 0,
+    ERASE_TOOL = 1,
+    FILL_TOOL = 2,
+    SELECTION_TOOL = 3
 };
 
-void Update(GameState* gs, KeyboardState* ks, int dt) {
-    Tool curr_tool = paint;
-    
-    //RenderTextButton(graphics_buffer, "save", 0,0,3);
-    int ui_scale = 5;
-    
+
+static Tool curr_tool = PAINT_TOOL;
+
+
+void DrawUI(KeyboardState* ks, Vector2Int mouse_pos, int ui_scale) {
     // SECTION: UI button 
     Rect paint_button = {0};
     paint_button.x = (float)(ui_scale);
@@ -105,7 +110,58 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     BlitBitmapScaled(graphics_buffer, &ui_set.tiles[15], 28 * ui_scale, 1 * ui_scale, ui_scale, 1, false);     
     
     
+    // SECTION: Check For Button Collision
+    if (ks->state.MBL && PointRectCollision(paint_button, mouse_pos)) {
+        curr_tool = PAINT_TOOL;  
+    } else if (ks->state.MBL && PointRectCollision(erase_button, mouse_pos)) {
+        curr_tool = ERASE_TOOL;  
+    } else if (ks->state.MBL && PointRectCollision(fill_button, mouse_pos)) {
+        curr_tool = FILL_TOOL;  
+    } else if (ks->state.MBL && PointRectCollision(selection_button, mouse_pos)) {
+        curr_tool = SELECTION_TOOL;  
+    }
+    
+    // SECTION: Display the correct cursor sprite:
+    if (curr_tool == PAINT_TOOL) {
+        BlitBitmapScaled(graphics_buffer, &cursor_set.tiles[0], mouse_pos.x, mouse_pos.y, 2, 1, true);     
+    } else if (curr_tool == ERASE_TOOL) {
+        BlitBitmapScaled(graphics_buffer, &cursor_set.tiles[1], mouse_pos.x, mouse_pos.y, 2, 1, true);     
+    } else if (curr_tool == FILL_TOOL) {
+        BlitBitmapScaled(graphics_buffer, &cursor_set.tiles[2], mouse_pos.x, mouse_pos.y, 2, 1, true);     
+    } else if (curr_tool == SELECTION_TOOL) {
+        BlitBitmapScaled(graphics_buffer, &cursor_set.tiles[3], mouse_pos.x, mouse_pos.y, 2, 1, true);     
+    }
+}
+
+void DrawTilemap(int ui_scale, int tilemap_width, int tilemap_height, Color background_color) {
+    RectInt tilemap_panel = {0};
+    tilemap_panel.x = ui_scale;
+    tilemap_panel.y = ui_scale * 10;
+    tilemap_panel.width = 1024; // NOTE: In pixels
+    tilemap_panel.height = SCREEN_H - (ui_scale * 11);
+
+    DrawRectangle(graphics_buffer, background_color, tilemap_panel);
+
+}
+
+void Update(GameState* gs, KeyboardState* ks, int dt) {
+    
+    Vector2Int mouse_pos = GetMousePosition(); 
      
+     
+    int ui_scale = 5;
+    
+    // SECTION: Display the tilemap Editor Area:
+    int tile_scale = 3;
+    Color background_color = {255, 255, 255, 255};
+    DrawTilemap(ui_scale, 32, 24, background_color);  
+
+     
+     
+    // SECTION: Draw the UI
+    DrawUI(ks, mouse_pos, ui_scale); 
+    
+
 
 }
 
