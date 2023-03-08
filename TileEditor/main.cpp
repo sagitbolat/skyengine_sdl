@@ -133,14 +133,31 @@ void DrawUI(KeyboardState* ks, Vector2Int mouse_pos, int ui_scale) {
     }
 }
 
-void DrawTilemap(int ui_scale, int tilemap_width, int tilemap_height, Color background_color) {
+void DrawTilemap(int ui_scale, int tilemap_width, int tilemap_height, Color background_color, int tile_scale, int tile_size) {
     RectInt tilemap_panel = {0};
     tilemap_panel.x = ui_scale;
     tilemap_panel.y = ui_scale * 10;
     tilemap_panel.width = 1024; // NOTE: In pixels
     tilemap_panel.height = SCREEN_H - (ui_scale * 11);
-
+    
+    // NOTE: Panel Background:
     DrawRectangle(graphics_buffer, background_color, tilemap_panel);
+    
+
+    for (int tile_y = 0; tile_y < tilemap_height; ++tile_y) {
+        int panel_y = tile_y * tile_scale * (tile_size + 1) + tile_scale; // NOTE: The x coordinate inside the panel
+        if (panel_y >= tilemap_panel.height) break;
+        for (int tile_x = 0; tile_x < tilemap_width; ++tile_x) {
+            int panel_x = tile_x * tile_scale * (tile_size + 1) + tile_scale; // NOTE: The x coordinate inside the panel
+            if (panel_x + tile_scale * (tile_size + 1) >= tilemap_panel.width) break;
+            
+            // TODO: Draw the actual tiles.
+            RectInt r = {panel_x + tilemap_panel.x, panel_y + tilemap_panel.y, tile_scale * tile_size, tile_scale * tile_size};
+            Color c = {255, 140, 140, 140};
+            DrawRectangle(graphics_buffer, c, r);
+        }
+    }
+
 
 }
 
@@ -152,9 +169,16 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     int ui_scale = 5;
     
     // SECTION: Display the tilemap Editor Area:
-    int tile_scale = 3;
+    static int tile_scale = 3;
+    
+    if (ks->state.Q && !ks->prev_state.Q && tile_scale < 5) {
+        ++tile_scale;
+    } else if (ks->state.E && !ks->prev_state.E && tile_scale > 0) {
+        --tile_scale;
+    }
+
     Color background_color = {255, 255, 255, 255};
-    DrawTilemap(ui_scale, 32, 24, background_color);  
+    DrawTilemap(ui_scale, 32, 24, background_color, tile_scale, 8);  
 
      
      
