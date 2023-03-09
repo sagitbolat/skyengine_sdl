@@ -267,6 +267,8 @@ int DrawPixel(GameBitmapBuffer* graphics_buffer, Color color, Vector2Int pos) {
     return 1;
 }
 
+
+// NOTE: Assumes that pos0 is less than or equal to pos1.
 void DrawLine(GameBitmapBuffer* graphics_buffer, Color color, Vector2Int pos0, Vector2Int pos1) {
     int x0 = pos0.x;
     int y0 = pos0.y;
@@ -277,6 +279,16 @@ void DrawLine(GameBitmapBuffer* graphics_buffer, Color color, Vector2Int pos0, V
     int dy = y1 - y0;
     int D = 2*dy - dx;
     int y = y0;
+    
+    if (dx == 0) {
+        for (int y = y0; y <= y1; ++y) {
+            Vector2Int pos = {0};
+            pos.x = x0;
+            pos.y = y;
+            DrawPixel(graphics_buffer, color, pos);
+        }
+        return;
+    }
 
     for (int x = x0; x < x1; ++x) {
         //uint8_t* pixel = (uint8_t*)graphics_buffer->memory + 

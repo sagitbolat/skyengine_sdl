@@ -8,10 +8,17 @@
 int SCREEN_H = 727;
 int SCREEN_W = 1280;
 
+int TILEMAP_WIDTH = 32;
+int TILEMAP_HEIGHT = 24;
+const char* TILESET_NAME = "assets/tileset.bmp";
+int TILE_WIDTH = 8;
+int TILE_HEIGHT = 8;
+
 
 Tileset font = {0};
 Tileset ui_set = {0};
 Tileset cursor_set = {0};
+
 
 // SECTION: main
 void Init(int* w, int* h) {
@@ -21,19 +28,19 @@ void Init(int* w, int* h) {
 }
 
 
-
+GameMemory* _gm;
 
 void Awake(GameMemory* gm) {
     LoadTileset(&gm->asset_storage, "assets/font_light.bmp", 8, 8, &font);
     LoadTileset(&gm->asset_storage, "assets/UI_tileset.bmp", 8, 8, &ui_set);
     LoadTileset(&gm->asset_storage, "assets/cursor_tileset.bmp", 8, 8, &cursor_set);
-
-    
+    _gm = gm;
 }
 
 
+
+
 void Start(GameState* gs, KeyboardState* ks) {
-    
 }
 
 void DisplayString(GameBitmapBuffer* graphics_buffer, const char* text, Tileset* tiles, int x, int y, int scale) {
@@ -133,7 +140,7 @@ void DrawUI(KeyboardState* ks, Vector2Int mouse_pos, int ui_scale) {
     }
 }
 
-void DrawTilemap(int ui_scale, int tilemap_width, int tilemap_height, Color background_color, int tile_scale, int tile_size) {
+void DrawTilemap(Tilemap* tilemap, Tileset* tileset, int ui_scale, int tilemap_width, int tilemap_height, Color background_color, int tile_scale, int tile_size, bool grid_enabled) {
     RectInt tilemap_panel = {0};
     tilemap_panel.x = ui_scale;
     tilemap_panel.y = ui_scale * 10;
@@ -145,46 +152,100 @@ void DrawTilemap(int ui_scale, int tilemap_width, int tilemap_height, Color back
     
 
     for (int tile_y = 0; tile_y < tilemap_height; ++tile_y) {
-        int panel_y = tile_y * tile_scale * (tile_size + 1) + tile_scale; // NOTE: The x coordinate inside the panel
+        int panel_y = tile_y * tile_scale * (tile_size) + tile_scale; // NOTE: The x coordinate inside the panel
         if (panel_y >= tilemap_panel.height) break;
         for (int tile_x = 0; tile_x < tilemap_width; ++tile_x) {
-            int panel_x = tile_x * tile_scale * (tile_size + 1) + tile_scale; // NOTE: The x coordinate inside the panel
+            int panel_x = tile_x * tile_scale * (tile_size) + tile_scale; // NOTE: The x coordinate inside the panel
             if (panel_x + tile_scale * (tile_size + 1) >= tilemap_panel.width) break;
             
             // TODO: Draw the actual tiles.
             RectInt r = {panel_x + tilemap_panel.x, panel_y + tilemap_panel.y, tile_scale * tile_size, tile_scale * tile_size};
-            Color c = {255, 140, 140, 140};
-            DrawRectangle(graphics_buffer, c, r);
+            int tile_i = tile_y * tilemap_width + tile_x;
+            BlitBitmapScaled(graphics_buffer, &tileset->tiles[tilemap->tile_data[tile_i]], r.x, r.y, tile_scale, 1, false); 
         }
     }
-
+    
+    // NOTE: Add grid lines
+    if (!grid_enabled) return;
+    for (int y = 0; y < tilemap_panel.height; y += tile_scale * tile_size) {
+        int panel_y = y + tilemap_panel.y + tile_scale;
+        Vector2Int v1 = {0};
+        v1.x = tilemap_panel.x;
+        v1.y = panel_y;
+        Vector2Int v2 = {0};
+        v2.x = tilemap_panel.x + tilemap_panel.width;
+        v2.y = panel_y;
+        DrawLine(graphics_buffer, background_color, v1, v2); 
+    }
+    for (int x = 0; x < tilemap_panel.width; x += tile_scale * tile_size) {
+        int panel_x = x + tilemap_panel.x + tile_scale;
+        Vector2Int v1 = {0};
+        v1.x = panel_x;
+        v1.y = tilemap_panel.y;
+        Vector2Int v2 = {0};
+        v2.x = panel_x;
+        v2.y = tilemap_panel.y + tilemap_panel.height;
+        DrawLine(graphics_buffer, background_color, v1, v2); 
+    }
 
 }
+
+
+enum Scene {
+    IMPORT_MENU = 0,
+    EDITOR = 1
+};
+
+
+static Scene curr_scene = IMPORT_MENU;
+
+
+Tileset tileset = {0};
+Tilemap tilemap = {0};
+
+
 
 void Update(GameState* gs, KeyboardState* ks, int dt) {
     
     Vector2Int mouse_pos = GetMousePosition(); 
      
-     
-    int ui_scale = 5;
-    
-    // SECTION: Display the tilemap Editor Area:
-    static int tile_scale = 3;
-    
-    if (ks->state.Q && !ks->prev_state.Q && tile_scale < 5) {
-        ++tile_scale;
-    } else if (ks->state.E && !ks->prev_state.E && tile_scale > 0) {
-        --tile_scale;
-    }
+    if (curr_scene == IMPORT_MENU) {
+        tilemap.width = TILEMAP_WIDTH;
+        tilemap.height = TILEMAP_HEIGHT;
+        tilemap.tile_data = (uint8_t*)malloc(sizeof(uint8_t) * tilemap.width * tilemap.height);
+        
 
-    Color background_color = {255, 255, 255, 255};
-    DrawTilemap(ui_scale, 32, 24, background_color, tile_scale, 8);  
+        for (int y = 0; y < tilemap.height; ++y) {
+            for (int x = 0; x < tilemap.width; ++x) {
+                tilemap.tile_data[y * tilemap.width + x] = 0;
+            }
+        }
+        
+        LoadTileset(&_gm->asset_storage, TILESET_NAME, TILE_WIDTH, TILE_HEIGHT, &tileset);
 
-     
-     
-    // SECTION: Draw the UI
-    DrawUI(ks, mouse_pos, ui_scale); 
+
+        curr_scene = EDITOR; 
+    } else {
     
+        int ui_scale = 5;
+        static int tile_scale = 3;
+        static bool grid_enabled = true; 
+        // SECTION: Display the tilemap Editor Area:
+        
+        if (ks->state.Q && !ks->prev_state.Q && tile_scale > 1) {
+            --tile_scale;
+        } else if (ks->state.E && !ks->prev_state.E && tile_scale < 10) {
+            ++tile_scale;
+        }
+
+        Color background_color = {255, 255, 255, 255};
+        DrawTilemap(&tilemap, &tileset, ui_scale, TILEMAP_WIDTH, TILEMAP_HEIGHT, background_color, tile_scale, 8, grid_enabled);  
+
+         
+         
+        // SECTION: Draw the UI
+        DrawUI(ks, mouse_pos, ui_scale);
+    } 
 
 
 }
