@@ -140,12 +140,7 @@ void DrawUI(KeyboardState* ks, Vector2Int mouse_pos, int ui_scale) {
     }
 }
 
-void DrawTilemap(Tilemap* tilemap, Tileset* tileset, int ui_scale, int tilemap_width, int tilemap_height, Color background_color, int tile_scale, int tile_size, bool grid_enabled) {
-    RectInt tilemap_panel = {0};
-    tilemap_panel.x = ui_scale;
-    tilemap_panel.y = ui_scale * 10;
-    tilemap_panel.width = 1024; // NOTE: In pixels
-    tilemap_panel.height = SCREEN_H - (ui_scale * 11);
+void DrawTilemap(Tilemap* tilemap, Tileset* tileset, RectInt tilemap_panel, int ui_scale, int tilemap_width, int tilemap_height, Color background_color, int tile_scale, int tile_size, bool grid_enabled) {
     
     // NOTE: Panel Background:
     DrawRectangle(graphics_buffer, background_color, tilemap_panel);
@@ -231,7 +226,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
         static int tile_scale = 3;
         static bool grid_enabled = true; 
         // SECTION: Display the tilemap Editor Area:
-        
+            
         if (ks->state.Q && !ks->prev_state.Q && tile_scale > 1) {
             --tile_scale;
         } else if (ks->state.E && !ks->prev_state.E && tile_scale < 10) {
@@ -239,12 +234,40 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
         }
 
         Color background_color = {255, 255, 255, 255};
-        DrawTilemap(&tilemap, &tileset, ui_scale, TILEMAP_WIDTH, TILEMAP_HEIGHT, background_color, tile_scale, 8, grid_enabled);  
+        RectInt tilemap_panel = {0};
+        tilemap_panel.x = ui_scale;
+        tilemap_panel.y = ui_scale * 10;
+        tilemap_panel.width = 1024; // NOTE: In pixels
+        tilemap_panel.height = SCREEN_H - (ui_scale * 11);
+        DrawTilemap(&tilemap, &tileset, tilemap_panel, ui_scale, TILEMAP_WIDTH, TILEMAP_HEIGHT, background_color, tile_scale, TILE_WIDTH, grid_enabled);  
 
          
-         
+
         // SECTION: Draw the UI
         DrawUI(ks, mouse_pos, ui_scale);
+
+
+        
+        // SECTION: Edit the tilemap:
+        static int curr_selected_tile = 1;
+        if (ks->state.MBL && curr_tool == PAINT_TOOL) {
+            int tile_x = (mouse_pos.x - tilemap_panel.x - tile_scale)/(tile_scale*TILE_WIDTH);
+            int tile_y = (mouse_pos.y - tilemap_panel.y - tile_scale)/(tile_scale*TILE_HEIGHT);
+            
+            tile_x = (tile_x >= TILEMAP_WIDTH) ? -1 : tile_x; 
+            tile_y = (tile_y >= TILEMAP_HEIGHT) ? -1 : tile_y; 
+            int tile_i = (tile_y * TILEMAP_WIDTH) + tile_x;
+            //NOTE: FOR DEBUGGING ONLY
+            //char coords[124];
+            //snprintf(coords, 124, "{%d, %d}, %d", tile_x, tile_y, tile_i);
+            //DisplayString(graphics_buffer, coords, &font, 800, 680, 5);
+
+            if (tile_x >= 0 && tile_y >= 0) {
+                // NOTE: Change that tile to the current selected tile type:
+                tilemap.tile_data[tile_i] = curr_selected_tile;
+            }
+        }
+        
     } 
 
 
