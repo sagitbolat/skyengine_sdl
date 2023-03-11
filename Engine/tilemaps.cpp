@@ -10,6 +10,7 @@ struct Tileset {
     uint16_t tile_height;
     uint16_t num_tiles;
     ImageData* tiles;
+    uint16_t width_in_tiles; // NOTE: Represents the width of the full tileset in tiles.
 };
 
 size_t LoadTileset (
@@ -39,7 +40,8 @@ size_t LoadTileset (
     tilemap->tile_height = tile_height;
     tilemap->num_tiles = num_tiles; 
     tilemap->tiles = (ImageData*)(ArenaAllocateAsset(asset_arena, sizeof(ImageData) * num_tiles));
-    
+    tilemap->width_in_tiles = width_in_tiles;    
+
     printf("Working...");
     for (int i = 0; i < num_tiles; ++i) {
         tilemap->tiles[i].width = tile_width;

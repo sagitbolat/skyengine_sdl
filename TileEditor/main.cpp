@@ -8,11 +8,12 @@
 int SCREEN_H = 727;
 int SCREEN_W = 1280;
 
-int TILEMAP_WIDTH = 32;
-int TILEMAP_HEIGHT = 24;
+int TILEMAP_WIDTH = 16;
+int TILEMAP_HEIGHT = 12;
 const char* TILESET_NAME = "assets/tileset.bmp";
 int TILE_WIDTH = 8;
 int TILE_HEIGHT = 8;
+int DEFAULT_TILE = 3;    
 
 
 Tileset font = {0};
@@ -148,7 +149,7 @@ void DrawTilemap(Tilemap* tilemap, Tileset* tileset, RectInt tilemap_panel, int 
 
     for (int tile_y = 0; tile_y < tilemap_height; ++tile_y) {
         int panel_y = tile_y * tile_scale * (tile_size) + tile_scale; // NOTE: The x coordinate inside the panel
-        if (panel_y >= tilemap_panel.height) break;
+        if (panel_y + tile_scale * (tile_size + 1) >= tilemap_panel.height) break;
         for (int tile_x = 0; tile_x < tilemap_width; ++tile_x) {
             int panel_x = tile_x * tile_scale * (tile_size) + tile_scale; // NOTE: The x coordinate inside the panel
             if (panel_x + tile_scale * (tile_size + 1) >= tilemap_panel.width) break;
@@ -185,6 +186,53 @@ void DrawTilemap(Tilemap* tilemap, Tileset* tileset, RectInt tilemap_panel, int 
 
 }
 
+// Returns the width of the palette window in tiles
+int DrawTileset(Tileset* tileset, RectInt tileset_panel, int ui_scale, int tile_scale, Color background_color, int tile_size) {
+    // NOTE: Panel Background:
+    DrawRectangle(graphics_buffer, background_color, tileset_panel);
+    int panel_tile_width = tileset_panel.width / (tile_size * tile_scale);        // NOTE: The width of the panel space in the unit of tiles
+    if (panel_tile_width > tileset->width_in_tiles) {
+        panel_tile_width = tileset->width_in_tiles;
+    }
+    int panel_tile_height = tileset->num_tiles / panel_tile_width;
+    
+    for (int tile_y = 0; tile_y < panel_tile_height; ++tile_y) {
+        int panel_y = tile_y * tile_size * tile_scale; // NOTE: The y coordinate inside the panel
+        for (int tile_x = 0; tile_x < panel_tile_width; ++tile_x) {
+            int panel_x = tile_x * tile_size * tile_scale; // NOTE: The x coordinate inside the panel
+            int tile_i = tile_y * panel_tile_width + tile_x;
+            Vector2Int v = {panel_x + tileset_panel.x, panel_y + tileset_panel.y};
+            BlitBitmapScaled(graphics_buffer, &tileset->tiles[tile_i], v.x, v.y, tile_scale, 1, false); 
+        }
+    }
+    
+    // NOTE: Add grid lines
+    ///*
+    for (int y = 0; y < tileset_panel.height; y += tile_scale * tile_size) {
+        int panel_y = y + tileset_panel.y;
+        Vector2Int v1 = {0};
+        v1.x = tileset_panel.x;
+        v1.y = panel_y;
+        Vector2Int v2 = {0};
+        v2.x = tileset_panel.x + tileset_panel.width;
+        v2.y = panel_y;
+        DrawLine(graphics_buffer, background_color, v1, v2); 
+    }
+    for (int x = 0; x < tileset_panel.width; x += tile_scale * tile_size) {
+        int panel_x = x + tileset_panel.x;
+        Vector2Int v1 = {0};
+        v1.x = panel_x;
+        v1.y = tileset_panel.y;
+        Vector2Int v2 = {0};
+        v2.x = panel_x;
+        v2.y = tileset_panel.y + tileset_panel.height - tile_scale;
+        DrawLine(graphics_buffer, background_color, v1, v2); 
+    }
+    //*/
+    
+    return panel_tile_width; 
+}
+
 
 enum Scene {
     IMPORT_MENU = 0,
@@ -193,7 +241,7 @@ enum Scene {
 
 
 static Scene curr_scene = IMPORT_MENU;
-
+static bool grid_enable = true;
 
 Tileset tileset = {0};
 Tilemap tilemap = {0};
@@ -203,7 +251,8 @@ Tilemap tilemap = {0};
 void Update(GameState* gs, KeyboardState* ks, int dt) {
     
     Vector2Int mouse_pos = GetMousePosition(); 
-     
+
+
     if (curr_scene == IMPORT_MENU) {
         tilemap.width = TILEMAP_WIDTH;
         tilemap.height = TILEMAP_HEIGHT;
@@ -212,7 +261,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
 
         for (int y = 0; y < tilemap.height; ++y) {
             for (int x = 0; x < tilemap.width; ++x) {
-                tilemap.tile_data[y * tilemap.width + x] = 0;
+                tilemap.tile_data[y * tilemap.width + x] = DEFAULT_TILE;
             }
         }
         
@@ -224,32 +273,67 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     
         int ui_scale = 5;
         static int tile_scale = 3;
-        static bool grid_enabled = true; 
-        // SECTION: Display the tilemap Editor Area:
-            
         if (ks->state.Q && !ks->prev_state.Q && tile_scale > 1) {
             --tile_scale;
         } else if (ks->state.E && !ks->prev_state.E && tile_scale < 10) {
             ++tile_scale;
         }
 
+        // SECTION: Display the tilemap Editor Area:
         Color background_color = {255, 255, 255, 255};
         RectInt tilemap_panel = {0};
         tilemap_panel.x = ui_scale;
         tilemap_panel.y = ui_scale * 10;
         tilemap_panel.width = 1024; // NOTE: In pixels
         tilemap_panel.height = SCREEN_H - (ui_scale * 11);
-        DrawTilemap(&tilemap, &tileset, tilemap_panel, ui_scale, TILEMAP_WIDTH, TILEMAP_HEIGHT, background_color, tile_scale, TILE_WIDTH, grid_enabled);  
+        DrawTilemap(&tilemap, &tileset, tilemap_panel, ui_scale, TILEMAP_WIDTH, TILEMAP_HEIGHT, background_color, tile_scale, TILE_WIDTH, grid_enable);  
+        
 
-         
+        // SECTION: Display the tileset palette area:
+        int palette_scale = 3;
+        RectInt tileset_panel = {0};
+        tileset_panel.x = tilemap_panel.x + tilemap_panel.width + ui_scale;
+        tileset_panel.y = ui_scale;
+        tileset_panel.width = SCREEN_W - ui_scale - tileset_panel.x; // NOTE: In pixels
+        tileset_panel.height = SCREEN_H - ui_scale;
+        int palette_width = DrawTileset(&tileset, tileset_panel, ui_scale, palette_scale, background_color, TILE_WIDTH);
 
         // SECTION: Draw the UI
         DrawUI(ks, mouse_pos, ui_scale);
 
-
         
+        // SECTION: Grid Controls 
+        if (ks->state.G && !ks->prev_state.G) {
+            grid_enable = !grid_enable;
+        }
+
+
+        // SECTION: Select a tile. 
+        static int curr_selected_tile = 3;
+        if (ks->state.MBL && curr_tool == PAINT_TOOL) {
+            int tile_x = (mouse_pos.x - tileset_panel.x - palette_scale)/(palette_scale*TILE_WIDTH);
+            int tile_y = (mouse_pos.y - tileset_panel.y - palette_scale)/(palette_scale*TILE_HEIGHT);
+            
+            int palette_height = tileset.num_tiles / palette_width;
+
+            tile_x = (tile_x >= palette_width)? -1 : tile_x;
+            tile_y = (tile_y >= palette_height)? -1 : tile_y;
+
+            int tile_i = (tile_y * palette_width) + tile_x;
+            //NOTE: FOR DEBUGGING ONLY
+            //char coords[124];
+            //snprintf(coords, 124, "{%d, %d}, %d", tile_x, tile_y, tile_i);
+            //DisplayString(graphics_buffer, coords, &font, 800, 680, 5);
+
+            if (tile_x >= 0 && tile_y >= 0) {
+                // NOTE: Change that tile to the current selected tile type:
+                curr_selected_tile = tile_i;
+            }
+        }
+
+
+
         // SECTION: Edit the tilemap:
-        static int curr_selected_tile = 1;
         if (ks->state.MBL && curr_tool == PAINT_TOOL) {
             int tile_x = (mouse_pos.x - tilemap_panel.x - tile_scale)/(tile_scale*TILE_WIDTH);
             int tile_y = (mouse_pos.y - tilemap_panel.y - tile_scale)/(tile_scale*TILE_HEIGHT);
@@ -269,7 +353,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
         }
         
     } 
-
+    
 
 }
 
