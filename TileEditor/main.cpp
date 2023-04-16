@@ -8,6 +8,7 @@
 int SCREEN_H = 727;
 int SCREEN_W = 1280;
 
+const char* TILEMAP_FILE_NAME = "level.lvl";
 int TILEMAP_WIDTH = 16;
 int TILEMAP_HEIGHT = 12;
 const char* TILESET_NAME = "assets/tileset.bmp";
@@ -53,7 +54,7 @@ void DisplayString(GameBitmapBuffer* graphics_buffer, const char* text, Tileset*
     }
 }
 
-void RenderTextButton(GameBitmapBuffer* gb, const char* text, int x, int y, int scale) {
+RectInt RenderTextButton(GameBitmapBuffer* gb, const char* text, int x, int y, int scale) {
     const int BORDER_WIDTH = 2;
     
     x += BORDER_WIDTH*scale;
@@ -74,6 +75,9 @@ void RenderTextButton(GameBitmapBuffer* gb, const char* text, int x, int y, int 
     BlitBitmapScaled(gb, &ui_set.tiles[10], x + (scale * ui_set.tile_width * length), y, scale, 1, false);
     BlitBitmapScaled(gb, &ui_set.tiles[14], x + (scale * ui_set.tile_width * length), y + (scale * ui_set.tile_width), scale, 1, false);
     DisplayString(gb, text, &font, x, y, scale);
+    
+    RectInt r = {x, y, (scale * ui_set.tile_width * length) + (2 * scale * 2), (scale * ui_set.tile_width) + (2 * scale * 2)};
+    return r;
 }
 
 enum Tool {
@@ -157,7 +161,10 @@ void DrawTilemap(Tilemap* tilemap, Tileset* tileset, RectInt tilemap_panel, int 
             // TODO: Draw the actual tiles.
             RectInt r = {panel_x + tilemap_panel.x, panel_y + tilemap_panel.y, tile_scale * tile_size, tile_scale * tile_size};
             int tile_i = tile_y * tilemap_width + tile_x;
-            BlitBitmapScaled(graphics_buffer, &tileset->tiles[tilemap->tile_data[tile_i]], r.x, r.y, tile_scale, 1, false); 
+            int tile_type = tilemap->tile_data[tile_i];
+            if (tile_type == 0) continue;
+            else --tile_type;
+            BlitBitmapScaled(graphics_buffer, &tileset->tiles[tile_type], r.x, r.y, tile_scale, 1, false); 
         }
     }
     
@@ -247,6 +254,19 @@ Tileset tileset = {0};
 Tilemap tilemap = {0};
 
 
+void FillToolAtCoordinate(int tile_x, int tile_y, int target_tile, int fill_tile_type) {
+    int tile_i = (tile_y * TILEMAP_WIDTH) + tile_x;
+    if (tile_i < 0 || tile_i >= (TILEMAP_WIDTH * TILEMAP_HEIGHT)) return;
+    if (tilemap.tile_data[tile_i] != target_tile) return;
+
+
+    tilemap.tile_data[tile_i] = fill_tile_type;
+    FillToolAtCoordinate(tile_x, tile_y+1, target_tile, fill_tile_type);
+    FillToolAtCoordinate(tile_x, tile_y-1, target_tile, fill_tile_type);
+    FillToolAtCoordinate(tile_x+1, tile_y, target_tile, fill_tile_type);
+    FillToolAtCoordinate(tile_x-1, tile_y, target_tile, fill_tile_type);
+
+} 
 
 void Update(GameState* gs, KeyboardState* ks, int dt) {
     
@@ -298,6 +318,14 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
         tileset_panel.height = SCREEN_H - ui_scale;
         int palette_width = DrawTileset(&tileset, tileset_panel, ui_scale, palette_scale, background_color, TILE_WIDTH);
 
+        
+        
+        // SECTION: Display Save Button
+        RectInt save_button_collider = RenderTextButton(graphics_buffer, "SAVE", ui_scale * 8 * 4 + ui_scale * 5, 0, ui_scale - 1);
+        
+        
+        
+        
         // SECTION: Draw the UI
         DrawUI(ks, mouse_pos, ui_scale);
 
@@ -310,7 +338,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
 
         // SECTION: Select a tile. 
         static int curr_selected_tile = 3;
-        if (ks->state.MBL && curr_tool == PAINT_TOOL) {
+        if (ks->state.MBL) {
             int tile_x = (mouse_pos.x - tileset_panel.x - palette_scale)/(palette_scale*TILE_WIDTH);
             int tile_y = (mouse_pos.y - tileset_panel.y - palette_scale)/(palette_scale*TILE_HEIGHT);
             
@@ -334,12 +362,13 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
 
 
         // SECTION: Edit the tilemap:
+        // NOTE: Paint Tool
         if (ks->state.MBL && curr_tool == PAINT_TOOL) {
             int tile_x = (mouse_pos.x - tilemap_panel.x - tile_scale)/(tile_scale*TILE_WIDTH);
             int tile_y = (mouse_pos.y - tilemap_panel.y - tile_scale)/(tile_scale*TILE_HEIGHT);
             
-            tile_x = (tile_x >= TILEMAP_WIDTH) ? -1 : tile_x; 
-            tile_y = (tile_y >= TILEMAP_HEIGHT) ? -1 : tile_y; 
+            tile_x = (tile_x >= TILEMAP_WIDTH || mouse_pos.x - tilemap_panel.x < 0) ? -1 : tile_x; 
+            tile_y = (tile_y >= TILEMAP_HEIGHT || mouse_pos.y - tilemap_panel.y < 0)  ? -1 : tile_y; 
             int tile_i = (tile_y * TILEMAP_WIDTH) + tile_x;
             //NOTE: FOR DEBUGGING ONLY
             //char coords[124];
@@ -348,8 +377,68 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
 
             if (tile_x >= 0 && tile_y >= 0) {
                 // NOTE: Change that tile to the current selected tile type:
-                tilemap.tile_data[tile_i] = curr_selected_tile;
+                tilemap.tile_data[tile_i] = curr_selected_tile + 1;
             }
+        }
+        // NOTE: Erase Tool
+        if (ks->state.MBL && curr_tool == ERASE_TOOL) {
+            int tile_x = (mouse_pos.x - tilemap_panel.x - tile_scale)/(tile_scale*TILE_WIDTH);
+            int tile_y = (mouse_pos.y - tilemap_panel.y - tile_scale)/(tile_scale*TILE_HEIGHT);
+            
+            tile_x = (tile_x >= TILEMAP_WIDTH || mouse_pos.x - tilemap_panel.x < 0) ? -1 : tile_x; 
+            tile_y = (tile_y >= TILEMAP_HEIGHT || mouse_pos.y - tilemap_panel.y < 0)  ? -1 : tile_y; 
+            int tile_i = (tile_y * TILEMAP_WIDTH) + tile_x;
+            
+            //char coords[124];
+            //snprintf(coords, 124, "{%d, %d}, %d", tile_x, tile_y, tile_i);
+            //DisplayString(graphics_buffer, coords, &font, 800, 680, 5);
+
+            if (tile_x >= 0 && tile_y >= 0) {
+                // NOTE: Change that tile to the empty tile (0 value):
+                tilemap.tile_data[tile_i] = 0;
+            }
+        }
+        // NOTE: Fill Tool
+        if (ks->state.MBL && curr_tool == FILL_TOOL) {
+            int tile_x = (mouse_pos.x - tilemap_panel.x - tile_scale)/(tile_scale*TILE_WIDTH);
+            int tile_y = (mouse_pos.y - tilemap_panel.y - tile_scale)/(tile_scale*TILE_HEIGHT);
+            
+            tile_x = (tile_x >= TILEMAP_WIDTH || mouse_pos.x - tilemap_panel.x < 0) ? -1 : tile_x; 
+            tile_y = (tile_y >= TILEMAP_HEIGHT || mouse_pos.y - tilemap_panel.y < 0)  ? -1 : tile_y; 
+            int tile_i = (tile_y * TILEMAP_WIDTH) + tile_x;
+            
+            //char coords[124];
+            //snprintf(coords, 124, "{%d, %d}, %d", tile_x, tile_y, tile_i);
+            //DisplayString(graphics_buffer, coords, &font, 800, 680, 5);
+
+            if (tile_x >= 0 && tile_y >= 0) {
+                // NOTE: Change that tile to the empty tile (0 value):
+                int target_tile = tilemap.tile_data[tile_i];
+                if (target_tile != curr_selected_tile + 1) {
+                    FillToolAtCoordinate(tile_x, tile_y, target_tile, curr_selected_tile + 1); 
+                }
+            }
+        }
+
+
+         
+        // SECTION: Do tilemap saving if save button is pressed.
+        if (ks->state.MBL && !ks->prev_state.MBL && PointRectCollision(save_button_collider, mouse_pos)) {
+            // TODO: Export the current tilemap
+            FILE* file = fopen(TILEMAP_FILE_NAME, "w");
+            uint32_t width = (uint32_t)TILEMAP_WIDTH;
+            uint32_t height = (uint32_t)TILEMAP_HEIGHT;
+            fwrite(&width, 4, 1, file);
+            fwrite(&height, 4, 1, file);
+            
+            for (int y = 0; y < tilemap.height; ++y) {
+                for (int x = 0; x < tilemap.width; ++x) {
+                    int i = (y * tilemap.width) + x;
+                    fwrite(&(tilemap.tile_data[i]), 1, 1, file); 
+                }
+            }
+            printf("Saved tilemap");
+            fclose(file); 
         }
         
     } 

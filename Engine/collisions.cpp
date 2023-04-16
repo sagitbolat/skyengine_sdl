@@ -24,6 +24,13 @@ bool PointRectCollision(Rect r, Vector2Int v) {
     vf.y = (float)(v.y);
     return PointRectCollision(r, vf);
 }
+bool PointRectCollision(RectInt r, Vector2Int v) {
+    Vector2 vf = {0};
+    vf.x = (float)(v.x);
+    vf.y = (float)(v.y);
+    Rect rf = {(float)r.x, (float)r.y, (float)r.width, (float)r.height};
+    return PointRectCollision(rf, vf);
+}
 
 // SECTION: Point to Circle
 bool PointCircleCollision(Circle c, Vector2 v) {

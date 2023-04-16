@@ -97,19 +97,18 @@ struct Tilemap {
  */
 Tilemap LoadTilemap(const char* level_name) {
     FILE *file = fopen(level_name, "r");
-    uint8_t width = fgetc(file);
-    uint8_t height = fgetc(file);
-    
-    fseek(file, 1, SEEK_CUR);
+    uint32_t width;
+    fread(&width, 4, 1, file);
+    uint32_t height;
+    fread(&height, 4, 1, file);
 
     Tilemap level_data = {0};
-    level_data.tile_data = (uint8_t*)malloc(sizeof(uint8_t) * width * height);
-    level_data.width = width;
-    level_data.height = height;
+    level_data.tile_data = (uint8_t*)malloc(sizeof(uint8_t) * (int)width * (int)height);
+    level_data.width = (int)width;
+    level_data.height = (int)height;
 
-    for (int h = 0; h < height; ++h) {
-        fread(&(level_data.tile_data[h * width]), 1, width, file);
-        fseek(file, 1, SEEK_CUR);
+    for (int h = 0; h < (int)height; ++h) {
+        fread(&(level_data.tile_data[h * (int)width]), 1, (int)width, file);
     }
     fclose(file);
     return level_data;
