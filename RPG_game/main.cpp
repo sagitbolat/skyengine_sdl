@@ -17,15 +17,15 @@ void Init(int* w, int* h) {
 }
 
 
-Tileset tileset;
+Tileset tileset = {0};
 Tilemap tilemap;
-int TILE_SIZE = 8;
+uint16_t TILE_SIZE = 8;
 
 
 void Awake(GameMemory* gm) {
     LoadTileset(&gm->asset_storage, "assets/tileset.bmp", TILE_SIZE, TILE_SIZE, &tileset);
-    tilemap = LoadTilemap("levels/level.lvl");
-    TILE_SIZE = tileset.tile_width;
+    //tilemap = LoadTilemap("levels/level.lvl");
+    //TILE_SIZE = tileset.tile_width;
 }
 
 
@@ -35,6 +35,8 @@ void Start(GameState* gs, KeyboardState* ks) {
 
 
 void Update(GameState* gs, KeyboardState* ks, int dt) {
+    printf("RPGTEST1\n");
+    /*
     static int pixel_scale = 5;  
     for (int y = 0; y < tilemap.height; ++y) {
         for (int x = 0; x < tilemap.width; ++x) {
@@ -44,7 +46,8 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
             else --tile_type;
             BlitBitmapScaled(graphics_buffer, &tileset.tiles[tile_type], x, y, pixel_scale, pixel_scale * TILE_SIZE, false); 
         }
-    } 
+    }
+    */ 
 }
 
 

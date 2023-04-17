@@ -272,7 +272,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     
     Vector2Int mouse_pos = GetMousePosition(); 
 
-
+    printf("TileEditor 1...\n");
     if (curr_scene == IMPORT_MENU) {
         tilemap.width = TILEMAP_WIDTH;
         tilemap.height = TILEMAP_HEIGHT;

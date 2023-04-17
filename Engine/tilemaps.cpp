@@ -16,12 +16,12 @@ struct Tileset {
 size_t LoadTileset (
     ArenaAllocator* asset_arena, 
     const char* image_file_name, 
-    int tile_width,
-    int tile_height,
-    Tileset* tilemap
+    uint16_t tile_width,
+    uint16_t tile_height,
+    Tileset* tileset
 ) {
     
-    printf("Working...");
+    printf("LoadTileset Working BP 1\n");
 
     FILE* image_file = fopen(image_file_name, "rb");
     uint32_t image_width = 0;
@@ -31,47 +31,50 @@ size_t LoadTileset (
     uint32_t padding_size = 0; // NOTE: The padding at the end of each line of the bmp data. 
     size_t image_size = ImportBMP(image_file_name, image_file, &image_width, &image_height, &bytes_per_pixel, &byte_offset, &padding_size);
     
-    printf("Working...");
+    printf("LoadTileset Working BP 2\n");
     int height_in_tiles = image_height / tile_height;
     int width_in_tiles = image_width / tile_width;
-    int num_tiles = width_in_tiles * height_in_tiles;
+    uint16_t num_tiles = width_in_tiles * height_in_tiles;
     
-    tilemap->tile_width = tile_width;
-    tilemap->tile_height = tile_height;
-    tilemap->num_tiles = num_tiles; 
-    tilemap->tiles = (ImageData*)(ArenaAllocateAsset(asset_arena, sizeof(ImageData) * num_tiles));
-    tilemap->width_in_tiles = width_in_tiles;    
+    tileset->tile_width = tile_width;
+    tileset->tile_height = tile_height;
+    tileset->num_tiles = num_tiles; 
+    tileset->tiles = (ImageData*)(ArenaAllocateAsset(asset_arena, sizeof(ImageData) * num_tiles));
+    tileset->width_in_tiles = (uint16_t)width_in_tiles;    
 
-    printf("Working...");
+    printf("LoadTileset Working BP 3\n");
+    printf("num_tiles: %d\n", num_tiles);
+    printf("tile_width: %d\n", tile_width);
     for (int i = 0; i < num_tiles; ++i) {
-        tilemap->tiles[i].width = tile_width;
-        tilemap->tiles[i].height = tile_height;
-        tilemap->tiles[i].bytes_per_pixel = bytes_per_pixel;
-        tilemap->tiles[i].data = (uint8_t*)(ArenaAllocateAsset(asset_arena, tile_height * tile_width * bytes_per_pixel));
+        printf("i: %d\n", i);
+        tileset->tiles[i].width = tile_width;
+        tileset->tiles[i].height = tile_height;
+        tileset->tiles[i].bytes_per_pixel = (uint8_t)bytes_per_pixel;
+        tileset->tiles[i].data = (uint8_t*)(ArenaAllocateAsset(asset_arena, tile_height * tile_width * bytes_per_pixel));
     }    
     
-    printf("Working...");
+    printf("LoadTileset Working BP 4\n");
     //move to start of bitmap data
     fseek(image_file, byte_offset, SEEK_SET);
     //read the data
-    printf("Working...");
+    printf("LoadTileset Working BP 5\n");
     for (int h = (int)image_height - 1; h >= 0; --h) {
         for (int w = 0; w < (int)image_width; ++w) {
-            int tilemap_h = h / (int)tile_height;
-            int tilemap_w = w / (int)tile_width;
-            int tilemap_i = (tilemap_h * (int)width_in_tiles) + tilemap_w;
+            int tileset_h = h / (int)tile_height;
+            int tileset_w = w / (int)tile_width;
+            int tileset_i = (tileset_h * (int)width_in_tiles) + tileset_w;
             int tile_h = h % (int)tile_height;
             int tile_w = w % (int)tile_width;
             int tile_i = ((tile_h * (int)tile_width) + tile_w) * (int)bytes_per_pixel;
             for (int k = 0; k < (int)bytes_per_pixel; ++k) {
-                fread(&(tilemap->tiles[tilemap_i].data[tile_i+k]), 1, 1, image_file);
+                fread(&(tileset->tiles[tileset_i].data[tile_i+k]), 1, 1, image_file);
             }
         }
         if (padding_size > 0) fseek(image_file, padding_size, SEEK_CUR);         
     }
     fclose(image_file);
     
-    printf("Working...");
+    printf("LoadTileset Working BP 6\n");
     return image_size;
 }
 
