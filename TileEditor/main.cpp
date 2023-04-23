@@ -11,11 +11,11 @@ int SCREEN_W = 1280;
 const char* TILEMAP_FILE_NAME = "level.lvl";
 int TILEMAP_WIDTH = 16;
 int TILEMAP_HEIGHT = 12;
-const char* TILESET_NAME = "assets/tileset.bmp";
-int TILE_WIDTH = 8;
-int TILE_HEIGHT = 8;
-int DEFAULT_TILE = 3;    
-
+const char* TILESET_NAME = "assets/tileset1.bmp";
+int TILE_WIDTH = 16;
+int TILE_HEIGHT = 16;
+int DEFAULT_TILE = 1;    
+int NUMBER_OF_LAYERS = 3; // NOTE: Includes collider layer, so 3 sprite layers and 1 collider level = 4 total layers
 
 Tileset font = {0};
 Tileset ui_set = {0};
@@ -84,7 +84,7 @@ enum Tool {
     PAINT_TOOL = 0,
     ERASE_TOOL = 1,
     FILL_TOOL = 2,
-    SELECTION_TOOL = 3
+    COLLIDER_TOOL = 3
 };
 
 
@@ -92,6 +92,7 @@ static Tool curr_tool = PAINT_TOOL;
 
 
 void DrawUI(KeyboardState* ks, Vector2Int mouse_pos, int ui_scale) {
+    
     // SECTION: UI button 
     Rect paint_button = {0};
     paint_button.x = (float)(ui_scale);
@@ -108,11 +109,11 @@ void DrawUI(KeyboardState* ks, Vector2Int mouse_pos, int ui_scale) {
     fill_button.y = (float)(ui_scale);
     fill_button.width = (float)(8 * ui_scale);
     fill_button.height = (float)(8 * ui_scale);
-    Rect selection_button = {0};
-    selection_button.x = (float)(28 * ui_scale);
-    selection_button.y = (float)(ui_scale);
-    selection_button.width = (float)(8 * ui_scale);
-    selection_button.height = (float)(8 * ui_scale);
+    Rect collider_button = {0};
+    collider_button.x = (float)(28 * ui_scale);
+    collider_button.y = (float)(ui_scale);
+    collider_button.width = (float)(8 * ui_scale);
+    collider_button.height = (float)(8 * ui_scale);
 
 
     // SECTION: Draw The UI Buttons
@@ -129,8 +130,8 @@ void DrawUI(KeyboardState* ks, Vector2Int mouse_pos, int ui_scale) {
         curr_tool = ERASE_TOOL;  
     } else if (ks->state.MBL && PointRectCollision(fill_button, mouse_pos)) {
         curr_tool = FILL_TOOL;  
-    } else if (ks->state.MBL && PointRectCollision(selection_button, mouse_pos)) {
-        curr_tool = SELECTION_TOOL;  
+    } else if (ks->state.MBL && PointRectCollision(collider_button, mouse_pos)) {
+        curr_tool = COLLIDER_TOOL;  
     }
     
     // SECTION: Display the correct cursor sprite:
@@ -140,31 +141,63 @@ void DrawUI(KeyboardState* ks, Vector2Int mouse_pos, int ui_scale) {
         BlitBitmapScaled(graphics_buffer, &cursor_set.tiles[1], mouse_pos.x, mouse_pos.y, 2, 1, true);     
     } else if (curr_tool == FILL_TOOL) {
         BlitBitmapScaled(graphics_buffer, &cursor_set.tiles[2], mouse_pos.x, mouse_pos.y, 2, 1, true);     
-    } else if (curr_tool == SELECTION_TOOL) {
+    } else if (curr_tool == COLLIDER_TOOL) {
         BlitBitmapScaled(graphics_buffer, &cursor_set.tiles[3], mouse_pos.x, mouse_pos.y, 2, 1, true);     
     }
 }
 
-void DrawTilemap(Tilemap* tilemap, Tileset* tileset, RectInt tilemap_panel, int ui_scale, int tilemap_width, int tilemap_height, Color background_color, int tile_scale, int tile_size, bool grid_enabled) {
-    
-    // NOTE: Panel Background:
-    DrawRectangle(graphics_buffer, background_color, tilemap_panel);
-    
 
-    for (int tile_y = 0; tile_y < tilemap_height; ++tile_y) {
-        int panel_y = tile_y * tile_scale * (tile_size) + tile_scale; // NOTE: The x coordinate inside the panel
+void DrawColliders(Tilemap* tilemap, RectInt tilemap_panel, int x_offset, int y_offset, int tile_scale, int tile_size) {
+    int tilemap_height = tilemap->height;
+    int tilemap_width = tilemap->width;
+    
+    for (int tile_y = y_offset; tile_y < tilemap_height; ++tile_y) {
+        int panel_y = (tile_y - y_offset) * tile_scale * (tile_size) + tile_scale; // NOTE: The x coordinate inside the panel
         if (panel_y + tile_scale * (tile_size + 1) >= tilemap_panel.height) break;
-        for (int tile_x = 0; tile_x < tilemap_width; ++tile_x) {
-            int panel_x = tile_x * tile_scale * (tile_size) + tile_scale; // NOTE: The x coordinate inside the panel
+        for (int tile_x = x_offset; tile_x < tilemap_width; ++tile_x) {
+            int panel_x = (tile_x - x_offset) * tile_scale * (tile_size) + tile_scale; // NOTE: The x coordinate inside the panel
             if (panel_x + tile_scale * (tile_size + 1) >= tilemap_panel.width) break;
             
             // TODO: Draw the actual tiles.
             RectInt r = {panel_x + tilemap_panel.x, panel_y + tilemap_panel.y, tile_scale * tile_size, tile_scale * tile_size};
-            int tile_i = tile_y * tilemap_width + tile_x;
-            int tile_type = tilemap->tile_data[tile_i];
-            if (tile_type == 0) continue;
-            else --tile_type;
-            BlitBitmapScaled(graphics_buffer, &tileset->tiles[tile_type], r.x, r.y, tile_scale, 1, false); 
+            int collider_type = GetTilemapCollider(tilemap, tile_x, tile_y);
+            if (collider_type == 0) continue;
+            Color c = {0};
+            c.red = 0;
+            c.green = 255;
+            c.blue = 0;
+            c.alpha = 127;
+            DrawRectangle(graphics_buffer, c, r); 
+        }
+    }
+
+}
+
+
+
+void DrawTilemap(Tilemap* tilemap, Tileset* tileset, RectInt tilemap_panel, int x_offset, int y_offset, int ui_scale, Color background_color, int tile_scale, int tile_size, bool grid_enabled, int current_layer, bool show_all_layers) {
+     
+    // NOTE: Panel Background:
+    DrawRectangle(graphics_buffer, background_color, tilemap_panel);
+    int tilemap_width = tilemap->width;
+    int tilemap_height = tilemap->height;
+
+    for (int tile_y = y_offset; tile_y < tilemap_height; ++tile_y) {
+        int panel_y = (tile_y - y_offset) * tile_scale * (tile_size) + tile_scale; // NOTE: The x coordinate inside the panel
+        if (panel_y + tile_scale * (tile_size + 1) >= tilemap_panel.height) break;
+        for (int tile_x = x_offset; tile_x < tilemap_width; ++tile_x) {
+            int panel_x = (tile_x-x_offset) * tile_scale * (tile_size) + tile_scale; // NOTE: The x coordinate inside the panel
+            if (panel_x + tile_scale * (tile_size + 1) >= tilemap_panel.width) break;
+            
+            // TODO: Draw the actual tiles.
+            RectInt r = {panel_x + tilemap_panel.x, panel_y + tilemap_panel.y, tile_scale * tile_size, tile_scale * tile_size};
+            for (int tile_l = 0; tile_l < tilemap->num_layers; ++tile_l) {
+                if (!show_all_layers && tile_l != current_layer) continue;
+                int tile_type = GetTilemapTile(tilemap, tile_x, tile_y, tile_l);
+                if (tile_type == 0) continue;
+                else --tile_type;
+                BlitBitmapScaled(graphics_buffer, &tileset->tiles[tile_type], r.x, r.y, tile_scale, 1, false); 
+            }
         }
     }
     
@@ -235,7 +268,7 @@ int DrawTileset(Tileset* tileset, RectInt tileset_panel, int ui_scale, int tile_
         v2.y = tileset_panel.y + tileset_panel.height - tile_scale;
         DrawLine(graphics_buffer, background_color, v1, v2); 
     }
-    //*/
+
     
     return panel_tile_width; 
 }
@@ -249,22 +282,29 @@ enum Scene {
 
 static Scene curr_scene = IMPORT_MENU;
 static bool grid_enable = true;
+static bool colliders_enable = true;
+
+
+static int current_layer = 0;
+static bool show_all_layers = true;
+
 
 Tileset tileset = {0};
-Tilemap tilemap = {0};
+Tilemap tilemap;
 
+int TILEMAP_PANEL_WIDTH = 1024;
 
-void FillToolAtCoordinate(int tile_x, int tile_y, int target_tile, int fill_tile_type) {
-    int tile_i = (tile_y * TILEMAP_WIDTH) + tile_x;
-    if (tile_i < 0 || tile_i >= (TILEMAP_WIDTH * TILEMAP_HEIGHT)) return;
+void FillToolAtCoordinate(int tile_x, int tile_y, int tile_l, int target_tile, int fill_tile_type) {
+    int tile_i = ((tile_y * TILEMAP_WIDTH) + tile_x)*NUMBER_OF_LAYERS + tile_l;
+    if (tile_i < 0 || tile_i >= (TILEMAP_WIDTH * TILEMAP_HEIGHT * NUMBER_OF_LAYERS)) return;
     if (tilemap.tile_data[tile_i] != target_tile) return;
 
 
     tilemap.tile_data[tile_i] = fill_tile_type;
-    FillToolAtCoordinate(tile_x, tile_y+1, target_tile, fill_tile_type);
-    FillToolAtCoordinate(tile_x, tile_y-1, target_tile, fill_tile_type);
-    FillToolAtCoordinate(tile_x+1, tile_y, target_tile, fill_tile_type);
-    FillToolAtCoordinate(tile_x-1, tile_y, target_tile, fill_tile_type);
+    FillToolAtCoordinate(tile_x, tile_y+1, tile_l, target_tile, fill_tile_type);
+    FillToolAtCoordinate(tile_x, tile_y-1, tile_l, target_tile, fill_tile_type);
+    FillToolAtCoordinate(tile_x+1, tile_y, tile_l, target_tile, fill_tile_type);
+    FillToolAtCoordinate(tile_x-1, tile_y, tile_l, target_tile, fill_tile_type);
 
 } 
 
@@ -272,25 +312,68 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     
     Vector2Int mouse_pos = GetMousePosition(); 
 
-    printf("TileEditor 1...\n");
     if (curr_scene == IMPORT_MENU) {
-        tilemap.width = TILEMAP_WIDTH;
-        tilemap.height = TILEMAP_HEIGHT;
-        tilemap.tile_data = (uint8_t*)malloc(sizeof(uint8_t) * tilemap.width * tilemap.height);
+        static bool new_tilemap = false;
+        static bool load_tilemap = false;
+        // SECTION: set up and render import menu buttons 
+        RectInt new_button_collider = RenderTextButton(graphics_buffer, "New Tilemap", SCREEN_W / 2 - 200, SCREEN_H/2 - 70, 5);
+        RectInt load_button_collider = RenderTextButton(graphics_buffer, "Load Tilemap", SCREEN_W / 2 - 220, SCREEN_H/2 + 40, 5);
+
+        
+        // SECTION: Render a cursor:
+        BlitBitmapScaled(graphics_buffer, &cursor_set.tiles[0], mouse_pos.x, mouse_pos.y, 2, 1, true);     
+        
+        // SECTION: Handle button clicks:
+        if (ks->state.MBL && PointRectCollision(new_button_collider, mouse_pos)) {
+            new_tilemap=true;
+        } 
+        if (ks->state.MBL && PointRectCollision(load_button_collider, mouse_pos)) {
+            load_tilemap=true;
+        } 
         
 
-        for (int y = 0; y < tilemap.height; ++y) {
-            for (int x = 0; x < tilemap.width; ++x) {
-                tilemap.tile_data[y * tilemap.width + x] = DEFAULT_TILE;
-            }
+        // SECTION: Load tilemap
+        if (load_tilemap) {
+            tilemap = LoadTilemap("level.lvl"); 
+            TILEMAP_WIDTH = tilemap.width;
+            TILEMAP_HEIGHT = tilemap.height; 
+            NUMBER_OF_LAYERS = tilemap.num_layers;
+            printf("Loading tileset...\n");
+            LoadTileset(&_gm->asset_storage, TILESET_NAME, TILE_WIDTH, TILE_HEIGHT, &tileset);
+            curr_scene = EDITOR; 
         }
-        
-        LoadTileset(&_gm->asset_storage, TILESET_NAME, TILE_WIDTH, TILE_HEIGHT, &tileset);
+
+        // SECTION: New tilemap: 
+        if (new_tilemap) {
+            tilemap.width = TILEMAP_WIDTH;
+            tilemap.height = TILEMAP_HEIGHT;
+            tilemap.num_layers = NUMBER_OF_LAYERS;
+            tilemap.tile_data = (uint16_t*)malloc(sizeof(uint16_t) * tilemap.width * tilemap.height * tilemap.num_layers);
+            tilemap.collider_data = (uint8_t*)malloc(sizeof(uint8_t) * tilemap.width * tilemap.height); 
+
+            for (int y = 0; y < tilemap.height; ++y) {
+                for (int x = 0; x < tilemap.width; ++x) {
+                    for (int l = 0; l < tilemap.num_layers; ++l) {
+                        SetTilemapTile(&tilemap, x, y, l, DEFAULT_TILE); 
+                    }
+                }
+            }
+            
+            for (int y = 0; y < tilemap.height; ++y) {
+                for (int x = 0; x < tilemap.width; ++x) {
+                    SetTilemapCollider(&tilemap, x, y, 0); 
+                }
+            }
+            
+            printf("Loading tileset...\n");
+            LoadTileset(&_gm->asset_storage, TILESET_NAME, TILE_WIDTH, TILE_HEIGHT, &tileset);
 
 
-        curr_scene = EDITOR; 
+            curr_scene = EDITOR; 
+        }
     } else {
-    
+        static int tilemap_x_offset = 0;
+        static int tilemap_y_offset = 0; 
         int ui_scale = 5;
         static int tile_scale = 3;
         if (ks->state.Q && !ks->prev_state.Q && tile_scale > 1) {
@@ -298,17 +381,22 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
         } else if (ks->state.E && !ks->prev_state.E && tile_scale < 10) {
             ++tile_scale;
         }
-
+        
         // SECTION: Display the tilemap Editor Area:
         Color background_color = {255, 255, 255, 255};
         RectInt tilemap_panel = {0};
         tilemap_panel.x = ui_scale;
         tilemap_panel.y = ui_scale * 10;
-        tilemap_panel.width = 1024; // NOTE: In pixels
+        tilemap_panel.width = TILEMAP_PANEL_WIDTH; // NOTE: In pixels
         tilemap_panel.height = SCREEN_H - (ui_scale * 11);
-        DrawTilemap(&tilemap, &tileset, tilemap_panel, ui_scale, TILEMAP_WIDTH, TILEMAP_HEIGHT, background_color, tile_scale, TILE_WIDTH, grid_enable);  
+        DrawTilemap(&tilemap, &tileset, tilemap_panel, tilemap_x_offset, tilemap_y_offset, ui_scale, background_color, tile_scale, TILE_WIDTH, grid_enable, current_layer, show_all_layers);  
         
 
+        // SECTION: Render the colliders on top of the tilemap. 
+        if (colliders_enable) { 
+            DrawColliders(&tilemap, tilemap_panel, tilemap_x_offset, tilemap_y_offset, tile_scale, TILE_WIDTH); 
+        }
+            
         // SECTION: Display the tileset palette area:
         int palette_scale = 3;
         RectInt tileset_panel = {0};
@@ -328,12 +416,61 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
         
         // SECTION: Draw the UI
         DrawUI(ks, mouse_pos, ui_scale);
+        // NOTE: Display the current layer
+        char layer_string[124];
+        snprintf(layer_string, 124, "Layer %d", current_layer);
+        DisplayString(graphics_buffer, layer_string,&font, 340, 15, 3);  
+               
+
 
         
         // SECTION: Grid Controls 
         if (ks->state.G && !ks->prev_state.G) {
             grid_enable = !grid_enable;
         }
+        
+        // SECTION: Collider display Controls
+        if (ks->state.W && !ks->prev_state.W) {
+            colliders_enable = !colliders_enable;
+        }
+
+
+        //SECTION: Offset controls
+        if (ks->state.I && !ks->prev_state.I && tilemap_y_offset > 0) {
+            --tilemap_y_offset;
+        }
+        if (ks->state.J && !ks->prev_state.J && tilemap_x_offset > 0) {
+            --tilemap_x_offset;
+        }
+        if (ks->state.K && !ks->prev_state.K && tilemap_y_offset < tilemap.height) {
+            ++tilemap_y_offset;
+        }
+        if (ks->state.L && !ks->prev_state.L && tilemap_x_offset < tilemap.width) {
+            ++tilemap_x_offset;
+        }
+        
+        
+
+        // SECTION: Layer controls
+        if (ks->state.A && !ks->prev_state.A && current_layer > 0) {
+            --current_layer;
+        }
+        if (ks->state.D && !ks->prev_state.D && current_layer < NUMBER_OF_LAYERS - 1) {
+            ++current_layer;
+        }
+        if (ks->state.S && !ks->prev_state.S) {
+            show_all_layers = !show_all_layers;
+        }
+        
+        
+        // SECTION: Panel Control
+        if (ks->state.Z && !ks->prev_state.Z && TILEMAP_PANEL_WIDTH - TILE_WIDTH*palette_scale > 512) {
+            TILEMAP_PANEL_WIDTH -= TILE_WIDTH * palette_scale;
+        }
+        if (ks->state.X && !ks->prev_state.X && TILEMAP_PANEL_WIDTH + TILE_WIDTH*palette_scale < 1048) {
+            TILEMAP_PANEL_WIDTH += TILE_WIDTH * palette_scale;
+        }
+
 
 
         // SECTION: Select a tile. 
@@ -369,7 +506,6 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
             
             tile_x = (tile_x >= TILEMAP_WIDTH || mouse_pos.x - tilemap_panel.x < 0) ? -1 : tile_x; 
             tile_y = (tile_y >= TILEMAP_HEIGHT || mouse_pos.y - tilemap_panel.y < 0)  ? -1 : tile_y; 
-            int tile_i = (tile_y * TILEMAP_WIDTH) + tile_x;
             //NOTE: FOR DEBUGGING ONLY
             //char coords[124];
             //snprintf(coords, 124, "{%d, %d}, %d", tile_x, tile_y, tile_i);
@@ -377,7 +513,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
 
             if (tile_x >= 0 && tile_y >= 0) {
                 // NOTE: Change that tile to the current selected tile type:
-                tilemap.tile_data[tile_i] = curr_selected_tile + 1;
+                SetTilemapTile(&tilemap, tile_x, tile_y, current_layer, curr_selected_tile+1); 
             }
         }
         // NOTE: Erase Tool
@@ -387,7 +523,6 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
             
             tile_x = (tile_x >= TILEMAP_WIDTH || mouse_pos.x - tilemap_panel.x < 0) ? -1 : tile_x; 
             tile_y = (tile_y >= TILEMAP_HEIGHT || mouse_pos.y - tilemap_panel.y < 0)  ? -1 : tile_y; 
-            int tile_i = (tile_y * TILEMAP_WIDTH) + tile_x;
             
             //char coords[124];
             //snprintf(coords, 124, "{%d, %d}, %d", tile_x, tile_y, tile_i);
@@ -395,7 +530,26 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
 
             if (tile_x >= 0 && tile_y >= 0) {
                 // NOTE: Change that tile to the empty tile (0 value):
-                tilemap.tile_data[tile_i] = 0;
+                SetTilemapTile(&tilemap, tile_x, tile_y, current_layer, 0); 
+            }
+        }
+        if (ks->state.MBR && curr_tool == ERASE_TOOL) {
+            int tile_x = (mouse_pos.x - tilemap_panel.x - tile_scale)/(tile_scale*TILE_WIDTH);
+            int tile_y = (mouse_pos.y - tilemap_panel.y - tile_scale)/(tile_scale*TILE_HEIGHT);
+            
+            tile_x = (tile_x >= TILEMAP_WIDTH || mouse_pos.x - tilemap_panel.x < 0) ? -1 : tile_x; 
+            tile_y = (tile_y >= TILEMAP_HEIGHT || mouse_pos.y - tilemap_panel.y < 0)  ? -1 : tile_y; 
+            
+            //char coords[124];
+            //snprintf(coords, 124, "{%d, %d}, %d", tile_x, tile_y, tile_i);
+            //DisplayString(graphics_buffer, coords, &font, 800, 680, 5);
+
+            if (tile_x >= 0 && tile_y >= 0) {
+                // NOTE: Change that tile to the empty tile (0 value):
+                int target_tile = GetTilemapTile(&tilemap, tile_x, tile_y, current_layer);
+                if (target_tile != 0) {
+                    FillToolAtCoordinate(tile_x, tile_y, current_layer, target_tile, 0); 
+                }
             }
         }
         // NOTE: Fill Tool
@@ -405,7 +559,6 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
             
             tile_x = (tile_x >= TILEMAP_WIDTH || mouse_pos.x - tilemap_panel.x < 0) ? -1 : tile_x; 
             tile_y = (tile_y >= TILEMAP_HEIGHT || mouse_pos.y - tilemap_panel.y < 0)  ? -1 : tile_y; 
-            int tile_i = (tile_y * TILEMAP_WIDTH) + tile_x;
             
             //char coords[124];
             //snprintf(coords, 124, "{%d, %d}, %d", tile_x, tile_y, tile_i);
@@ -413,10 +566,43 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
 
             if (tile_x >= 0 && tile_y >= 0) {
                 // NOTE: Change that tile to the empty tile (0 value):
-                int target_tile = tilemap.tile_data[tile_i];
+                int target_tile = GetTilemapTile(&tilemap, tile_x, tile_y, current_layer);
                 if (target_tile != curr_selected_tile + 1) {
-                    FillToolAtCoordinate(tile_x, tile_y, target_tile, curr_selected_tile + 1); 
+                    FillToolAtCoordinate(tile_x, tile_y, current_layer, target_tile, curr_selected_tile + 1); 
                 }
+            }
+        }
+        // NOTE: Collider Tool
+        if (ks->state.MBL && curr_tool == COLLIDER_TOOL) {
+            int tile_x = (mouse_pos.x - tilemap_panel.x - tile_scale)/(tile_scale*TILE_WIDTH);
+            int tile_y = (mouse_pos.y - tilemap_panel.y - tile_scale)/(tile_scale*TILE_HEIGHT);
+            
+            tile_x = (tile_x >= TILEMAP_WIDTH || mouse_pos.x - tilemap_panel.x < 0) ? -1 : tile_x; 
+            tile_y = (tile_y >= TILEMAP_HEIGHT || mouse_pos.y - tilemap_panel.y < 0)  ? -1 : tile_y; 
+            //NOTE: FOR DEBUGGING ONLY
+            //char coords[124];
+            //snprintf(coords, 124, "{%d, %d}, %d", tile_x, tile_y, tile_i);
+            //DisplayString(graphics_buffer, coords, &font, 800, 680, 5);
+
+            if (tile_x >= 0 && tile_y >= 0) {
+                // NOTE: Change that tile to the current selected tile type:
+                SetTilemapCollider(&tilemap, tile_x, tile_y, 1); 
+            }
+        }
+        if (ks->state.MBR && curr_tool == COLLIDER_TOOL) {
+            int tile_x = (mouse_pos.x - tilemap_panel.x - tile_scale)/(tile_scale*TILE_WIDTH);
+            int tile_y = (mouse_pos.y - tilemap_panel.y - tile_scale)/(tile_scale*TILE_HEIGHT);
+            
+            tile_x = (tile_x >= TILEMAP_WIDTH || mouse_pos.x - tilemap_panel.x < 0) ? -1 : tile_x; 
+            tile_y = (tile_y >= TILEMAP_HEIGHT || mouse_pos.y - tilemap_panel.y < 0)  ? -1 : tile_y; 
+            //NOTE: FOR DEBUGGING ONLY
+            //char coords[124];
+            //snprintf(coords, 124, "{%d, %d}, %d", tile_x, tile_y, tile_i);
+            //DisplayString(graphics_buffer, coords, &font, 800, 680, 5);
+
+            if (tile_x >= 0 && tile_y >= 0) {
+                // NOTE: Change that tile to the current selected tile type:
+                SetTilemapCollider(&tilemap, tile_x, tile_y, 0); 
             }
         }
 
@@ -428,16 +614,33 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
             FILE* file = fopen(TILEMAP_FILE_NAME, "w");
             uint32_t width = (uint32_t)TILEMAP_WIDTH;
             uint32_t height = (uint32_t)TILEMAP_HEIGHT;
+            uint32_t num_layers = (uint32_t)NUMBER_OF_LAYERS;
+            uint32_t padding = (uint32_t)0;
             fwrite(&width, 4, 1, file);
             fwrite(&height, 4, 1, file);
+            fwrite(&num_layers, 4, 1, file); 
+            fwrite(&padding, 4, 1, file);
             
+
+            // NOTE: Write tilemap sprite data
             for (int y = 0; y < tilemap.height; ++y) {
                 for (int x = 0; x < tilemap.width; ++x) {
-                    int i = (y * tilemap.width) + x;
-                    fwrite(&(tilemap.tile_data[i]), 1, 1, file); 
+                    for (int l = 0; l < tilemap.num_layers; ++l) {
+                        uint16_t tile_type = GetTilemapTile(&tilemap, x, y, l); 
+                        fwrite(&(tile_type), 2, 1, file); 
+                    }
                 }
             }
-            printf("Saved tilemap");
+            // NOTE: Write tilemap collider data
+            for (int y = 0; y < tilemap.height; ++y) {
+                for (int x = 0; x < tilemap.width; ++x) {
+                    uint8_t collider_type = GetTilemapCollider(&tilemap, x, y);
+                    fwrite(&(collider_type), 1, 1, file); 
+                }
+            }
+
+            
+            printf("Saved tilemap \n");
             fclose(file); 
         }
         

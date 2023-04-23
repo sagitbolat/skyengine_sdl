@@ -43,10 +43,7 @@ size_t LoadTileset (
     tileset->width_in_tiles = (uint16_t)width_in_tiles;    
 
     printf("LoadTileset Working BP 3\n");
-    printf("num_tiles: %d\n", num_tiles);
-    printf("tile_width: %d\n", tile_width);
     for (int i = 0; i < num_tiles; ++i) {
-        printf("i: %d\n", i);
         tileset->tiles[i].width = tile_width;
         tileset->tiles[i].height = tile_height;
         tileset->tiles[i].bytes_per_pixel = (uint8_t)bytes_per_pixel;
@@ -83,36 +80,105 @@ size_t LoadTileset (
 struct Tilemap {
     int width;
     int height;
-    uint8_t* tile_data;
+    int num_layers;
+    uint16_t* tile_data;
+    uint8_t* collider_data;
 };
+
+
+void SetTilemapCollider(Tilemap* tm, int x, int y, uint8_t collider_type) {
+    int w = tm->width;
+
+    tm->collider_data[(y*w) + x] = collider_type;
+}
+
+uint8_t GetTilemapCollider(Tilemap* tm, int x, int y) {
+    int w = tm->width;
+
+    return tm->collider_data[(y*w) + x];
+}
+
+void SetTilemapTile(Tilemap* tm, int x, int y, int layer, uint16_t tile_type) {
+    int w = tm->width;
+    int l = tm->num_layers;
+
+    tm->tile_data[(((y*w) + x)*l) + layer] = tile_type;
+}
+
+uint16_t GetTilemapTile(Tilemap* tm, int x, int y, int layer) {
+    int w = tm->width;
+    int l = tm->num_layers;
+
+    return tm->tile_data[(((y*w) + x)*l) + layer];
+}
+
 
 // SECTION: Tilemap Level Loading.
 // NOTE: A tilemap level should have the following format:
-/* HEADER: 8 bytes to represent the width of the level, 8 bytes to represent the height of the level, newline character
- * n 8-byte characters each representing a tile, where n is the width of the level. This is followed by a newline char
- * The above line repeats m times, where m is the height of the level. 
- * Ex:
- * 44 // THIS IS THE HEADER
- * 1111 
- * 1001
- * 1001
- * 1111
+/* HEADER: 32 bytes to represent the width of the level, 32 bytes to represent the height of the level, 
+ * 32 bits to represent the number of layers, and finally 32 bits of padding.
+ * 
+ * Each tile is represented with a string of 16-bit words. 
+ * The first word represents the collision information of the time  
+ * The rest of the 16-bit words represent the tile data. Each word is part of a layer. If the tilemap has 3 layers,
+ * the bottom layer is the first of the non-collider words. If a tilemap has 3 total layers, each tile will be a 64-bit string 
+ * with the first 16-bits being the colliders, and the rest of the 16-bit words being the bottom-top layers.
+ * NOTE: if num_layers is only 1, then there are no collider layer.
  */
 Tilemap LoadTilemap(const char* level_name) {
+    printf("LoadTilemap 1...\n");
     FILE *file = fopen(level_name, "r");
+    
+    printf("LoadTilemap 2...\n");
     uint32_t width;
     fread(&width, 4, 1, file);
     uint32_t height;
     fread(&height, 4, 1, file);
+    uint32_t num_layers;
+    fread(&num_layers, 4, 1, file);
+    uint32_t padding;
+    fread(&padding, 4, 1, file);
+    
 
+    printf("LoadTilemap 3...\n");
     Tilemap level_data = {0};
-    level_data.tile_data = (uint8_t*)malloc(sizeof(uint8_t) * (int)width * (int)height);
+    level_data.tile_data = (uint16_t*)malloc(sizeof(uint16_t) * (int)width * (int)height * (int)num_layers);
+    level_data.collider_data = (uint8_t*)malloc(sizeof(uint8_t) * (int)width * (int)height);
     level_data.width = (int)width;
     level_data.height = (int)height;
+    level_data.num_layers = (int)num_layers;
+    
 
-    for (int h = 0; h < (int)height; ++h) {
-        fread(&(level_data.tile_data[h * (int)width]), 1, (int)width, file);
+    // NOTE: Write tilemap sprite data
+    for (int y = 0; y < level_data.height; ++y) {
+        for (int x = 0; x < level_data.width; ++x) {
+            for (int l = 0; l < level_data.num_layers; ++l) {
+                uint16_t tile_type = 0; 
+                fread(&(tile_type), 2, 1, file);
+                SetTilemapTile(&level_data, x, y, l, tile_type);  
+            }
+        }
     }
+    // NOTE: Write tilemap collider data
+    for (int y = 0; y < level_data.height; ++y) {
+        for (int x = 0; x < level_data.width; ++x) {
+            uint8_t collider_type = 0; 
+            fread(&(collider_type), 1, 1, file);
+            SetTilemapCollider(&level_data, x, y, collider_type);  
+        }
+    }
+    /*
+    // NOTE: Read Tile sprite data
+    for (int h = 0; h < (int)height; ++h) {
+        fread(&(level_data.tile_data[h * (int)width * (int)num_layers]), 2, (int)width*(int)num_layers, file);
+    }
+    
+    // NOTE: Read Tile collider data
+    for (int h = 0; h < (int)height; ++h) {
+        fread(&(level_data.collider_data[h * (int)width]), 1, (int)width, file);
+    }
+    */
+    
     fclose(file);
     return level_data;
 }
