@@ -26,7 +26,7 @@ float player_speed = 0.01;
 
 void Awake(GameMemory* gm) {
     LoadTileset(&gm->asset_storage, "assets/tileset.bmp", TILE_SIZE, TILE_SIZE, &tileset);
-    tilemap_level_1 = LoadTilemap("levels/level1.lvl");
+    tilemap_level_1 = LoadTilemap("levels/level.lvl");
 }
 
 // SECTION: Gameplay data

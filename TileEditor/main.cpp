@@ -9,13 +9,13 @@ int SCREEN_H = 727;
 int SCREEN_W = 1280;
 
 const char* TILEMAP_FILE_NAME = "level.lvl";
-int TILEMAP_WIDTH = 16;
-int TILEMAP_HEIGHT = 12;
+int TILEMAP_WIDTH = 32;
+int TILEMAP_HEIGHT = 24;
 const char* TILESET_NAME = "assets/tileset1.bmp";
 int TILE_WIDTH = 16;
 int TILE_HEIGHT = 16;
 int DEFAULT_TILE = 1;    
-int NUMBER_OF_LAYERS = 3; // NOTE: Includes collider layer, so 3 sprite layers and 1 collider level = 4 total layers
+int NUMBER_OF_LAYERS = 1; // NOTE: Includes collider layer, so 3 sprite layers and 1 collider level = 4 total layers
 
 Tileset font = {0};
 Tileset ui_set = {0};
@@ -501,8 +501,8 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
         // SECTION: Edit the tilemap:
         // NOTE: Paint Tool
         if (ks->state.MBL && curr_tool == PAINT_TOOL) {
-            int tile_x = (mouse_pos.x - tilemap_panel.x - tile_scale)/(tile_scale*TILE_WIDTH);
-            int tile_y = (mouse_pos.y - tilemap_panel.y - tile_scale)/(tile_scale*TILE_HEIGHT);
+            int tile_x = (mouse_pos.x - tilemap_panel.x - tile_scale)/(tile_scale*TILE_WIDTH) + tilemap_x_offset;
+            int tile_y = (mouse_pos.y - tilemap_panel.y - tile_scale)/(tile_scale*TILE_HEIGHT) + tilemap_y_offset;
             
             tile_x = (tile_x >= TILEMAP_WIDTH || mouse_pos.x - tilemap_panel.x < 0) ? -1 : tile_x; 
             tile_y = (tile_y >= TILEMAP_HEIGHT || mouse_pos.y - tilemap_panel.y < 0)  ? -1 : tile_y; 
@@ -621,23 +621,29 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
             fwrite(&num_layers, 4, 1, file); 
             fwrite(&padding, 4, 1, file);
             
-
+            int last_x = 0;
+            int last_y = 0;
             // NOTE: Write tilemap sprite data
             for (int y = 0; y < tilemap.height; ++y) {
+                last_y = y;
                 for (int x = 0; x < tilemap.width; ++x) {
+                    last_x = x;
                     for (int l = 0; l < tilemap.num_layers; ++l) {
                         uint16_t tile_type = GetTilemapTile(&tilemap, x, y, l); 
                         fwrite(&(tile_type), 2, 1, file); 
                     }
                 }
             }
+
+            printf("%d, %d", last_x, last_y);
+
             // NOTE: Write tilemap collider data
-            for (int y = 0; y < tilemap.height; ++y) {
+            /*for (int y = 0; y < tilemap.height; ++y) {
                 for (int x = 0; x < tilemap.width; ++x) {
                     uint8_t collider_type = GetTilemapCollider(&tilemap, x, y);
                     fwrite(&(collider_type), 1, 1, file); 
                 }
-            }
+            }*/
 
             
             printf("Saved tilemap \n");
