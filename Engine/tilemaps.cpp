@@ -161,13 +161,13 @@ Tilemap LoadTilemap(const char* level_name) {
         }
     }
     // NOTE: Write tilemap collider data
-    /*for (int y = 0; y < level_data.height; ++y) {
+    for (int y = 0; y < level_data.height; ++y) {
         for (int x = 0; x < level_data.width; ++x) {
             uint8_t collider_type = 0; 
             fread(&(collider_type), 1, 1, file);
             SetTilemapCollider(&level_data, x, y, collider_type);  
         }
-    }*/
+    }
     /*
     // NOTE: Read Tile sprite data
     for (int h = 0; h < (int)height; ++h) {

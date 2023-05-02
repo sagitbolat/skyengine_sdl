@@ -1,5 +1,5 @@
-mkdir debug
-pushd debug
-g++ -Wall -Werror -g ../$1.cpp -w -lSDL2 
-gdb a.out
+mkdir ./$1/debug
+pushd ./$1/debug
+    g++ -Wall -Werror -g ../$2.cpp -w -lSDL2 
+    gdb a.out
 popd

@@ -175,7 +175,7 @@ void DrawColliders(Tilemap* tilemap, RectInt tilemap_panel, int x_offset, int y_
 
 
 
-void DrawTilemap(Tilemap* tilemap, Tileset* tileset, RectInt tilemap_panel, int x_offset, int y_offset, int ui_scale, Color background_color, int tile_scale, int tile_size, bool grid_enabled, int current_layer, bool show_all_layers) {
+void DrawTilemap(Tilemap* tilemap, Tileset* tileset, RectInt tilemap_panel, int x_offset, int y_offset, int ui_scale, Color background_color, Color gridline_color, int tile_scale, int tile_size, bool grid_enabled, int current_layer, bool show_all_layers) {
      
     // NOTE: Panel Background:
     DrawRectangle(graphics_buffer, background_color, tilemap_panel);
@@ -211,7 +211,7 @@ void DrawTilemap(Tilemap* tilemap, Tileset* tileset, RectInt tilemap_panel, int 
         Vector2Int v2 = {0};
         v2.x = tilemap_panel.x + tilemap_panel.width;
         v2.y = panel_y;
-        DrawLine(graphics_buffer, background_color, v1, v2); 
+        DrawLine(graphics_buffer, gridline_color, v1, v2); 
     }
     for (int x = 0; x < tilemap_panel.width; x += tile_scale * tile_size) {
         int panel_x = x + tilemap_panel.x + tile_scale;
@@ -221,7 +221,7 @@ void DrawTilemap(Tilemap* tilemap, Tileset* tileset, RectInt tilemap_panel, int 
         Vector2Int v2 = {0};
         v2.x = panel_x;
         v2.y = tilemap_panel.y + tilemap_panel.height;
-        DrawLine(graphics_buffer, background_color, v1, v2); 
+        DrawLine(graphics_buffer, gridline_color, v1, v2); 
     }
 
 }
@@ -384,12 +384,13 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
         
         // SECTION: Display the tilemap Editor Area:
         Color background_color = {255, 255, 255, 255};
+        Color gridline_color = {155, 155, 155, 255};
         RectInt tilemap_panel = {0};
         tilemap_panel.x = ui_scale;
         tilemap_panel.y = ui_scale * 10;
         tilemap_panel.width = TILEMAP_PANEL_WIDTH; // NOTE: In pixels
         tilemap_panel.height = SCREEN_H - (ui_scale * 11);
-        DrawTilemap(&tilemap, &tileset, tilemap_panel, tilemap_x_offset, tilemap_y_offset, ui_scale, background_color, tile_scale, TILE_WIDTH, grid_enable, current_layer, show_all_layers);  
+        DrawTilemap(&tilemap, &tileset, tilemap_panel, tilemap_x_offset, tilemap_y_offset, ui_scale, background_color, gridline_color, tile_scale, TILE_WIDTH, grid_enable, current_layer, show_all_layers);  
         
 
         // SECTION: Render the colliders on top of the tilemap. 
@@ -638,12 +639,12 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
             printf("%d, %d", last_x, last_y);
 
             // NOTE: Write tilemap collider data
-            /*for (int y = 0; y < tilemap.height; ++y) {
+            for (int y = 0; y < tilemap.height; ++y) {
                 for (int x = 0; x < tilemap.width; ++x) {
                     uint8_t collider_type = GetTilemapCollider(&tilemap, x, y);
                     fwrite(&(collider_type), 1, 1, file); 
                 }
-            }*/
+            }
 
             
             printf("Saved tilemap \n");
