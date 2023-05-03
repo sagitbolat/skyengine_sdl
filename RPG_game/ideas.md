@@ -61,3 +61,40 @@
             * i.e. if a player is in certain situations, like on a quest that has stat checks, 
               those stats will be chosen during a levelup
 
+
+
+# Combat System
+
+## The Battlefield
+
+### Version 1:
+* The battlefield for each encounter is entered the same way a pokemon battle is entered.
+    * A seperate sceen for the battle
+    * The scene is a tile grid with enemies and player characters and summons. 
+* This makes handling summons easier, as they always spawn during start of combat.
+* Makes careful planning and maneuvaring the non-combat map less rewarding.
+* Breaks the flow of gameplay
+### Version 2:
+* The battlefield is integrated in the level design. the map itself acts as the turnbased field where you continously take combat
+    and non-combat actions. this is similar to most textbased roguelike combat systems.
+* Things like summons can be automatically summoned when an enemy detects the player, or can be summoned manually? (explore this further)
+* This makes combat vs exploration flow more naturally and allow the player to more strategically maneuver different levels.
+
+
+## The Accuracy System:
+* Every offensive action (spells, attacks, etc.) from both players and enemies have a base accuracy.
+* An accuracy of 100 means the action is guaranteed to hit its target.
+* An accuracy of below 100 (such as 50) will mean that the action will only hit the target at that percentage
+    * An accuracy of 60 will mean that the action will "miss" 40% of the time.
+* When an action misses, it instead hit a tile near the target tile. 
+    * Example: A fireball spell fired at tile (10,10) that misses might hit tile (11, 10) or (11, 11) etc.
+    * Some actions might have a bigger spread, meaning it might hit a tile some number of spaces away from the target
+        while others will only hit tiles adjacent to the target tile.
+* If accuracy exceeds 100 (either from buffs, skills, items, or the action have >100 base accuracy), we get surplus accuracy
+    * Surplus accuracy gives a chance to score a critical hit. 
+    * The chance to score a critical is calculated as (accuracy - 100).
+        * Example: at 130 accuracy, the chance of a critical hit is 30%.
+        * The damage of the critical hit depends on player stats and modifiers (action dependent)
+            * Example: A fireball spell might get more critical damage from player's Intelligence and level of pyromancy proficiency.
+            * Example: A dagger throw skill might get more critical damage from player's Luck
+

@@ -353,6 +353,35 @@ void DrawRectangle(GameBitmapBuffer* graphics_buffer, Color color, RectInt pos_a
     }
 }
 
+/*
+void BlitBitmapSized(
+    GameBitmapBuffer* graphics_buffer,
+    ImageData* img_data,
+    int x0, int y0,
+    int new_height, int new_width,
+    int pos_scale
+    bool centered    
+) {
+    int w1 = img_data->width;
+    int h1 = img_data->height;
+    int w2 = new_width;
+    int h2 = new_height;
+    uint8_t* data = img_data->data;
+    int bytes_per_pixel = img_data->bytes_per_pixel;
+    
+
+    if (w2 % w1 == 0 && h2 % h1 == 0 && w2 / w1 == h2 / h1) {
+        BlitBitmapScaled(graphics_buffer, img_data, x0, y0, new_width/w, pos_scale, centered); 
+    }
+    
+    float x_ratio = (float)w1 /(float)w2;
+    float y_ratio = (float)h1 / (float)h2;
+    
+    float px;
+    float py;
+
+    for (int x = 0; x < h2; x++
+}*/
 
 // NOTE: If centered is false, the x0, y0 coordinate will be in the top left of the bitmap. If it is true, it will be in the center of the bitmap
 // NOTE: scale is the size taken up by each pixel in the bmp file on the graphics buffer. Scale = 1 means a 16x16 bitmap will be taking up 16x16 pixel space on screen.
@@ -367,7 +396,7 @@ void BlitBitmapScaled (
     GameBitmapBuffer* graphics_buffer, 
     ImageData* img_data, 
     int x0, int y0, 
-    int scale, int pos_scale, 
+    int pixel_scale, int pos_scale, 
     bool centered
 ) {
     int w = img_data->width;
@@ -375,8 +404,8 @@ void BlitBitmapScaled (
     uint8_t* data = img_data->data;
     int bytes_per_pixel = img_data->bytes_per_pixel;
 
-    if (pos_scale == scale) { 
-        if (scale == 1) {
+    if (pos_scale == pixel_scale) { 
+        if (pixel_scale  == 1) {
             if (centered) {
                 x0 -= w/2;
                 y0 -= h/2;
@@ -395,22 +424,22 @@ void BlitBitmapScaled (
                     DrawPixel(graphics_buffer, c, pos);
                 }
             }
-        } else if (scale > 1) {
+        } else if (pixel_scale > 1) {
             
             if (centered) {
-                x0 -= w*scale/2;
-                y0 -= h*scale/2;
+                x0 -= w*pixel_scale/2;
+                y0 -= h*pixel_scale/2;
             }
             y0 *= pos_scale;
             x0 *= pos_scale;
 
-            int ymax = y0 + (h * scale);
-            int xmax = x0 + (w * scale);
+            int ymax = y0 + (h * pixel_scale);
+            int xmax = x0 + (w * pixel_scale);
 
             int yi = y0;
-            for (int y = y0; y < ymax; y+=scale) {
+            for (int y = y0; y < ymax; y+=pixel_scale) {
                 int xi = x0;
-                for (int x = x0; x < xmax; x+=scale) {
+                for (int x = x0; x < xmax; x+=pixel_scale) {
                     int i = (((yi - y0) * w) + (xi - x0)) * bytes_per_pixel;
                     Color c = {0};
                     if (bytes_per_pixel > 3) c.alpha = data[i + 3];
@@ -421,8 +450,8 @@ void BlitBitmapScaled (
                     RectInt pos_and_size = {0};
                     pos_and_size.x = x;
                     pos_and_size.y = y;
-                    pos_and_size.width = scale;
-                    pos_and_size.height = scale;
+                    pos_and_size.width = pixel_scale;
+                    pos_and_size.height = pixel_scale;
 
                     DrawRectangle(graphics_buffer, c, pos_and_size);
                     ++xi;
@@ -431,7 +460,7 @@ void BlitBitmapScaled (
             }
         }
     } else { // NOTE: pos_scale != scale
-        if (scale == 1) {
+        if (pixel_scale == 1) {
             y0 *= pos_scale;
             x0 *= pos_scale;
             if (centered) {
@@ -453,21 +482,21 @@ void BlitBitmapScaled (
                     DrawPixel(graphics_buffer, c, pos);
                 }
             }
-        } else if (scale > 1) {
+        } else if (pixel_scale > 1) {
             if (centered) {
-                x0 -= w*scale/2;
-                y0 -= h*scale/2;
+                x0 -= w*pixel_scale/2;
+                y0 -= h*pixel_scale/2;
             }
             y0 *= pos_scale;
             x0 *= pos_scale;
             
-            int ymax = y0 + (h * scale);
-            int xmax = x0 + (w * scale);
+            int ymax = y0 + (h * pixel_scale);
+            int xmax = x0 + (w * pixel_scale);
 
             int yi = y0;
-            for (int y = y0; y < ymax; y+=scale) {
+            for (int y = y0; y < ymax; y+=pixel_scale) {
                 int xi = x0;
-                for (int x = x0; x < xmax; x+=scale) {
+                for (int x = x0; x < xmax; x+=pixel_scale) {
                     int i = (((yi - y0) * w) + (xi - x0)) * bytes_per_pixel;
                     Color c = {0};
                     if (bytes_per_pixel > 3) c.alpha = data[i + 3];
@@ -478,8 +507,8 @@ void BlitBitmapScaled (
                     RectInt pos_and_size = {0};
                     pos_and_size.x = x;
                     pos_and_size.y = y;
-                    pos_and_size.width = scale;
-                    pos_and_size.height = scale;
+                    pos_and_size.width = pixel_scale;
+                    pos_and_size.height = pixel_scale;
                     DrawRectangle(graphics_buffer, c, pos_and_size);
                     ++xi;
                 }

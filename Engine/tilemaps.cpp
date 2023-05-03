@@ -156,7 +156,7 @@ Tilemap LoadTilemap(const char* level_name) {
             for (int l = 0; l < level_data.num_layers; ++l) {
                 uint16_t tile_type = 0; 
                 fread(&(tile_type), 2, 1, file);
-                SetTilemapTile(&level_data, x, y, l, tile_type);  
+                SetTilemapTile(&level_data, x, y, l, tile_type - 27);  
             }
         }
     }

@@ -84,11 +84,12 @@ enum Tool {
     PAINT_TOOL = 0,
     ERASE_TOOL = 1,
     FILL_TOOL = 2,
-    COLLIDER_TOOL = 3
+    COLLIDER_TOOL = 3,
+    NULL_TOOL = 4
 };
 
 
-static Tool curr_tool = PAINT_TOOL;
+static Tool curr_tool = NULL_TOOL;
 
 
 void DrawUI(KeyboardState* ks, Vector2Int mouse_pos, int ui_scale) {
@@ -143,6 +144,8 @@ void DrawUI(KeyboardState* ks, Vector2Int mouse_pos, int ui_scale) {
         BlitBitmapScaled(graphics_buffer, &cursor_set.tiles[2], mouse_pos.x, mouse_pos.y, 2, 1, true);     
     } else if (curr_tool == COLLIDER_TOOL) {
         BlitBitmapScaled(graphics_buffer, &cursor_set.tiles[3], mouse_pos.x, mouse_pos.y, 2, 1, true);     
+    } else if (curr_tool == NULL_TOOL) {
+        BlitBitmapScaled(graphics_buffer, &cursor_set.tiles[0], mouse_pos.x, mouse_pos.y, 2, 1, true);     
     }
 }
 
@@ -501,7 +504,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
 
         // SECTION: Edit the tilemap:
         // NOTE: Paint Tool
-        if (ks->state.MBL && curr_tool == PAINT_TOOL) {
+        if (ks->state.MBL && curr_tool == PAINT_TOOL && PointRectCollision(tilemap_panel, mouse_pos)) {
             int tile_x = (mouse_pos.x - tilemap_panel.x - tile_scale)/(tile_scale*TILE_WIDTH) + tilemap_x_offset;
             int tile_y = (mouse_pos.y - tilemap_panel.y - tile_scale)/(tile_scale*TILE_HEIGHT) + tilemap_y_offset;
             
@@ -518,7 +521,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
             }
         }
         // NOTE: Erase Tool
-        if (ks->state.MBL && curr_tool == ERASE_TOOL) {
+        if (ks->state.MBL && curr_tool == ERASE_TOOL && PointRectCollision(tilemap_panel, mouse_pos)) {
             int tile_x = (mouse_pos.x - tilemap_panel.x - tile_scale)/(tile_scale*TILE_WIDTH);
             int tile_y = (mouse_pos.y - tilemap_panel.y - tile_scale)/(tile_scale*TILE_HEIGHT);
             
@@ -534,7 +537,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
                 SetTilemapTile(&tilemap, tile_x, tile_y, current_layer, 0); 
             }
         }
-        if (ks->state.MBR && curr_tool == ERASE_TOOL) {
+        if (ks->state.MBR && curr_tool == ERASE_TOOL && PointRectCollision(tilemap_panel, mouse_pos)) {
             int tile_x = (mouse_pos.x - tilemap_panel.x - tile_scale)/(tile_scale*TILE_WIDTH);
             int tile_y = (mouse_pos.y - tilemap_panel.y - tile_scale)/(tile_scale*TILE_HEIGHT);
             
@@ -554,7 +557,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
             }
         }
         // NOTE: Fill Tool
-        if (ks->state.MBL && curr_tool == FILL_TOOL) {
+        if (ks->state.MBL && curr_tool == FILL_TOOL && PointRectCollision(tilemap_panel, mouse_pos)) {
             int tile_x = (mouse_pos.x - tilemap_panel.x - tile_scale)/(tile_scale*TILE_WIDTH);
             int tile_y = (mouse_pos.y - tilemap_panel.y - tile_scale)/(tile_scale*TILE_HEIGHT);
             
@@ -574,7 +577,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
             }
         }
         // NOTE: Collider Tool
-        if (ks->state.MBL && curr_tool == COLLIDER_TOOL) {
+        if (ks->state.MBL && curr_tool == COLLIDER_TOOL && PointRectCollision(tilemap_panel, mouse_pos)) {
             int tile_x = (mouse_pos.x - tilemap_panel.x - tile_scale)/(tile_scale*TILE_WIDTH);
             int tile_y = (mouse_pos.y - tilemap_panel.y - tile_scale)/(tile_scale*TILE_HEIGHT);
             
@@ -590,7 +593,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
                 SetTilemapCollider(&tilemap, tile_x, tile_y, 1); 
             }
         }
-        if (ks->state.MBR && curr_tool == COLLIDER_TOOL) {
+        if (ks->state.MBR && curr_tool == COLLIDER_TOOL && PointRectCollision(tilemap_panel, mouse_pos)) {
             int tile_x = (mouse_pos.x - tilemap_panel.x - tile_scale)/(tile_scale*TILE_WIDTH);
             int tile_y = (mouse_pos.y - tilemap_panel.y - tile_scale)/(tile_scale*TILE_HEIGHT);
             
@@ -630,7 +633,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
                 for (int x = 0; x < tilemap.width; ++x) {
                     last_x = x;
                     for (int l = 0; l < tilemap.num_layers; ++l) {
-                        uint16_t tile_type = GetTilemapTile(&tilemap, x, y, l); 
+                        uint16_t tile_type = GetTilemapTile(&tilemap, x, y, l) + 27; 
                         fwrite(&(tile_type), 2, 1, file); 
                     }
                 }
