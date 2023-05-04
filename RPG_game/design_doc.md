@@ -77,7 +77,8 @@
 ### Version 2:
 * The battlefield is integrated in the level design. the map itself acts as the turnbased field where you continously take combat
     and non-combat actions. this is similar to most textbased roguelike combat systems.
-* Things like summons can be automatically summoned when an enemy detects the player, or can be summoned manually? (explore this further)
+* Things like summons can be automatically summoned when an enemy detects the player, or can be summoned manually? (explore this 
+  further)
 * This makes combat vs exploration flow more naturally and allow the player to more strategically maneuver different levels.
 
 
@@ -89,7 +90,7 @@
 * When an action misses, it instead hit a tile near the target tile. 
     * Example: A fireball spell fired at tile (10,10) that misses might hit tile (11, 10) or (11, 11) etc.
     * Some actions might have a bigger spread, meaning it might hit a tile some number of spaces away from the target
-        while others will only hit tiles adjacent to the target tile.
+      while others will only hit tiles adjacent to the target tile.
 * If accuracy exceeds 100 (either from buffs, skills, items, or the action have >100 base accuracy), we get surplus accuracy
     * Surplus accuracy gives a chance to score a critical hit. 
     * The chance to score a critical is calculated as (accuracy - 100).
@@ -98,3 +99,13 @@
             * Example: A fireball spell might get more critical damage from player's Intelligence and level of pyromancy proficiency.
             * Example: A dagger throw skill might get more critical damage from player's Luck
 
+# Equipment and Spells:
+
+* Rusty Sword:
+    * Starts off as the weakest weapon in the game, but can be upgraded into the TRusty Sword by bringing it to a master blacksmith.
+    * TRust Sword starts off only slightly better than the Rusty Sword, however, as you use the sword for different things, it gains
+      experience. 
+        * At maximum experience, TRusty sword becomes comparable in damage to all other legendary weapons, but is able to be infused
+          and buffed with other elements, making it more versatile.
+        * Maybe look at a way to include some sort of evolution system with the sword similar to how an eevee can be evolved into    
+          multiple variants.

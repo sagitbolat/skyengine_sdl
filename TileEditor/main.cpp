@@ -23,9 +23,10 @@ Tileset cursor_set = {0};
 
 
 // SECTION: main
-void Init(int* w, int* h) {
+void Init(int* w, int* h, bool* fullscreen) {
     *w = SCREEN_W;
     *h = SCREEN_H;
+	*fullscreen = 0;
     SetCursorVisibility(false);
 }
 

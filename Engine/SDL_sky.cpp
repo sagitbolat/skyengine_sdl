@@ -8,7 +8,7 @@
 // SECTION: Window Size
 int SCREEN_WIDTH = 1280;
 int SCREEN_HEIGHT = 720;
-
+bool LAUNCH_FULLSCREEN = 0;
 // SECTION: Function declarations
 static void BlitToScreen(GameBitmapBuffer*, SDL_Texture*, SDL_Renderer*);
 static void ClearBuffer(GameBitmapBuffer*);
@@ -36,13 +36,16 @@ int main(int argc, char* argv[]) {
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
 
-    Init(&SCREEN_WIDTH, &SCREEN_HEIGHT);
+    Init(&SCREEN_WIDTH, &SCREEN_HEIGHT, &LAUNCH_FULLSCREEN);
     
+    uint32_t window_flags = SDL_WINDOW_SHOWN;
+    if (LAUNCH_FULLSCREEN) window_flags |= SDL_WINDOW_FULLSCREEN;
+
     SDL_Window* window = SDL_CreateWindow("Sky Engine",
                         SDL_WINDOWPOS_UNDEFINED,
                         SDL_WINDOWPOS_UNDEFINED,
                         SCREEN_WIDTH, SCREEN_HEIGHT, 
-                        SDL_WINDOW_SHOWN);
+                        window_flags);
 
     if (window == NULL) {
         //printf("Window failed to create. %c", '\n');

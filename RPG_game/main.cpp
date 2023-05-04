@@ -5,28 +5,29 @@
 #include "../Engine/truetype.cpp"
 #include "../Engine/sky_random.cpp"
 #include "../Engine/UI/button.cpp"
-	
-int SCREEN_H = 720;
-int SCREEN_W = 1280;
+
+#include "entity.cpp"
+
+int SCREEN_H = 1080;
+int SCREEN_W = 1920;
 
 
 // SECTION: main
-void Init(int* w, int* h) {
+void Init(int* w, int* h, bool* fullscreen) {
     *w = SCREEN_W;
     *h = SCREEN_H;
+    *fullscreen = true;
 }
 
 Tileset tileset = {0};
 Tilemap tilemap_level_1;
 uint16_t TILE_SIZE = 16;
 
-int TILEMAP_SCALE = 5;
-
-float player_speed = 0.01;
+int TILEMAP_SCALE = 3;
 
 void Awake(GameMemory* gm) {
     LoadTileset(&gm->asset_storage, "assets/tileset.bmp", TILE_SIZE, TILE_SIZE, &tileset);
-    tilemap_level_1 = LoadTilemap("levels/level.lvl");
+    tilemap_level_1 = LoadTilemap("levels/1.lvl");
 }
 
 // SECTION: Gameplay data
@@ -73,19 +74,21 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     RenderBackground(bg);
     RenderLevel(tilemap_level_1, player_x, player_y, TILEMAP_SCALE);
     
-    if (ks->state.W) {
-        player_y += dt * player_speed;
+    if (ks->state.W && !ks->prev_state.W) {
+        ++player_y;
     }
-    if (ks->state.A) {
-        player_x += dt * player_speed;
+    if (ks->state.A && !ks->prev_state.A) {
+        ++player_x;
     }
-    if (ks->state.S) {
-        player_y -= dt * player_speed;
+    if (ks->state.S && !ks->prev_state.S) {
+        --player_y;
     }
-    if (ks->state.D) {
-        player_x -= dt * player_speed;
+    if (ks->state.D && !ks->prev_state.D) {
+        --player_x;
     }
-    //printf("(%f, %f)\n", player_x, player_y); 
+    if (ks->state.SPACE && !ks->prev_state.SPACE) {
+        printf("(%f, %f)\n", player_x, player_y);
+    } 
 }
 
 
