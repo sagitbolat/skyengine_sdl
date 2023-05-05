@@ -8,8 +8,13 @@
 
 #include "entity.cpp"
 
-int SCREEN_H = 1080;
-int SCREEN_W = 1920;
+
+// SECTION: Constants.
+const int SCREEN_H = 1080;
+const int SCREEN_W = 1920;
+const int PIXEL_SCALE = 6;
+const uint16_t TILE_SIZE = 16;
+
 
 
 // SECTION: main
@@ -21,19 +26,33 @@ void Init(int* w, int* h, bool* fullscreen) {
 
 Tileset tileset = {0};
 Tilemap tilemap_level_1;
-uint16_t TILE_SIZE = 16;
 
-int TILEMAP_SCALE = 3;
+ImageData player_sprite = {0};
+
 
 void Awake(GameMemory* gm) {
     LoadTileset(&gm->asset_storage, "assets/tileset.bmp", TILE_SIZE, TILE_SIZE, &tileset);
     tilemap_level_1 = LoadTilemap("levels/1.lvl");
+    
+    LoadBitmap(&gm->asset_storage, "assets/player.bmp", &player_sprite); 
 }
 
 // SECTION: Gameplay data
 int current_level = 0;
 
-void Start(GameState* gs, KeyboardState* ks) {
+void DrawSpriteInWorldCoords(ImageData* sprite, Vector2Int sprite_world_coordinates, Vector2Int camera_position) {
+    BlitBitmapScaled(
+        graphics_buffer, 
+        sprite, 
+        (int)(sprite_world_coordinates.x * TILE_SIZE - camera_position.x), 
+        (int)(sprite_world_coordinates.y * TILE_SIZE - camera_position.y), 
+        PIXEL_SCALE, PIXEL_SCALE, false
+    ); 
+}
+
+void CenterCameraOnCoords(Vector2Int* camera_position, Vector2Int center_coordinates) {
+    camera_position->x = (center_coordinates.x * TILE_SIZE) - (SCREEN_W)/(2*PIXEL_SCALE) + (TILE_SIZE/2);
+    camera_position->y = (center_coordinates.y * TILE_SIZE) - (SCREEN_H)/(2*PIXEL_SCALE) + (TILE_SIZE/2);
 }
 
 void RenderBackground(Color bg) {
@@ -42,57 +61,65 @@ void RenderBackground(Color bg) {
 }
 
 // TODO: Make this not render things outside the screen.
-void RenderLevel(Tilemap level_map, float center_x, float center_y, int pixel_scale) {
+void RenderLevel(Tilemap level_map, Vector2Int camera_position) {
     for (int y = 0; y < level_map.height; ++y) {
         for (int x = 0; x < level_map.width; ++x) {
             for (int l = 0; l < level_map.num_layers; ++l) {
                 int tile_type = GetTilemapTile(&level_map, x, y, l);
                 if (tile_type == 0) continue;
                 else --tile_type;
-                BlitBitmapScaled(
-                    graphics_buffer, 
-                    &tileset.tiles[tile_type], 
-                    (int)((x + center_x) * (float)(pixel_scale * TILE_SIZE)), 
-                    (int)((y + center_y) * (float)(pixel_scale * TILE_SIZE)), 
-                    pixel_scale, 1, false
-                ); 
+                Vector2Int coords = {x, y};
+                DrawSpriteInWorldCoords(&tileset.tiles[tile_type], coords, camera_position);
             }
         }
     }
+}
 
+
+Player player = {0};
+Vector2Int camera_position = {0};
+
+
+void Start(GameState* gs, KeyboardState* ks) {
+    player.position.x = 3;
+    player.position.y = 3;
 }
 
 void Update(GameState* gs, KeyboardState* ks, int dt) {
-    static float player_x = 0;
-    static float player_y = 0;
-
     Color bg = {0};
     bg.red = 27;
     bg.green = 38;
     bg.blue = 50;
     bg.alpha = 255;
+    
     RenderBackground(bg);
-    RenderLevel(tilemap_level_1, player_x, player_y, TILEMAP_SCALE);
+    
+    CenterCameraOnCoords(&camera_position, player.position); 
+    RenderLevel(tilemap_level_1, camera_position);
+    DrawSpriteInWorldCoords(&player_sprite, player.position, camera_position); 
     
     if (ks->state.W && !ks->prev_state.W) {
-        ++player_y;
+        --player.position.y;
     }
     if (ks->state.A && !ks->prev_state.A) {
-        ++player_x;
+        --player.position.x;
     }
     if (ks->state.S && !ks->prev_state.S) {
-        --player_y;
+        ++player.position.y;
     }
     if (ks->state.D && !ks->prev_state.D) {
-        --player_x;
+        ++player.position.x;
     }
+    
+
     if (ks->state.SPACE && !ks->prev_state.SPACE) {
-        printf("(%f, %f)\n", player_x, player_y);
-    } 
+        printf("Player: (%d, %d)\n", player.position.x, player.position.y);
+    }
+     
 }
 
 
 void UserFree() {
-  
+
 }
 
