@@ -4,18 +4,8 @@
 #include "../Engine/collisions.cpp"
 #include "stdio.h"
 
+#include "globals.h"
 
-int SCREEN_H = 727;
-int SCREEN_W = 1280;
-
-const char* TILEMAP_FILE_NAME = "level.lvl";
-int TILEMAP_WIDTH = 32;
-int TILEMAP_HEIGHT = 24;
-const char* TILESET_NAME = "assets/tileset1.bmp";
-int TILE_WIDTH = 16;
-int TILE_HEIGHT = 16;
-int DEFAULT_TILE = 1;    
-int NUMBER_OF_LAYERS = 1; // NOTE: Includes collider layer, so 3 sprite layers and 1 collider level = 4 total layers
 
 Tileset font = {0};
 Tileset ui_set = {0};
@@ -338,7 +328,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
 
         // SECTION: Load tilemap
         if (load_tilemap) {
-            tilemap = LoadTilemap("level.lvl"); 
+            tilemap = LoadTilemap(LEVEL_NAME); 
             TILEMAP_WIDTH = tilemap.width;
             TILEMAP_HEIGHT = tilemap.height; 
             NUMBER_OF_LAYERS = tilemap.num_layers;
@@ -380,11 +370,6 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
         static int tilemap_y_offset = 0; 
         int ui_scale = 5;
         static int tile_scale = 3;
-        if (ks->state.Q && !ks->prev_state.Q && tile_scale > 1) {
-            --tile_scale;
-        } else if (ks->state.E && !ks->prev_state.E && tile_scale < 10) {
-            ++tile_scale;
-        }
         
         // SECTION: Display the tilemap Editor Area:
         Color background_color = {255, 255, 255, 255};
@@ -403,7 +388,7 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
         }
             
         // SECTION: Display the tileset palette area:
-        int palette_scale = 3;
+        static int palette_scale = 1;
         RectInt tileset_panel = {0};
         tileset_panel.x = tilemap_panel.x + tilemap_panel.width + ui_scale;
         tileset_panel.y = ui_scale;
@@ -427,6 +412,19 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
         DisplayString(graphics_buffer, layer_string,&font, 340, 15, 3);  
                
 
+        // SECTION: Zoom Controls
+        // NOTE: map zoom
+        if (ks->state.Q && !ks->prev_state.Q && tile_scale > 1) {
+            --tile_scale;
+        } else if (ks->state.E && !ks->prev_state.E && tile_scale < 10) {
+            ++tile_scale;
+        }
+        // NOTE: palette zoom
+        if (ks->state.C && !ks->prev_state.C && palette_scale > 1) {
+            --palette_scale;
+        } else if (ks->state.V && !ks->prev_state.V && tile_scale < 5) {
+            ++palette_scale;
+        }
 
         
         // SECTION: Grid Controls 

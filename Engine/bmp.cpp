@@ -253,7 +253,10 @@ size_t LoadBitmap(ArenaAllocator* asset_arena, const char* image_file_name, Imag
 
 // SECTION: Drawing.
 // Returns: 1 if successful, 0 if outside bounds.
+// NOTE: For now only support binary alpha values (i.e. 0 or non-zero)
 int DrawPixel(GameBitmapBuffer* graphics_buffer, Color color, Vector2Int pos) {
+    if (color.alpha == 0) return 1;
+
     int i = ((pos.y * graphics_buffer->pitch) + (pos.x * graphics_buffer->bytes_per_pixel));
     uint8_t* pixel = (uint8_t*)(graphics_buffer->memory);
     int max_i = ((graphics_buffer->width * graphics_buffer->bytes_per_pixel) + 
@@ -415,6 +418,7 @@ void BlitBitmapScaled (
                     int i = (((y - y0) * w) + (x - x0)) * bytes_per_pixel;
                     Color c = {0};
                     if (bytes_per_pixel > 3) c.alpha = data[i+3];
+                    else c.alpha=1;
                     c.red = data[i + 2];
                     c.green = data[i + 1];
                     c.blue = data[i + 0];
