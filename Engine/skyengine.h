@@ -126,7 +126,7 @@ struct KeyState {
     unsigned int INSERT : 1;
     unsigned int HOME : 1;
     unsigned int PAGEUP : 1;
-    unsigned int DELETE : 1;
+    unsigned int DELETE_BUTTON : 1;
     unsigned int END : 1;
     unsigned int PAGEDOWN : 1;  
 };
