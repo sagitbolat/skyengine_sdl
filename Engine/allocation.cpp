@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include "skyintrinsics.h"
+#include "sky_structs.h"
 
 // SECTION: System-dependant page memory allocation for arena
 #ifdef __linux__
@@ -14,11 +15,7 @@
 
 
 // SECTION: Arena Allocator
-struct ArenaAllocator {
-    uint64_t offset_pointer;
-    void* memory;
-    size_t total_size;
-};
+
 
 // Returns address of allocation.
 void* ArenaAllocateAsset(ArenaAllocator* arena, size_t allocation_size) {

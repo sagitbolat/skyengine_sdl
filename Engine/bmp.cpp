@@ -5,17 +5,11 @@
 
 #include "skyengine.h"
 #include "allocation.cpp"
-
+#include "sky_structs.h"
 
 //NOTE: For cos and sin in RotateBitmap:
 #include "skyintrinsics.h"
 
-struct ImageData {
-    uint16_t width;
-    uint16_t height;
-    uint8_t bytes_per_pixel;
-    uint8_t* data;
-};
 
 // NOTE: Assumes angle is in Degrees
 ImageData RotateBitmap(ArenaAllocator* frame_arena, ImageData image, float angle) {

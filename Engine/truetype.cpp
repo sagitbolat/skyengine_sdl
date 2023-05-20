@@ -5,16 +5,7 @@
 #include "stb_truetype.h"
 #include "skyengine.cpp"
 #include "allocation.cpp"
-
-
-struct FontData {
-    // TODO: Figure out how to store font asset info and stuff.
-    uint16_t width[128], height[128];
-    uint16_t pixel_height;
-    uint8_t bytes_per_pixel;
-    uint8_t** data;  // TODO: Is this the right number to fit all ascii chars?
-};
-
+#include "sky_structs.h"
 
 
 // NOTE: font_data.data must be allocated as a 128 long array of pointers.
