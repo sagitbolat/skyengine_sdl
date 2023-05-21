@@ -1,12 +1,19 @@
 #pragma once
 #include <stdint.h>
 
+
 // SECTION: Utils
 struct Vector2 {
     float x, y;
 };
+struct Vector3 {
+    float x, y, z;
+};
 struct Vector2Int {
     int x, y;
+};
+struct Vector3Int {
+    int x, y, z;
 };
 struct Rect {
     float x, y, width, height;
@@ -23,10 +30,45 @@ struct CircleInt {
     int x, y;
     float radius;
 };
+
+
 struct Color {
     uint8_t alpha, red, green, blue;
 };
+struct fColor {
+    float r, g, b, a;
+};
 
+
+// SECTION: OpenGL Rendering
+struct Sprite {
+    unsigned int pixel_width;
+    unsigned int pixel_height;
+    unsigned int shader_id;
+    unsigned int texture_id;
+    unsigned int VAO;
+};
+struct Transform {
+    Vector3 position;
+    Vector3 rotation;
+    Vector3 scale;
+};
+enum CameraProjectionType {
+    ORTHOGRAPHIC_CAMERA, 
+    PERSPECTIVE_CAMERA
+};
+struct Camera {
+    Vector3 position;
+    Vector3 up_direction;
+    Vector3 look_target;
+    float near_plane;
+    float far_plane;
+    float width;
+    float height;
+    float FOV;
+
+    CameraProjectionType projection;
+};
 
 // SECTION: Image Loading
 struct ImageData {
@@ -60,17 +102,6 @@ struct FontData {
     uint16_t pixel_height;
     uint8_t bytes_per_pixel;
     uint8_t** data;  // TODO: Is this the right number to fit all ascii chars?
-};
-
-
-// SECTION: software render buffer (DEPRICATED)
-// NOTE: Platform independant bitmap buffer.
-struct GameBitmapBuffer {
-    void*       memory;
-    int         width;
-    int         height;
-    int         bytes_per_pixel;
-    int         pitch;
 };
 
 

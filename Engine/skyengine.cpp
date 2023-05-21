@@ -7,14 +7,10 @@
 
 #include <iostream>
 
-
+// NOTE: TODO: Change this to sample multiple frames for better precision.
 inline int DeltaTimeToFps(int delta_time) {
     return delta_time > 0 ? (1000/delta_time) : 1000;
 }
-
-
-// TODO: Make not global by passing as parameter.
-static GameBitmapBuffer* graphics_buffer;
 
 // SECTION: User Defined Functions
 static void Init(int* width, int* height, bool* is_fullscreen);
@@ -23,9 +19,8 @@ static void Start(GameState* game_state, KeyboardState* keyboard_state);
 static void Update(GameState* game_state, KeyboardState* keyboard_state, int delta_time);
 static void UserFree();
 
-static void GameUpdateAndRender(GameMemory* memory, GameBitmapBuffer* _graphics_buffer, KeyboardState* keyboard_state, int delta_time) {
+static void GameUpdateAndRender(GameMemory* memory, KeyboardState* keyboard_state, int delta_time) {
 
-    graphics_buffer = _graphics_buffer;
     GameState* game_state = (GameState*)memory->permanent_storage.memory;
 
     if (!memory->is_initialized) {

@@ -3,6 +3,12 @@
 #include "skyengine.h"
 #include "skyintrinsics.h"
 
+// SECTION: Utils
+Rect TransformToCollider(Transform transform) {
+    
+}
+
+
 // NOTE: These methods return true if the two objects are colliding
 
 // SECTION: Point to Rectanle

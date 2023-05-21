@@ -15,38 +15,68 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
+const char *default_vertex_shader_source = "#version 330 core\n"
+    "layout (location = 0) in vec3 a_pos;\n"
+    "layout (location = 1) in vec2 a_texture_coord;\n"
+    "out vec2 tex_coord;\n"
+    "uniform mat4 transform;\n"
+    "uniform mat4 view;\n"
+    "void main()\n"
+    "{\n"
+    "   gl_Position = transform * vec4(a_pos.x, a_pos.y, a_pos.z, 1.0);\n"
+    "   tex_coord = a_texture_coord;\n"
+    "}\0";
+
+const char *default_fragment_shader_source = "#version 330 core\n"
+    "in vec2 tex_coord;\n"
+    "out vec4 FragColor;\n"
+    "uniform sampler2D texture1;\n"
+    "void main()\n"
+    "{\n"
+    "   FragColor = texture(texture1, tex_coord);\n"
+    "}\0";
+
 
 // SECTION: Shaders.
 // NOTE: Returns the shader ID
 unsigned int ShaderInit(const char* vertex_path, const char* fragment_path) {
-    std::string vertex_code;
-    std::string fragment_code;
-    std::ifstream v_shader_file;
-    std::ifstream f_shader_file;
-    
-    v_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    f_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    try {
-        v_shader_file.open(vertex_path);
-        f_shader_file.open(fragment_path);
-        
-        std::stringstream v_shader_stream, f_shader_stream;
-        
-        v_shader_stream << v_shader_file.rdbuf();
-        f_shader_stream << f_shader_file.rdbuf();
-        
-        v_shader_file.close();
-        f_shader_file.close();
+    const char* v_shader_code;
+    const char* f_shader_code;
 
-        vertex_code = v_shader_stream.str();
-        fragment_code = f_shader_stream.str();
-    } catch(std::ifstream::failure const &e) {
-        std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ " << e.what() << std::endl;
+
+    if (vertex_path == nullptr || fragment_path == nullptr) {
+        v_shader_code = default_vertex_shader_source;
+        f_shader_code = default_fragment_shader_source;
+    } else {
+        std::string vertex_code;
+        std::string fragment_code;
+        std::ifstream v_shader_file;
+        std::ifstream f_shader_file;
+        
+        v_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+        f_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+        try {
+            v_shader_file.open(vertex_path);
+            f_shader_file.open(fragment_path);
+            
+            std::stringstream v_shader_stream, f_shader_stream;
+            
+            v_shader_stream << v_shader_file.rdbuf();
+            f_shader_stream << f_shader_file.rdbuf();
+            
+            v_shader_file.close();
+            f_shader_file.close();
+
+            vertex_code = v_shader_stream.str();
+            fragment_code = f_shader_stream.str();
+        } catch(std::ifstream::failure const &e) {
+            std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ " << e.what() << std::endl;
+        }
+        v_shader_code = vertex_code.c_str();
+        f_shader_code = fragment_code.c_str();
     }
-    
-    const char* v_shader_code = vertex_code.c_str();
-    const char* f_shader_code = fragment_code.c_str();
-    
+ 
+ 
     unsigned int vertex, fragment;
     int success;
     char infoLog[512];
@@ -118,14 +148,6 @@ const void ShaderSetTransform(unsigned int ID, const char* name, glm::mat4 trans
 struct WindowState {
     SDL_Window* window;
     SDL_GLContext* gl_context;
-};
-
-struct fColor {
-    float r, g, b, a;
-};
-
-struct Vector3 {
-    float x, y, z;
 };
 
 
@@ -263,39 +285,6 @@ void ClearScreen() {
 
 // SECTOIN: Higher level texture loading and displaying
 
-
-struct Sprite {
-    unsigned int pixel_width;
-    unsigned int pixel_height;
-    unsigned int shader_id;
-    unsigned int texture_id;
-    unsigned int VAO;
-};
-
-struct Transform {
-    Vector3 position;
-    Vector3 rotation;
-    Vector3 scale;
-};
-
-
-enum CameraProjectionType {
-    ORTHOGRAPHIC_CAMERA, 
-    PERSPECTIVE_CAMERA
-};
-struct Camera {
-    Vector3 position;
-    Vector3 up_direction;
-    Vector3 look_target;
-    float near_plane;
-    float far_plane;
-    float width;
-    float height;
-    float FOV;
-
-    CameraProjectionType projection;
-};
-
 // NOTE: Converts a transform object into a glm transform matrix. 
 // NOTE: Rotations are done in xyz order for now.
 glm::mat4 TransformToMatrix(Transform transform) {
@@ -339,8 +328,8 @@ glm::mat4 CameraToMatrix(Camera camera) {
 
 Sprite LoadSprite(
     const char* texture_path, 
-    const char* vertex_shader_path, 
-    const char* fragment_shader_path
+    const char* vertex_shader_path = nullptr, 
+    const char* fragment_shader_path = nullptr
 ) {
 
     float vertices[] = {

@@ -8,15 +8,13 @@
 #include "skyengine.h"
 #include "skyengine.cpp" 
 
+#include "OpenGL_renderer2D.cpp"
 
 
 // SECTION: Window Size
 int SCREEN_WIDTH = 1280;
 int SCREEN_HEIGHT = 720;
 bool LAUNCH_FULLSCREEN = 0;
-// SECTION: Function declarations
-static void BlitToScreen(GameBitmapBuffer*, SDL_Texture*, SDL_Renderer*);
-static void ClearBuffer(GameBitmapBuffer*);
 
 
 // NOTE: Returns the x and y of the mouse cursor, in pixels. 0,0 is top left of the window
@@ -33,43 +31,29 @@ void SetCursorVisibility(bool toggle) {
 }
 
 
-// TODO: remove from global space.
-SDL_Renderer* renderer;
-
+Camera main_camera = {0};
 
 int main(int argc, char* argv[]) {
 
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
 
+    // NOTE: The skyengine function that the user implements
     Init(&SCREEN_WIDTH, &SCREEN_HEIGHT, &LAUNCH_FULLSCREEN);
     
-    uint32_t window_flags = SDL_WINDOW_SHOWN;
-    if (LAUNCH_FULLSCREEN) window_flags |= SDL_WINDOW_FULLSCREEN;
 
-    SDL_Window* window = SDL_CreateWindow("Sky Engine",
-                        SDL_WINDOWPOS_UNDEFINED,
-                        SDL_WINDOWPOS_UNDEFINED,
-                        SCREEN_WIDTH, SCREEN_HEIGHT, 
-                        window_flags);
+    // TODO: pass LAUNCH_FULLSCREEN as an argument to the initializer
+    WindowState window = InitWindowContext(SCREEN_WIDTH, SCREEN_HEIGHT, "SkyEngine App", {0.05, 0.0, 0.15, 1.0});
 
-    if (window == NULL) {
-        //printf("Window failed to create. %c", '\n');
-    }
+    main_camera.position = {0.0f, 0.0f, 3.0f};
+    main_camera.up_direction = {0.0f, 0.1f, 0.0f};
+    main_camera.look_target = {0.0f, 0.0f, 0.0f};
+    main_camera.near_plane = 0.1f;
+    main_camera.far_plane = 1000.0f;
+    main_camera.width = (float)SCREEN_WIDTH/100;
+    main_camera.height = (float)SCREEN_HEIGHT/100;
+    main_camera.FOV = 90.0f;
+    main_camera.projection = ORTHOGRAPHIC_CAMERA;
 
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    SDL_Texture* texture = SDL_CreateTexture(renderer, 
-                        SDL_PIXELFORMAT_ARGB8888, 
-                        SDL_TEXTUREACCESS_STREAMING, 
-                        SCREEN_WIDTH, SCREEN_HEIGHT); 
 
-    // NOTE: Initializing graphics buffer
-    GameBitmapBuffer graphics_buffer = {0};
-    graphics_buffer.width = SCREEN_WIDTH;
-    graphics_buffer.height = SCREEN_HEIGHT;
-    graphics_buffer.pitch = SCREEN_WIDTH * 32;
-    graphics_buffer.bytes_per_pixel = 4;
-    graphics_buffer.memory = malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 32);
-    memset(graphics_buffer.memory, 0, SCREEN_WIDTH * SCREEN_HEIGHT * 32);
 
     // NOTE: Initialize the freelist allocator
     size_t alignment = 64; // TODO: Change to reflect the machine architecture.
@@ -184,13 +168,18 @@ int main(int argc, char* argv[]) {
         int delta_time = timer_end - timer_start;
         timer_start = timer_end; 
         
-        GameUpdateAndRender(&game_memory, &graphics_buffer, &keyboard_state, delta_time); 
-        BlitToScreen(&graphics_buffer, texture, renderer);
-        ClearBuffer(&graphics_buffer);    
+
+        // Clear the screen
+        ClearScreen();
+        
+        GameUpdateAndRender(&game_memory, &keyboard_state, delta_time); 
+        
+        // Swap buffers
+        SDL_GL_SwapWindow(window.window);
+
     }
     
-    UserFree();    
-    free(graphics_buffer.memory);
+    UserFree();
     
 #ifdef __linux__ 
     munmap(game_memory.permanent_storage.memory, game_memory.permanent_storage_size);
@@ -200,21 +189,7 @@ int main(int argc, char* argv[]) {
 	free(game_memory.permanent_storage.memory);
     free(game_memory.asset_storage.memory);
 #endif
-    SDL_DestroyTexture(texture);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
+    FreeWindowContext(window);
     SDL_Quit();
     return 0;
-}
-
-static void BlitToScreen(GameBitmapBuffer* graphics_buffer, SDL_Texture* texture, SDL_Renderer* renderer) {   
-    SDL_RenderClear(renderer);
-    SDL_UpdateTexture(texture, NULL, graphics_buffer->memory, graphics_buffer->pitch);
-    SDL_RenderCopy(renderer, texture, NULL, NULL); 
-    SDL_RenderPresent(renderer);
-}
-
-static void ClearBuffer(GameBitmapBuffer* graphics_buffer) {
-    uint64_t buffer_size = (graphics_buffer->pitch) * graphics_buffer->height;
-    memset(graphics_buffer->memory, 0, buffer_size);
 }
