@@ -27,4 +27,4 @@
 
 // NOTE: We need timing, controller/keyboard input, bitmap buffer for graphics, sound buffer.
 
-static void GameUpdateAndRender(GameMemory*, KeyboardState*, int delta_time);
+static void GameUpdateAndRender(GameMemory*, KeyboardState*, double delta_time);

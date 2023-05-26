@@ -3,11 +3,17 @@
 
 
 // SECTION: Utils
-struct Vector2 {
-    float x, y;
+union Vector2 {
+    float E[2];
+    struct {
+        float x, y;
+    };
 };
-struct Vector3 {
-    float x, y, z;
+union Vector3 {
+    float E[3];
+    struct {
+        float x, y, z;
+    };
 };
 struct Vector2Int {
     int x, y;
@@ -15,6 +21,18 @@ struct Vector2Int {
 struct Vector3Int {
     int x, y, z;
 };
+union Matrix3 {
+	//NOTE: Stored ROW MAJOR. (mat.E[ROW][COLUMN] OR mat.D[ROW * 4 + COLUMN).
+	float E[3][3];
+	float D[9];
+    Vector3 rows[3];
+    struct {
+        Vector3 a;
+        Vector3 b;
+        Vector3 c;
+    };
+};
+
 struct Rect {
     float x, y, width, height;
 };

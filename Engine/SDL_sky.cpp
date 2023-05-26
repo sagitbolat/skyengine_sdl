@@ -15,7 +15,7 @@
 int SCREEN_WIDTH = 1280;
 int SCREEN_HEIGHT = 720;
 bool LAUNCH_FULLSCREEN = 0;
-
+fColor CLEAR_COLOR = {0.05, 0.0, 0.15, 1.0};
 
 // NOTE: Returns the x and y of the mouse cursor, in pixels. 0,0 is top left of the window
 Vector2Int GetMousePosition() {
@@ -37,19 +37,19 @@ int main(int argc, char* argv[]) {
 
 
     // NOTE: The skyengine function that the user implements
-    Init(&SCREEN_WIDTH, &SCREEN_HEIGHT, &LAUNCH_FULLSCREEN);
+    Init(&SCREEN_WIDTH, &SCREEN_HEIGHT, &LAUNCH_FULLSCREEN, &CLEAR_COLOR);
     
 
     // TODO: pass LAUNCH_FULLSCREEN as an argument to the initializer
-    WindowState window = InitWindowContext(SCREEN_WIDTH, SCREEN_HEIGHT, "SkyEngine App", {0.05, 0.0, 0.15, 1.0});
+    WindowState window = InitWindowContext(SCREEN_WIDTH, SCREEN_HEIGHT, "SkyEngine App", CLEAR_COLOR);
 
     main_camera.position = {0.0f, 0.0f, 3.0f};
     main_camera.up_direction = {0.0f, 0.1f, 0.0f};
     main_camera.look_target = {0.0f, 0.0f, 0.0f};
     main_camera.near_plane = 0.1f;
     main_camera.far_plane = 1000.0f;
-    main_camera.width = (float)SCREEN_WIDTH/100;
-    main_camera.height = (float)SCREEN_HEIGHT/100;
+    main_camera.width = 10.0f;
+    main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
     main_camera.FOV = 90.0f;
     main_camera.projection = ORTHOGRAPHIC_CAMERA;
 
@@ -89,10 +89,23 @@ int main(int argc, char* argv[]) {
 
 
     // NOTE: Timer variables.
-    int timer_start = SDL_GetTicks();
-    int timer_end = SDL_GetTicks();
-    
+    uint64_t frequency = SDL_GetPerformanceFrequency();
+    uint64_t previousCounter = SDL_GetPerformanceCounter();
+    uint64_t currentCounter;
+    uint64_t deltaCounter;
+
     while(running) {
+        
+        // SECTION: Time keeping
+        // Calculate delta counter
+        currentCounter = SDL_GetPerformanceCounter();
+        deltaCounter = currentCounter - previousCounter;
+        previousCounter = currentCounter;
+
+        // Calculate delta time in milliseconds
+        double delta_time = (double)deltaCounter / (double)frequency * 1000.0;
+
+
 
         // NOTE: Copying current state into previous state.
         // TODO: Should I use memcpy or assignment here?
@@ -164,9 +177,7 @@ int main(int argc, char* argv[]) {
                     break;
             }
         }
-        timer_end = SDL_GetTicks();
-        int delta_time = timer_end - timer_start;
-        timer_start = timer_end; 
+        
         
 
         // Clear the screen

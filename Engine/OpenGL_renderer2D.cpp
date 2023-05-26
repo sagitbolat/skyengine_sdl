@@ -189,6 +189,10 @@ WindowState InitWindowContext(int width, int height, const char* window_name, fC
     glClearColor(clear_color.r, clear_color.g, clear_color.b, clear_color.a);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+    // Set OpenGL rendering to have depth testing:
+    glEnable(GL_DEPTH_TEST);
+
+
     window_state.window = window;
     window_state.gl_context = &glContext;
     return window_state;
@@ -278,7 +282,10 @@ void DrawTexture(unsigned int shader_id, unsigned int texture, unsigned int VAO)
 }
 
 void ClearScreen() {
+    // Clear the color buffer
     glClear(GL_COLOR_BUFFER_BIT);
+    // Clear the depth buffer
+    glClear(GL_DEPTH_BUFFER_BIT);
 }
 
 

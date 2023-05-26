@@ -42,10 +42,8 @@ uint64_t sky_rand() {
 
     return a + b;
 }
-// TODO: Test this for correctness!
-float sky_rand_float() {
-    uint64_t m = (uint64_t)1 << 32;
-    return (float)sky_rand() / m; 
+float sky_rand_float(float min, float max) {
+    return min + (sky_rand() / (float)(UINT64_MAX)) * (max - min);
 }
 
 
