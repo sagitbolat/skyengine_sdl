@@ -68,6 +68,42 @@ Vector3 Normalize(const Vector3 vec) {
 }
 
 
+// SECTION: Rotation about an axis:
+
+// NOTE: Rotates a vector about the X axis by an angle and returns it:
+Vector3 RotateX(Vector3 v, float angle_deg) {
+	float cos_angle = CosDeg(angle_deg);
+	float sin_angle = SinDeg(angle_deg);
+
+	return Vector3{
+		v.x,
+		cos_angle * v.y - sin_angle * v.z,
+		sin_angle * v.y + cos_angle * v.z
+	};
+}
+// NOTE: Rotates a vector about the Y axis by an angle and returns it:
+Vector3 RotateY(Vector3 v, float angle_deg) {
+	float cos_angle = CosDeg(angle_deg);
+	float sin_angle = SinDeg(angle_deg);
+
+	return Vector3{
+		cos_angle * v.x + sin_angle * v.z,
+		v.y,
+		cos_angle * v.z - sin_angle * v.x
+	};
+}
+// NOTE: Rotates a vector about the Z axis by an angle and returns it:
+Vector3 RotateZ(Vector3 v, float angle_deg) {
+	float cos_angle = CosDeg(angle_deg);
+	float sin_angle = SinDeg(angle_deg);
+
+	return Vector3{
+		cos_angle * v.x - sin_angle * v.y,
+		sin_angle * v.x + cos_angle * v.y,
+		v.z
+	};
+}
+
 /********************************
  *
  * Matrix Math
