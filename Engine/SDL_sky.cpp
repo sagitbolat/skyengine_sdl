@@ -14,6 +14,7 @@
 // SECTION: Window Size
 int SCREEN_WIDTH = 1280;
 int SCREEN_HEIGHT = 720;
+float SCREEN_WIDTH_IN_WORLD_SPACE = 10.0f;
 bool LAUNCH_FULLSCREEN = 0;
 fColor CLEAR_COLOR = {0.05, 0.0, 0.15, 1.0};
 
@@ -37,7 +38,7 @@ int main(int argc, char* argv[]) {
 
 
     // NOTE: The skyengine function that the user implements
-    Init(&SCREEN_WIDTH, &SCREEN_HEIGHT, &LAUNCH_FULLSCREEN, &CLEAR_COLOR);
+    Init(&SCREEN_WIDTH, &SCREEN_HEIGHT, &SCREEN_WIDTH_IN_WORLD_SPACE, &LAUNCH_FULLSCREEN, &CLEAR_COLOR);
     
 
     // TODO: pass LAUNCH_FULLSCREEN as an argument to the initializer
@@ -48,7 +49,7 @@ int main(int argc, char* argv[]) {
     main_camera.look_target = {0.0f, 0.0f, 0.0f};
     main_camera.near_plane = 0.1f;
     main_camera.far_plane = 1000.0f;
-    main_camera.width = 10.0f;
+    main_camera.width = SCREEN_WIDTH_IN_WORLD_SPACE;
     main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
     main_camera.FOV = 90.0f;
     main_camera.projection = ORTHOGRAPHIC_CAMERA;

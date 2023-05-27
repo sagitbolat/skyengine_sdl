@@ -2,7 +2,7 @@
 
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
-#include <gl/gl.h>
+#include <GL/gl.h>
 
 #include <string>
 #include <fstream>

@@ -13,7 +13,7 @@ inline int DeltaTimeToFps(int delta_time) {
 }
 
 // SECTION: User Defined Functions
-static void Init(int* width, int* height, bool* is_fullscreen, fColor* clear_color);
+static void Init(int* width, int* height, float* width_in_world_space, bool* is_fullscreen, fColor* clear_color);
 static void Awake(GameMemory* game_memory);
 static void Start(GameState* game_state, KeyboardState* keyboard_state);
 static void Update(GameState* game_state, KeyboardState* keyboard_state, double delta_time);

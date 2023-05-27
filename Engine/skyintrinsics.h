@@ -50,3 +50,11 @@ inline int IntMin(int a, int b) {
 inline int IntMax(int a, int b) {
     return a>=b?a:b;
 }
+
+// NOTE: Clamps value "val" between "min" and "max" and returns it. Original variable value is unchanged
+inline int IntClamp(int val, int min, int max) {
+    return (val < min) ? min : ((val > max) ? max : val);
+}
+inline float FloatClamp(float val, float min, float max) {
+    return (val < min) ? min : ((val > max) ? max : val);
+}
