@@ -17,18 +17,58 @@
 #define CUBE(a) ((a)*(a)*(a))
 
 
-inline Vector3 I_Vector3D() {
+// SECTION: 2D Vectors
+
+inline Vector2 I_Vector2() {
+	return { 1, 0};
+}
+inline Vector3 J_Vector2() {
+	return { 0, 1};
+}
+
+inline Vector2 Vec2(float x, float y) {
+	return { x, y};
+}
+inline Vector2 Vec2(Vector2 v) {
+	return { v.x, v.y};
+}
+inline Vector2 Vec2(Vector3 v) {
+	return { v.x, v.y}; // NOTE: This initialization drops the z component of a vector.
+}
+
+inline Vector2 operator+(const Vector2 a, const Vector2 b) {
+	return Vector2{ a.x + b.x, a.y + b.y};
+}
+inline Vector2 operator-(const Vector2 a, const Vector2 b) {
+	return Vector2{ a.x - b.x, a.y - b.y};
+}
+inline Vector2 operator*(const Vector2 a, const float b) {
+	return Vector2{ a.x * b, a.y * b};	
+}
+inline Vector2 operator*(const float b, const Vector2 a) {
+	return a * b;	
+}
+inline Vector2 operator/(const Vector2 a, const float b) {
+	return Vector2{ a.x / b, a.y / b}; 
+}
+
+// SECTION: 3D Vectors
+
+inline Vector3 I_Vector3() {
 	return { 1, 0, 0 };
 }
-inline Vector3 J_Vector3D() {
+inline Vector3 J_Vector3() {
 	return { 0, 1, 0 };
 }
-inline Vector3 K_Vector3D() {
+inline Vector3 K_Vector3() {
 	return { 0, 0, 1 };
 }
 
 inline Vector3 Vec3(float x, float y, float z) {
 	return { x, y, z };
+}
+inline Vector3 Vec3(Vector2 v, float z) {
+	return {v.x, v.y, z};
 }
 inline Vector3 Vec3(Vector3 v) {
 	return { v.x, v.y, v.z };
@@ -51,18 +91,32 @@ inline Vector3 operator/(const Vector3 a, const float b) {
 }
 
 
+
+// SECTION: Standard Vector Functions
+
+inline float VectorDot(const Vector2 a, const Vector2 b) {
+	return a.x * b.x + a.y * b.y;
+}
 inline float VectorDot(const Vector3 a, const Vector3 b) {
 	return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
+
+// NOTE: The cross product is not a valid operation in 2D space
 inline Vector3 VectorCross(const Vector3 a, const Vector3 b){
 	return Vec3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x); 
 }
 
+float Magnitude(const Vector2 vec) {
+	return SquareRoot(SQUARE(vec.x) + SQUARE(vec.y));
+}
 float Magnitude(const Vector3 vec) {	
 	return SquareRoot(SQUARE(vec.x) + SQUARE(vec.y) + SQUARE(vec.z)); 
 }
 
+Vector2 Normalize(const Vector2 vec) {	
+	return (vec / Magnitude(vec)); 
+}
 Vector3 Normalize(const Vector3 vec) {	
 	return (vec / Magnitude(vec)); 
 }
@@ -121,6 +175,8 @@ Vector3 operator*(const Matrix3 m, const Vector3 v) {
 	return r;	
 }
 
+
+// NOTE: For internal use only. Used for the forward vector.
 Matrix3 RotationMatrix(Transform transform) {
 	float Sx = SinDeg(transform.rotation.x);
     float Sy = SinDeg(transform.rotation.y);

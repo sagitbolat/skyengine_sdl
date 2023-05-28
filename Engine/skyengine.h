@@ -1,6 +1,5 @@
 #pragma once
 #include <stdint.h>
-#include "allocation.cpp"
 #include "sky_structs.h"
 
 #define Kilobytes(value) ((value) * 1024)

@@ -120,7 +120,7 @@ void Update(GameState* gs, KeyboardState* ks, double dt) {
         transform.position.x = transform.position.x + (player_movement_direction.x * player_speed * ((float)dt / 1000.0f));
         transform.position.y = transform.position.y + (player_movement_direction.y * player_speed * ((float)dt / 1000.0f));
     }
-    
+
     
     if (ks->state.Q) {
         transform.rotation.z += rotation_speed_scaled;

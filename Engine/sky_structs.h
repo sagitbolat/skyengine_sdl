@@ -1,6 +1,9 @@
 #pragma once
 #include <stdint.h>
-
+#include <stddef.h>
+// NOTE: stddef.h can be removed, but it will cause compilation to fail if SDL2.h 
+// is not included prior. This is beacause the stddef.h header is included in
+// SDL2. This is included here so the file can be included without the main engine file (mostly for testing).
 
 // SECTION: Utils
 union Vector2 {
@@ -229,7 +232,7 @@ struct KeyboardState {
 struct ArenaAllocator {
     uint64_t offset_pointer;
     void* memory;
-    size_t total_size;
+    size_t total_size; 
 };
 
 // SECTION: Memory. This is the persistant memory that

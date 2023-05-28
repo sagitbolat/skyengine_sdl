@@ -9,6 +9,13 @@
 #define _USE_MATH_DEFINES
 #include "math.h" 
 
+inline int Abs(int a) {
+    return abs(a);
+}
+inline float fAbs(float a) {
+    return fabs(a);
+}
+
 inline float SquareRoot(float a) {
 	return sqrt(a);
 }

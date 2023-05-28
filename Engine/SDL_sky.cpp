@@ -6,7 +6,8 @@
 
 
 #include "skyengine.h"
-#include "skyengine.cpp" 
+#include "skyengine.cpp"
+#include "allocation.cpp" 
 
 #include "OpenGL_renderer2D.cpp"
 
