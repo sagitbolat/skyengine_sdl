@@ -44,6 +44,22 @@ inline float TanDeg(float deg) {
     return tan((M_PI / 180) * deg);
 }
 
+inline float ACos(float x) {
+    return acosf(x);
+}
+
+inline float ACosDeg(float x) {
+    return acosf(x) * (180 / M_PI);
+}
+
+inline float ATan2(float y, float x) {
+    return atan2f(y, x);
+}
+
+inline float ATan2Deg(float y, float x) {
+    return atan2f(y, x) * (180 / M_PI);
+}
+
 // NOTE: ModFloats. Different from fmod. This does not return negative numbers at all.
 inline float FloatMod(float a, float b) {
     return (a - b * floor(a/b));

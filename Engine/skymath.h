@@ -158,6 +158,27 @@ Vector3 RotateZ(Vector3 v, float angle_deg) {
 	};
 }
 
+// SECTION: More utils
+
+// NOTE: Returns a rotation (euler angles) vector that represents the rotation that rotates a transform to
+// point toward the target position 
+// EX: Vector2LookAt({0, 0}, {1, 1}) will return {0, 0, 45}.
+//                  . < (1, 1, 0)
+//                .
+//              .    <  This angle is 45 degrees
+//(0, 0, 0) > .
+// NOTE: This will always return a rotation with x and y components of 0, since 2D rotation is always about the
+// z axis (to and away from camera).
+Vector3 Vector2LookAt(Vector2 transform_position, Vector2 target_position) {
+	Vector3 r = {0.0f, 0.0f, 0.0f};
+
+	Vector2 diff = target_position - transform_position;
+	
+	r.z = ATan2Deg(diff.y, diff.x) - 90.0f;
+
+	return r;
+}
+
 /********************************
  *
  * Matrix Math

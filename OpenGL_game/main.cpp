@@ -17,6 +17,7 @@ Sprite sprite = {0};
 Transform transform = {0.0f};
 
 Sprite bullet_sprite = {0};
+Sprite enemy_sprite = {0};
 
 
 void Awake(GameMemory* gm) {
@@ -29,76 +30,33 @@ void Awake(GameMemory* gm) {
     transform.scale = {(float)sprite.pixel_width/PIXELS_PER_UNIT, (float)sprite.pixel_height/PIXELS_PER_UNIT, 1.0f};
 
 
-    // SECTION: Load bullet sprite
     bullet_sprite = LoadSprite("bullet.bmp");
+    
+    enemy_sprite = LoadSprite("enemy.bmp");
 }
 
-struct BulletPool {
-    Transform* data;
-    bool* is_active;
-    int pool_size;
-    int curr_pointer;
-    void AllocAndInit(unsigned int size) {
-        this->data = (Transform*)malloc(sizeof(Transform) * size);
-        this->pool_size = size;
-        this->curr_pointer = 0;
-        this->is_active = (bool*)calloc(size, sizeof(bool));
-    }
-    void UpdateBulletState(float speed_scaled) {
-        for (int e = 0; e < this->pool_size; ++e) {
-            // NOTE: increment all enemy positions downward.
-            // If bullet is out of screen, set its position to -100.
-            // NOTE: the -50 is a value that allows us to spawn enemies offscreen without them being tagged as inactive.
-            if (!this->is_active[e]) {
-                continue;
-            }
-            this->data[e].position = this->data[e].position + UpVector(this->data[e]) * speed_scaled; 
-        }
 
-    }
-    void SpawnBullet(Transform target_transform) {
-
-        //NOTE: Set spawn position
-        this->data[this->curr_pointer].position = target_transform.position;
-        //NOTE: Offset the spawn position to be at the front of the ship instead of the center.
-        this->data[this->curr_pointer].position = target_transform.position + (UpVector(target_transform) * (sky_rand_float(0.3f, 0.6f)));
-
-        // NOTE: Make the z layer be behind the spaceship
-        this->data[this->curr_pointer].position.z = -1.0f;
-        
-        // NOTE: Set spawn rotation
-        this->data[this->curr_pointer].rotation = target_transform.rotation;
-        // NOTE: Give the rotation a random offset to simulate bullet spread
-        this->data[this->curr_pointer].rotation.z += (sky_rand_float(-30.0f, 30.0f));
-        
-        // NOTE: Set the scale of the bullet sprite
-        this->data[this->curr_pointer].scale = Vector3{(float)bullet_sprite.pixel_width/PIXELS_PER_UNIT, (float)bullet_sprite.pixel_height/PIXELS_PER_UNIT, 1.0f};
-        
-        // NOTE: set bullet to be active
-        this->is_active[this->curr_pointer] = true;
-        
-        // NOTE: incremenet pool pointer
-        this->curr_pointer += 1;
-        // SECTION: Resetting enemy pool pointer if its at the end of the pool
-        if (this->curr_pointer >= this->pool_size) {
-            this->curr_pointer = 0;
-        }
-    }
-};
+#include "object_pools.h"
 
 
 BulletPool bullet_pool;
 const int BULLET_POOL_SIZE = 80;
+EnemyPool enemy_pool;
+const int ENEMY_POOL_SIZE = 30;
+
 
 void Start(GameState* gs, KeyboardState* ks) {
     bullet_pool.AllocAndInit(BULLET_POOL_SIZE);  
+    enemy_pool.AllocAndInit(ENEMY_POOL_SIZE);  
 }
 
 void Update(GameState* gs, KeyboardState* ks, double dt) {
     float player_speed = 6.0f;
     float rotation_speed_scaled = 315.0f * ((float)dt / 1000.0f);
     float bullet_speed_scaled = 10.0f * ((float)dt / 1000.0f); 
-    float fire_delay = 40.0f; //NOTE: A firerate of 10 makes the bullet fire every 10 milliseconds. 1000 means every second
+    float fire_delay = 40.0f; //NOTE: A firedelay of 10 makes the bullet fire every 10 milliseconds. 1000 means every second
+    float enemy_speed_scaled = 6.0f * ((float)dt / 1000.0f); 
+    float enemy_spawn_delay = 500.0f; //NOTE: A spawndelay of 10 makes an enemy spawn every 10 milliseconds. 1000 means every second
      
     Vector3 player_movement_direction = {};
     
@@ -148,16 +106,30 @@ void Update(GameState* gs, KeyboardState* ks, double dt) {
         reset_timer = false;
     }
     
+    
+    static float enemy_spawn_timer = 0;
+    enemy_spawn_timer += (float)dt;
+    if (enemy_spawn_timer > enemy_spawn_delay) {
+        //transform.position = transform.position + UpVector(transform) * player_speed;
+        enemy_pool.SpawnEnemy({0.0f, main_camera.height/2, 0.0f}, transform.position);
+        enemy_spawn_timer = 0;
+    }
+    
+   
+   
     bullet_pool.UpdateBulletState(bullet_speed_scaled);    
+    enemy_pool.UpdateEnemyState(enemy_speed_scaled);
+
 
     for (int i = 0; i < bullet_pool.pool_size; ++i) {
+        if (!bullet_pool.is_active[i]) continue;
         DrawSprite(bullet_sprite, bullet_pool.data[i], main_camera);
     }
+    for (int i = 0; i < enemy_pool.pool_size; ++i) {
+        if (!enemy_pool.is_active[i]) continue;
+        DrawSprite(enemy_sprite, enemy_pool.data[i], main_camera);
+    }
     DrawSprite(sprite, transform, main_camera);
-
-    //float speed_ps = player_speed * (1000.0f / (float)dt);
-    //printf("Playe Speed %f. Delta time: %f. Speed per second: %f\n", player_speed, dt, speed_ps);
-    
 }
 
 
