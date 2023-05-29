@@ -190,8 +190,10 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
     for (int i = 0; i < enemy_pool.pool_size; ++i) {
         if (!enemy_pool.is_active[i]) continue;
         DrawSprite(enemy_sprite, enemy_pool.data[i], main_camera);
+        //Debug::DrawRectangle2D(enemy_pool.data[i], enemy_sprite.shader_id, main_camera, 3.0f);
     }
     DrawSprite(player.sprite, player.transform, main_camera);
+    //Debug::DrawRectangle2D(player.transform, player.sprite.shader_id, main_camera, 3.0f);
     return;
 }
 void GameClose(GameState* gs, KeyboardState* ks, double dt) {

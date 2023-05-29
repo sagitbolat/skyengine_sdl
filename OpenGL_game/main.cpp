@@ -24,24 +24,7 @@ void Init(int* w, int* h, float* w_in_world_space, bool* fullscreen, fColor* cle
 #define SCENE_GAME_OVER 2
 
 SceneManager scene_manager = {0};
-// SECTION: Scene method declerations:
-void MainMenuAwake();
-void MainMenuStart(GameState* gs, KeyboardState* ks, double dt);
-void MainMenuUpdate(GameState* gs, KeyboardState* ks, double dt);
-void MainMenuClose(GameState* gs, KeyboardState* ks, double dt);
-void MainMenuFree();
 
-void GameAwake();
-void GameStart(GameState* gs, KeyboardState* ks, double dt);
-void GameUpdate(GameState* gs, KeyboardState* ks, double dt);
-void GameClose(GameState* gs, KeyboardState* ks, double dt);
-void GameFree();
-
-void GameoverAwake();
-void GameoverStart(GameState* gs, KeyboardState* ks, double dt);
-void GameoverUpdate(GameState* gs, KeyboardState* ks, double dt);
-void GameoverClose(GameState* gs, KeyboardState* ks, double dt);
-void GameoverFree();
 
 
 #include "mainmenu_scene.cpp"

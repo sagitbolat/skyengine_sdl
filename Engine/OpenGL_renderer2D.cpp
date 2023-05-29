@@ -143,6 +143,7 @@ const void ShaderSetTransform(unsigned int ID, const char* name, glm::mat4 trans
 }
 
 
+
 // SECTION: Rendering
 
 struct WindowState {
@@ -370,4 +371,61 @@ void DrawSprite(Sprite sprite, Transform transform, Camera camera) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+}
+
+
+// SECTION: Debug code only
+// NOTE: This uses immediate mode rendering, and as such is much slower than the main renering code.
+namespace Debug {
+    // NOTE: So far the debug drawing only works if its done as the last draw call of the rendering order.
+    // NOTE: Draws a line from point a to point b in given color
+    void DrawLine2D(Vector3 a, Vector3 b, unsigned int shader_id, Camera camera, float line_width = 1.0f) {
+
+        Transform transform = {0.0f};
+        transform.scale = {1.0f, 1.0f, 1.0f};
+        ShaderSetTransform(shader_id, "transform", CameraToMatrix(camera) * TransformToMatrix(transform));
+
+
+        glDisable(GL_TEXTURE_2D); // Disable texturing
+        glLineWidth(line_width);
+        glEnable(GL_STENCIL_TEST);
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        glDisable(GL_DEPTH_TEST);
+        glClear(GL_STENCIL_BUFFER_BIT);
+        glBegin(GL_LINES);
+        glVertex3f(a.x, a.y, a.z);
+        glVertex3f(b.x, b.y, b.z);
+        glEnd();
+        glEnable(GL_DEPTH_TEST);
+        glStencilFunc(GL_EQUAL, 1, 0xFF);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+        glLineWidth(1.0f);
+        glEnable(GL_TEXTURE_2D); // Disable texturing
+
+
+        return;
+    }  
+    // NOTE: Rotation not done
+    void DrawRectangle2D(Transform transform, unsigned int shader_id, Camera camera, float line_width = 1.0f) {
+        Vector3 center = transform.position;
+        float width = transform.scale.x;
+        float height = transform.scale.y;
+        
+        float x_min = center.x - width/2;
+        float x_max = center.x + width/2;
+        float y_min = center.y - height/2;
+        float y_max = center.y + height/2;
+        float z = center.z;
+
+        Vector3 a = {x_min, y_min, z};
+        Vector3 b = {x_max, y_min, z};
+        Vector3 c = {x_max, y_max, z};
+        Vector3 d = {x_min, y_max, z};
+        
+        DrawLine2D(a, b, shader_id, camera, line_width);
+        DrawLine2D(b, c, shader_id, camera, line_width);
+        DrawLine2D(c, d, shader_id, camera, line_width);
+        DrawLine2D(d, a, shader_id, camera, line_width);
+    } 
 }
