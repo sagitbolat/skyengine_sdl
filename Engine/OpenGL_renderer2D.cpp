@@ -147,7 +147,7 @@ const void ShaderSetTransform(unsigned int ID, const char* name, glm::mat4 trans
 
 struct WindowState {
     SDL_Window* window;
-    SDL_GLContext* gl_context;
+    SDL_GLContext gl_context;
 };
 
 
@@ -194,16 +194,15 @@ WindowState InitWindowContext(int width, int height, const char* window_name, fC
 
 
     window_state.window = window;
-    window_state.gl_context = &glContext;
+    window_state.gl_context = glContext;
     return window_state;
 }
 
 void FreeWindowContext(WindowState wdws) {
 
-    SDL_GL_DeleteContext(*(wdws.gl_context));
+    SDL_GL_DeleteContext((wdws.gl_context));
     SDL_DestroyWindow(wdws.window);
     SDL_Quit();
-    
 }
 
 // NOTE: Inits all the buffers and return the VAO
@@ -362,14 +361,13 @@ Sprite LoadSprite(
 }
 
 void DrawSprite(Sprite sprite, Transform transform, Camera camera) {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     ShaderUse(sprite.shader_id);
 
     ShaderSetTransform(sprite.shader_id, "transform", CameraToMatrix(camera) * TransformToMatrix(transform));
     
     glBindTexture(GL_TEXTURE_2D, sprite.texture_id);
     glBindVertexArray(sprite.VAO);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }

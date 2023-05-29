@@ -1,6 +1,8 @@
+#pragma once
 // NOTE: This should only be included in the game's main file where it is currently,
 // because it relies on the defenition of buller_sprite and enemy_sprite
-
+#include "../Engine/sky_structs.h"
+#include "../Engine/skymath.h"
 
 struct BulletPool {
     Transform* data;
@@ -37,7 +39,7 @@ struct BulletPool {
         }
 
     }
-    void SpawnBullet(Transform target_transform) {
+    void SpawnBullet(Transform target_transform, Sprite bullet_sprite) {
 
         //NOTE: Set spawn position
         this->data[this->curr_pointer].position = target_transform.position;
@@ -93,7 +95,7 @@ struct EnemyPool {
     }
 
     // NOTE: Spawns an enemy at a spawn_position and rotates it towards the target position
-    void SpawnEnemy(Vector3 spawn_position, Vector3 target_position) {
+    void SpawnEnemy(Vector3 spawn_position, Vector3 target_position, Sprite enemy_sprite) {
 
         //NOTE: Set spawn position
         this->data[this->curr_pointer].position = spawn_position;

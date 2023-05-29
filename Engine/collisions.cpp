@@ -10,26 +10,6 @@
 // SECTION: 2D Collision:
 
 
-// NOTE: Given two Oriented Bounding Boxes (OBBs) in the form of transforms, 
-// check if they overlap on a given axis
-// NOTE: This is an internal function for the SAT collision test.
-bool OverlapOnAxis(Transform obb1, Transform obb2, Vector3 axis) {
-    // Project OBB1 onto the axis
-    float obb1_min = VectorDot(axis, obb1.position) - VectorDot(axis, obb1.scale);
-    float obb1_max = VectorDot(axis, obb1.position) + VectorDot(axis, obb1.scale);
-
-    // Project OBB2 onto the axis
-    float obb2_min = VectorDot(axis, obb2.position) - VectorDot(axis, obb2.scale);
-    float obb2_max = VectorDot(axis, obb2.position) + VectorDot(axis, obb2.scale);
-
-    // Check for overlap
-    if (obb1_max < obb2_min || obb2_max < obb1_min) {
-        return false;
-    }
-    return true;
-}
-
-
 // NOTE: Given two OBBs in the form of transforms, test if they are colliding
 // NOTE: Uses the Separating Axis Theorem (SAT).
 bool TestCollision(Transform obb1, Transform obb2) {
@@ -47,7 +27,7 @@ bool TestCollision(Transform obb1, Transform obb2) {
     float h_b = obb2.scale.y / 2; // Half-height of B
     
     Vector3 T = p_b - p_a;
-    
+
     // Check against axis a_x:
     float Ta_x = fAbs(VectorDot(T, a_x));
     float Ta_x_test = w_a + fAbs(VectorDot((w_b * b_x), a_x)) + fAbs(VectorDot((h_b * b_y), a_x)); 
@@ -76,22 +56,4 @@ bool TestCollision(Transform obb1, Transform obb2) {
         return false;
     }
     return true;
-    // SECTION: old code
-    //// Calculating the axes of each OBB
-    //Vector3 axes[4] = {
-    //    RotateZ({1, 0, 0}, obb1.rotation.z),
-    //    RotateZ({0, 1, 0}, obb1.rotation.z),
-    //    RotateZ({1, 0, 0}, obb2.rotation.z),
-    //    RotateZ({0, 1, 0}, obb2.rotation.z),
-    //    //ForwardVector(obb1), RightVector(obb1)
-    //};
-
-
-    //// Project onto axis[i]
-    //for (int i = 0; i < 4; ++i) {
-    //    //printf("Axis %d: {%f, %f, %f}\n", i, axes[i].x, axes[i].y, axes[i].z);
-    //    if (!OverlapOnAxis(obb1, obb1, axes[i])) return false; 
-    //}
-
-    //return true;
 }

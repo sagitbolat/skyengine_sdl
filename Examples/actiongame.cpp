@@ -369,8 +369,6 @@ void Update(GameState* gs, KeyboardState* ks, int dt) {
     DisplayText(graphics_buffer, health_str, &font, text_color, 0, 0, 1, 0);
 
 
-    // SECTION: Print frame deltatime
-    //printf("%d\n", dt);       
 }
 
 void UserFree() {

@@ -54,7 +54,6 @@ size_t ImportBMP (
     if (BYTES_PER_PIXEL * 8 != bits_per_pixel) {
         // TODO: Pixel Resolution Error
         BYTES_PER_PIXEL = bits_per_pixel / 8;
-        printf("ImportBMP Warning. %d bits per pixel. Does not match 24. Will attempt to adjust to %d.%c", bits_per_pixel, BYTES_PER_PIXEL*8, '\n');
     }
     *bytes_per_pixel = BYTES_PER_PIXEL;
 
