@@ -1,4 +1,5 @@
 #define INCLUDE_IMGUI
+#define FPS_SHOW
 #include "../Engine/SDL_sky.cpp"
 
 #include "scene.h"
@@ -23,8 +24,14 @@ void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *cle
 SceneManager scene_manager = {0};
 
 int high_score = 0;
-
 int last_score = 0;
+
+
+// SECTION: UI Fonts
+
+ImFont* button_font = nullptr;
+ImFont* title_font = nullptr;
+
 
 #include "mainmenu_scene.cpp"
 #include "game_scene.cpp"
@@ -57,6 +64,10 @@ void Awake(GameMemory *gm)
         fscanf(file, "%d", &high_score);
         fclose(file); // Close the file when you're done
     }
+
+    // SECTION: Load Fonts
+    button_font = LoadFont("./pixel.ttf", 32.0f);
+    title_font = LoadFont("./pixel.ttf", 64.0f);
 }
 
 void Start(GameState *gs, KeyboardState *ks)

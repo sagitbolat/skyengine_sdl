@@ -44,9 +44,15 @@ static void GameUpdateAndRender(Vector2Int screen_size, GameMemory* memory, Keyb
         Update(game_state, keyboard_state, delta_time);
     }
     
+    #ifdef FPS_SHOW
+    double fps = DeltaTimeToFps(delta_time);
+    char fps_str[64];
+    sprintf(fps_str, "FPS: %f", fps);
+    DrawSimpleText(fps_str, {1.0f, 0.0f}, UI_Alignment::TOP_RIGHT);
+    #endif
+    
     #ifdef INCLUDE_IMGUI
     UI_FrameRender(); 
     #endif
-    //double fps = DeltaTimeToFps(delta_time);
     //std::cout << fps << std::endl;
 }

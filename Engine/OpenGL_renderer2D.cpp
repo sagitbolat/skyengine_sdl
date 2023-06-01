@@ -160,6 +160,9 @@ WindowState InitWindowContext(int width, int height, const char* window_name, fC
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     
+    // NOTE: Turn off vsync
+    SDL_GL_SetSwapInterval(0);
+    
     
     // Create an SDL window
     SDL_Window* window = SDL_CreateWindow(window_name,

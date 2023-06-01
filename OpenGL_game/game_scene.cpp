@@ -194,11 +194,11 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
     // NOTE: Score Tracker
     char score_string[64];
     sprintf(score_string, "Score: %d", player.curr_score);
-    DrawSimpleText(score_string, {0.0f, 0.0f}, 5.0f, false);
+    DrawSimpleText(score_string, {0.01, 0.0f}, UI_Alignment::TOP_LEFT, button_font);
     // NOTE: Health Tracker
     char health_string[64];
-    sprintf(health_string, "Health: %d/%d", player.curr_health, PLAYER_MAX_HEALTH);
-    DrawSimpleText(health_string, {0.0f, 0.95f}, 5.0f, false);
+    sprintf(health_string, "Healthy: %d/%d", player.curr_health, PLAYER_MAX_HEALTH);
+    DrawSimpleText(health_string, {0.01, 1.0f}, UI_Alignment::BOTTOM_LEFT, button_font);
 
 
     // SECTION: Rendering

@@ -4,6 +4,9 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 
+// SECTION: Window Size
+int SCREEN_WIDTH = 1280;
+int SCREEN_HEIGHT = 720;
 
 #include "skyengine.h"
 #include "skyengine.cpp"
@@ -12,9 +15,6 @@
 #include "OpenGL_renderer2D.cpp"
 
 
-// SECTION: Window Size
-int SCREEN_WIDTH = 1280;
-int SCREEN_HEIGHT = 720;
 float SCREEN_WIDTH_IN_WORLD_SPACE = 10.0f;
 bool LAUNCH_FULLSCREEN = 0;
 fColor CLEAR_COLOR = {0.05, 0.0, 0.15, 1.0};
