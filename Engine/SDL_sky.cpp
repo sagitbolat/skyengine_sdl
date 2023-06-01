@@ -18,12 +18,29 @@ int SCREEN_HEIGHT = 720;
 float SCREEN_WIDTH_IN_WORLD_SPACE = 10.0f;
 bool LAUNCH_FULLSCREEN = 0;
 fColor CLEAR_COLOR = {0.05, 0.0, 0.15, 1.0};
+SDL_bool ENGINE_MAIN_LOOP_RUNNING = SDL_TRUE;
+
+Camera main_camera = {0};
+
+
 
 // NOTE: Returns the x and y of the mouse cursor, in pixels. 0,0 is top left of the window
 Vector2Int GetMousePosition() {
     Vector2Int pos = {0};
     SDL_GetMouseState(&pos.x, &pos.y);
     return pos;
+}
+
+Vector2 GetMousePositionInWorldCoords() {
+    float h = main_camera.height;
+    float w = main_camera.width;
+    Vector2Int mouse_pos = GetMousePosition();
+
+    Vector2 mouse_pos_normalized = {(float)mouse_pos.x / (float)SCREEN_WIDTH, (float)mouse_pos.y / (float)SCREEN_HEIGHT};
+    mouse_pos_normalized.x -= 0.5f;
+    mouse_pos_normalized.y -= 0.5f;
+    mouse_pos_normalized.y *= -1.0f;
+    return {mouse_pos_normalized.x * w, mouse_pos_normalized.y * h};
 }
 
 // NOTE: Pass true to enable the mouse cursor and false to disable the mouse cursor.
@@ -33,7 +50,10 @@ void SetCursorVisibility(bool toggle) {
 }
 
 
-Camera main_camera = {0};
+void QuitApp() {
+    ENGINE_MAIN_LOOP_RUNNING = SDL_FALSE;
+}
+
 
 int main(int argc, char* argv[]) {
 
@@ -44,6 +64,13 @@ int main(int argc, char* argv[]) {
 
     // TODO: pass LAUNCH_FULLSCREEN as an argument to the initializer
     WindowState window = InitWindowContext(SCREEN_WIDTH, SCREEN_HEIGHT, "SkyEngine App", CLEAR_COLOR);
+
+
+    // NOTE: Init the UI
+    #ifdef INCLUDE_IMGUI
+    InitUI(&window);
+    #endif
+
 
     main_camera.position = {0.0f, 0.0f, 3.0f};
     main_camera.up_direction = {0.0f, 0.1f, 0.0f};
@@ -81,7 +108,6 @@ int main(int argc, char* argv[]) {
 
     
     
-    SDL_bool running = SDL_TRUE;
 
     SDL_Event e = {0};
     
@@ -96,7 +122,7 @@ int main(int argc, char* argv[]) {
     uint64_t currentCounter;
     uint64_t deltaCounter;
 
-    while(running) {
+    while(ENGINE_MAIN_LOOP_RUNNING) {
         
         // SECTION: Time keeping
         // Calculate delta counter
@@ -119,9 +145,14 @@ int main(int argc, char* argv[]) {
         const uint8_t* SDL_keyboard_state = SDL_GetKeyboardState(NULL);
 
         while (SDL_PollEvent(&e)) {
+
+            #ifdef INCLUDE_IMGUI
+            ImGui_ImplSDL2_ProcessEvent(&e);
+            #endif
+
             switch(e.type) {
                 case SDL_QUIT:
-                    running = SDL_FALSE;
+                    ENGINE_MAIN_LOOP_RUNNING = SDL_FALSE;
                     break;
                 case SDL_MOUSEBUTTONDOWN: {
                     if (e.button.button == SDL_BUTTON_LEFT) keyboard_state.state.MBL = 1;
@@ -185,15 +216,19 @@ int main(int argc, char* argv[]) {
         // Clear the screen
         ClearScreen();
         
-        GameUpdateAndRender(&game_memory, &keyboard_state, delta_time); 
+        GameUpdateAndRender(Vector2Int{SCREEN_WIDTH, SCREEN_HEIGHT}, &game_memory, &keyboard_state, delta_time); 
         
         // Swap buffers
         SDL_GL_SwapWindow(window.window);
 
     }
     
+    #ifdef INCLUDE_IMGUI
+    DeinitUI();
+    #endif
+
     UserFree();
-    
+
 #ifdef __linux__ 
     munmap(game_memory.permanent_storage.memory, game_memory.permanent_storage_size);
     munmap(game_memory.asset_storage.memory, game_memory.asset_storage_size);

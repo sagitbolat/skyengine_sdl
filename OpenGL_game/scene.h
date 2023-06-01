@@ -44,7 +44,7 @@ struct SceneManager {
     void SwitchScene(int scene_id, GameState* gs, KeyboardState* ks, double dt) {
         scenes[curr_scene].CloseScene(gs, ks, dt);
         curr_scene = scene_id;
-        scenes[scene_id].StartScene(gs, ks, dt);
+        scenes[curr_scene].StartScene(gs, ks, dt);
     }
 
     // NOTE: Runs the Update method of the scene

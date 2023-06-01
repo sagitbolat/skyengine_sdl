@@ -146,12 +146,6 @@ const void ShaderSetTransform(unsigned int ID, const char* name, glm::mat4 trans
 
 // SECTION: Rendering
 
-struct WindowState {
-    SDL_Window* window;
-    SDL_GLContext gl_context;
-};
-
-
 WindowState InitWindowContext(int width, int height, const char* window_name, fColor clear_color) {
     WindowState window_state = {0};
 
@@ -160,7 +154,13 @@ WindowState InitWindowContext(int width, int height, const char* window_name, fC
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to initialize SDL: %s", SDL_GetError());
     }
-
+    
+    
+    // NOTE: Requests OpenGL 3.3
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    
+    
     // Create an SDL window
     SDL_Window* window = SDL_CreateWindow(window_name,
                                           SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,

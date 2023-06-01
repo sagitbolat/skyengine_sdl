@@ -13,6 +13,7 @@ struct Player {
     Transform transform;
     Sprite sprite;
     int curr_health;
+    int curr_score;
 };
 
 Player player = {0};
@@ -29,6 +30,9 @@ EnemyPool enemy_pool;
 const int ENEMY_POOL_SIZE = 30;
 
 const int PLAYER_MAX_HEALTH = 3;
+
+const int INITIAL_ENEMY_SPAWN_DELAY = 500.0f;
+float enemy_spawn_delay; //NOTE: A spawndelay of 10 makes an enemy spawn every 10 milliseconds. 1000 means every second
  
 void GameAwake() {
     sky_srand(199213);
@@ -50,16 +54,22 @@ void GameStart(GameState* gs, KeyboardState* ks, double dt) {
     bullet_pool.AllocAndInit(BULLET_POOL_SIZE);  
     enemy_pool.AllocAndInit(ENEMY_POOL_SIZE);  
 
+    enemy_spawn_delay = INITIAL_ENEMY_SPAWN_DELAY;
+
     player.curr_health = PLAYER_MAX_HEALTH;
+    player.curr_score = 0;
 }
 
 void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
+    if (ks->state.SPACE) {
+        // NOTE: Slow down time
+        dt *= 0.5f;
+    }
+
     float player_speed = 6.0f;
-    float rotation_speed_scaled = 315.0f * ((float)dt / 1000.0f);
     float bullet_speed_scaled = 10.0f * ((float)dt / 1000.0f); 
     float fire_delay = 40.0f; //NOTE: A firedelay of 10 makes the bullet fire every 10 milliseconds. 1000 means every second
     float enemy_speed_scaled = 6.0f * ((float)dt / 1000.0f); 
-    float enemy_spawn_delay = 500.0f; //NOTE: A spawndelay of 10 makes an enemy spawn every 10 milliseconds. 1000 means every second
      
     Vector3 player_movement_direction = {};
     
@@ -81,16 +91,9 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
         player.transform.position.x = player.transform.position.x + (player_movement_direction.x * player_speed * ((float)dt / 1000.0f));
         player.transform.position.y = player.transform.position.y + (player_movement_direction.y * player_speed * ((float)dt / 1000.0f));
     }
-
     
-    if (ks->state.Q) {
-        player.transform.rotation.z += rotation_speed_scaled;
-    }
-    if (ks->state.E) {
-        player.transform.rotation.z -= rotation_speed_scaled;
-    }   
-
-
+    Vector2 mouse_pos = GetMousePositionInWorldCoords(); 
+    player.transform.rotation = Vector2LookAt(Vec2(player.transform.position), mouse_pos);
 
     // SECTION: Firing
     static float fire_timer = 0;
@@ -124,21 +127,21 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
             case 0: {
                 // Top side of screen
                 spawn_pos.x = sky_rand_float(-half_w, half_w);
-                spawn_pos.y = half_h;
+                spawn_pos.y = half_h + 1.0f;
             } break;
             case 1: {
                 // Bottom side of screen
                 spawn_pos.x = sky_rand_float(-half_w, half_w);
-                spawn_pos.y = -half_h;
+                spawn_pos.y = -half_h - 1.0f;
             } break;
             case 2: {
                 // Left side of screen
-                spawn_pos.x = -half_w;
+                spawn_pos.x = -half_w - 1.0f;
                 spawn_pos.y = sky_rand_float(-half_h, half_h);
             } break;
             case 3: {
                 // Right side of screen
-                spawn_pos.x = half_w;
+                spawn_pos.x = half_w + 1.0f;
                 spawn_pos.y = sky_rand_float(-half_h, half_h);
             } break;
 
@@ -164,6 +167,9 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
             // TODO: Handle game over and health here:
             enemy_pool.is_active[en] = false;
             player.curr_health--;
+            if (player.curr_health <= 0) {
+                scene_manager.SwitchScene(SCENE_GAME_OVER, gs, ks, dt);
+            }
         }
 
         for (int bul = 0; bul < bullet_pool.pool_size; ++bul) {
@@ -177,9 +183,22 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
             // HANDLING IT NOW
             enemy_pool.is_active[en] = false;
             bullet_pool.is_active[bul] = false;
+            player.curr_score += 1;
+            if (enemy_spawn_delay > 300.0f) {
+                enemy_spawn_delay *= 0.98;
+            }
         }
     } 
 
+    // SECTION: Render UI:
+    // NOTE: Score Tracker
+    char score_string[64];
+    sprintf(score_string, "Score: %d", player.curr_score);
+    DrawSimpleText(score_string, {0.0f, 0.0f}, 5.0f, false);
+    // NOTE: Health Tracker
+    char health_string[64];
+    sprintf(health_string, "Health: %d/%d", player.curr_health, PLAYER_MAX_HEALTH);
+    DrawSimpleText(health_string, {0.0f, 0.95f}, 5.0f, false);
 
 
     // SECTION: Rendering
@@ -196,7 +215,9 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
     //Debug::DrawRectangle2D(player.transform, player.sprite.shader_id, main_camera, 3.0f);
     return;
 }
+
 void GameClose(GameState* gs, KeyboardState* ks, double dt) {
+    last_score = player.curr_score;
     return;
 }
 

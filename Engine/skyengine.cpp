@@ -1,14 +1,17 @@
 #pragma once
 #include "skyengine.h"
-// TODO: Remove this at some point and implement trig functions myself.
-// #include <math.h>
-// #define PI32 3.14159265f
+
+// NOTE: includes imgui UI
+#ifdef INCLUDE_IMGUI
+#include "UI/sky_ui_imgui.cpp"
+#endif
+
 
 
 #include <iostream>
 
 // NOTE: TODO: Change this to sample multiple frames for better precision.
-inline int DeltaTimeToFps(int delta_time) {
+inline double DeltaTimeToFps(double delta_time) {
     return delta_time > 0 ? (1000/delta_time) : 1000;
 }
 
@@ -19,7 +22,7 @@ static void Start(GameState* game_state, KeyboardState* keyboard_state);
 static void Update(GameState* game_state, KeyboardState* keyboard_state, double delta_time);
 static void UserFree();
 
-static void GameUpdateAndRender(GameMemory* memory, KeyboardState* keyboard_state, double delta_time) {
+static void GameUpdateAndRender(Vector2Int screen_size, GameMemory* memory, KeyboardState* keyboard_state, double delta_time) {
 
     GameState* game_state = (GameState*)memory->permanent_storage.memory;
 
@@ -29,6 +32,10 @@ static void GameUpdateAndRender(GameMemory* memory, KeyboardState* keyboard_stat
     
     static bool first = true;
 
+    #ifdef INCLUDE_IMGUI
+    UI_FrameStart(screen_size);
+    #endif
+
     if (first) {
         Start(game_state, keyboard_state);
         first = false;
@@ -37,6 +44,9 @@ static void GameUpdateAndRender(GameMemory* memory, KeyboardState* keyboard_stat
         Update(game_state, keyboard_state, delta_time);
     }
     
-    //int fps = DeltaTimeToFps(delta_time);
+    #ifdef INCLUDE_IMGUI
+    UI_FrameRender(); 
+    #endif
+    //double fps = DeltaTimeToFps(delta_time);
     //std::cout << fps << std::endl;
 }

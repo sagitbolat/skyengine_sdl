@@ -253,3 +253,12 @@ struct GameMemory {
 struct GameState {
     void* state;
 };
+
+
+
+// SECTION: Platform-specific
+
+struct WindowState {
+    SDL_Window* window;
+    SDL_GLContext gl_context;
+};

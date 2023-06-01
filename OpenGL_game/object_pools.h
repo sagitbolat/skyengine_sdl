@@ -52,7 +52,7 @@ struct BulletPool {
         // NOTE: Set spawn rotation
         this->data[this->curr_pointer].rotation = target_transform.rotation;
         // NOTE: Give the rotation a random offset to simulate bullet spread
-        this->data[this->curr_pointer].rotation.z += (sky_rand_float(-30.0f, 30.0f));
+        this->data[this->curr_pointer].rotation.z += (sky_rand_float(-10.0f, 10.0f));
         
         // NOTE: Set the scale of the bullet sprite
         this->data[this->curr_pointer].scale = Vector3{(float)bullet_sprite.pixel_width/PIXELS_PER_UNIT, (float)bullet_sprite.pixel_height/PIXELS_PER_UNIT, 1.0f};
