@@ -11,12 +11,12 @@ void MainMenuStart(GameState* gs, KeyboardState* ks, double dt) {
 
 void MainMenuUpdate(GameState* gs, KeyboardState* ks, double dt) {
 
-    DrawSimpleText("Asteroids", Vector2{0.5f, 0.2f}, UI_Alignment::CENTER_CENTER, title_font);
+    DrawSimpleText("Asteroids", Vector2{0.5f, 0.2f}, UI_Alignment::CENTER_CENTER, title_font, {0.9f, 0.9f, 1.0f, 1.0f});
 
-    if (DrawSimpleButton("Start Game", Vector2{0.4f, 0.35f}, Vector2{0.2f, 0.1f}, button_font)){
+    if (DrawSimpleButton("Start Game", Vector2{0.4f, 0.35f}, Vector2{0.2f, 0.1f}, button_font, &main_button_style)){
         scene_manager.SwitchScene(SCENE_GAME, gs, ks, dt);
     } 
-    if (DrawSimpleButton("Quit Game", Vector2{0.4f, 0.55f}, Vector2{0.2f, 0.1f}, button_font)) {
+    if (DrawSimpleButton("Quit Game", Vector2{0.4f, 0.55f}, Vector2{0.2f, 0.1f}, button_font, &main_button_style)) {
         QuitApp(); 
     }     
     char score_string[64];

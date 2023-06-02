@@ -198,9 +198,13 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
     // NOTE: Health Tracker
     char health_string[64];
     sprintf(health_string, "Healthy: %d/%d", player.curr_health, PLAYER_MAX_HEALTH);
-    DrawSimpleText(health_string, {0.01, 1.0f}, UI_Alignment::BOTTOM_LEFT, button_font);
+    for (int hp = 0; hp < player.curr_health; ++hp) {
+        DrawSimpleImage(player.sprite, {0.005f + (0.05f * hp), 0.92f}, {-1.0f, 0.07f});
+    }    
+    //DrawSimpleText(health_string, {0.01, 1.0f}, UI_Alignment::BOTTOM_LEFT, button_font);
 
-
+    
+    
     // SECTION: Rendering
     for (int i = 0; i < bullet_pool.pool_size; ++i) {
         if (!bullet_pool.is_active[i]) continue;

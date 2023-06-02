@@ -1,5 +1,5 @@
 #define INCLUDE_IMGUI
-#define FPS_SHOW
+//#define FPS_SHOW
 #include "../Engine/SDL_sky.cpp"
 
 #include "scene.h"
@@ -31,6 +31,8 @@ int last_score = 0;
 
 ImFont* button_font = nullptr;
 ImFont* title_font = nullptr;
+
+ButtonStyle main_button_style = {0.0f};
 
 
 #include "mainmenu_scene.cpp"
@@ -68,6 +70,21 @@ void Awake(GameMemory *gm)
     // SECTION: Load Fonts
     button_font = LoadFont("./pixel.ttf", 32.0f);
     title_font = LoadFont("./pixel.ttf", 64.0f);
+
+    // SECTION: Initializing button style
+    main_button_style.button_idle_color = {1.0f, 1.0f, 1.0f, 1.0f};
+    main_button_style.button_hover_color = {0.7f, 0.7f, 0.7f, 1.0f};
+    main_button_style.button_active_color = {0.9f, 0.9f, 0.9f, 1.0f};
+
+    main_button_style.outline_color = {0.4f, 0.4, 0.4f, 1.0f};
+    main_button_style.text_color = {0.0f, 0.0f, 0.0f, 1.0f};
+    
+    main_button_style. button_alpha = 1.0f;
+    main_button_style.text_alignment = {0.5f, 0.5f}; // NOTE: Centered
+    main_button_style.corner_rounding = 0.0f;
+    main_button_style.border_size = 3.0f;
+    main_button_style.frame_padding = {0.0f, 0.0f};
+
 }
 
 void Start(GameState *gs, KeyboardState *ks)

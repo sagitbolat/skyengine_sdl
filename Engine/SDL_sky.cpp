@@ -146,9 +146,9 @@ int main(int argc, char* argv[]) {
 
         while (SDL_PollEvent(&e)) {
 
-            #ifdef INCLUDE_IMGUI
+#ifdef INCLUDE_IMGUI
             ImGui_ImplSDL2_ProcessEvent(&e);
-            #endif
+#endif
 
             switch(e.type) {
                 case SDL_QUIT:
@@ -223,9 +223,9 @@ int main(int argc, char* argv[]) {
 
     }
     
-    #ifdef INCLUDE_IMGUI
+#ifdef INCLUDE_IMGUI
     DeinitUI();
-    #endif
+#endif
 
     UserFree();
 

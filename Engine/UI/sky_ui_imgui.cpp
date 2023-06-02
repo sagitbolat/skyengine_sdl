@@ -53,6 +53,27 @@ void UI_FrameRender()
 // SECTION: user code. Should be called inside the update or start methods of the game.
 
 
+struct ButtonStyle {
+    // SECTION: Coloring
+    fColor button_idle_color;
+    fColor button_hover_color;
+    fColor button_active_color;
+    fColor outline_color;
+    fColor text_color;
+
+    // SECTION: Styling
+    float button_alpha;
+    Vector2 text_alignment; // NOTE: {0.5, 0.5} will center the text
+    float corner_rounding;
+    float border_size;
+    Vector2 frame_padding; // How much padding around the button there is. Useful for imagebutton for the image to take up all the space
+};
+
+inline ImVec4 fColorToImVec4(fColor c) {
+    return ImVec4(c.r, c.g, c.b, c.a);
+}
+
+
 // NOTE: Goes in order Y_X. Used for UI alignment 
 enum UI_Alignment {
     TOP_LEFT,
@@ -83,8 +104,40 @@ ImFont* LoadFont(const char* font_path, float font_size) {
 
 }
 
-bool DrawSimpleButton(const char* label, Vector2 screen_position, Vector2 scale, ImFont* font)
-{
+// NOTE: Called at button function calls. Can also be called by user to default the same style on multiple buttons
+// EX:
+//  PushStyle(&my_style);
+//  
+//  DrawSimpleButton(...)       // No need to pass the my_style variable to this
+//  DrawSimpleImageButton(...)  // No need to pass here either
+//
+//  PopStyle(&my_style);
+void PushStyle(const ButtonStyle* style) {
+    if (style == nullptr) return;
+    ImGui::PushStyleColor(ImGuiCol_Button, fColorToImVec4(style->button_idle_color));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, fColorToImVec4(style->button_hover_color));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, fColorToImVec4(style->button_active_color));
+    ImGui::PushStyleColor(ImGuiCol_Border, fColorToImVec4(style->outline_color));
+    ImGui::PushStyleColor(ImGuiCol_Text, fColorToImVec4(style->text_color));
+
+    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, style->button_alpha);
+    ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(style->text_alignment.x, style->text_alignment.y));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, style->corner_rounding);
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, style->border_size);
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(style->frame_padding.x, style->frame_padding.y));
+}
+
+void PopStyle() {
+    ImGui::PopStyleColor(5);
+    ImGui::PopStyleVar(5);
+}
+
+bool DrawSimpleButton(
+    const char* label, 
+    Vector2 screen_position, Vector2 scale, 
+    ImFont* font, 
+    const ButtonStyle* style = nullptr
+) {
     int height = ImGui::GetWindowSize().y;
     int width = ImGui::GetWindowSize().x;
     ImVec2 button_size((int)(scale.x * width), (int)(scale.y * height));
@@ -95,15 +148,74 @@ bool DrawSimpleButton(const char* label, Vector2 screen_position, Vector2 scale,
 
     ImGui::PushFont(font);
 
+    PushStyle(style); 
+
     bool r = ImGui::Button(label, button_size);
+
+    if (style != nullptr) {
+        PopStyle();
+    }
 
     ImGui::PopFont();
     
     return r;
 }
 
+
+// If You want the image button to preseve it's aspect ratio, 
+// then pass the scale vector with one of the parameters as as negative value (eg. -1.0f).
+// If scale.x is negative, then it will scale the height according to your scale.
+// If scale.y is negative, then it will scale the width according to your scale.
+// NOTE: The scale, just like a normal button is between 0.0 and 1.0, where 1.0f takes up the whole screen.
+bool DrawSimpleImageButton(
+    const char* button_id, Sprite sprite, 
+    Vector2 screen_position, Vector2 scale, 
+    const ButtonStyle* style = nullptr,
+    fColor background_color = {0.0f, 0.0f, 0.0f, 0.0f}, 
+    fColor tint_color = {1.0f, 1.0f, 1.0f, 1.0f},
+    Vector2 uv0 = {0.0f, 0.0f}, 
+    Vector2 uv1 = {1.0f, 1.0f}
+) {
+    int height = ImGui::GetWindowSize().y;
+    int width = ImGui::GetWindowSize().x;
+
+    if (scale.y < 0.0f) {
+        scale.y = ((float)sprite.pixel_height/(float)sprite.pixel_width) * scale.x * ((float)width/(float)height);
+    } else if (scale.x < 0.0f) {
+        scale.x = (sprite.pixel_width/sprite.pixel_height) * scale.y * ((float)height/(float)width);
+    }
+
+    ImVec2 button_size((int)(scale.x * width), (int)(scale.y * height));
+
+    ImVec2 button_position((int)(screen_position.x * width), (int)(screen_position.y * height));
+
+    ImGui::SetCursorPos(button_position);
+    
+    PushStyle(style); 
+
+    bool r = ImGui::ImageButton(
+        button_id, (void*)sprite.texture_id, 
+        button_size, 
+        ImVec2(uv0.x, 1.0f - uv0.y), ImVec2(uv1.x, 1.0f - uv1.y), 
+        fColorToImVec4(background_color),
+        fColorToImVec4(tint_color)
+    );
+
+    if (style != nullptr) {
+        PopStyle(); 
+    }
+
+    return r;
+}
+
 // NOTE: Currently, vertical alignment is broken. Its close enough at medium sizes.
-void DrawSimpleText(const char* text, Vector2 screen_position, UI_Alignment alignment, ImFont* font = nullptr) {
+void DrawSimpleText(
+    const char* text, 
+    Vector2 screen_position, 
+    UI_Alignment alignment, 
+    ImFont* font = nullptr,
+    fColor text_color = {1.0f, 1.0f, 1.0f, 1.0f} 
+) {
     int height = SCREEN_HEIGHT;
     int width = SCREEN_WIDTH;
 
@@ -158,9 +270,50 @@ void DrawSimpleText(const char* text, Vector2 screen_position, UI_Alignment alig
     }
 
     ImGui::SetCursorPos(text_position);
-    
-    ImGui::Text(text);
 
+    ImGui::PushStyleColor(ImGuiCol_Text, fColorToImVec4(text_color));
+    ImGui::Text(text);
+    ImGui::PopStyleColor();
     if (font != nullptr) ImGui::PopFont();
     return;
+}
+
+// If You want the image to preseve it's aspect ratio, 
+// then pass the scale vector with one of the parameters as as negative value (eg. -1.0f).
+// If scale.x is negative, then it will scale the height according to your scale.
+// If scale.y is negative, then it will scale the width according to your scale.
+// NOTE: The scale, just like a normal button is between 0.0 and 1.0, where 1.0f takes up the whole screen.
+void DrawSimpleImage(
+    Sprite sprite, 
+    Vector2 screen_position, 
+    Vector2 scale, 
+    fColor tint_color = {1.0f, 1.0f, 1.0f, 1.0f},
+    fColor border_color = {0.0f, 0.0f, 0.0f, 0.0f},
+    Vector2 uv0 = {0.0f, 0.0f}, 
+    Vector2 uv1 = {1.0f, 1.0f}
+) {
+    int height = ImGui::GetWindowSize().y;
+    int width = ImGui::GetWindowSize().x;
+
+    if (scale.y < 0.0f) {
+        scale.y = ((float)sprite.pixel_height/(float)sprite.pixel_width) * scale.x * ((float)width/(float)height);
+    } else if (scale.x < 0.0f) {
+        scale.x = (sprite.pixel_width/sprite.pixel_height) * scale.y * ((float)height/(float)width);
+    }
+
+    ImVec2 image_size((int)(scale.x * width), (int)(scale.y * height));
+
+    ImVec2 image_position((int)(screen_position.x * width), (int)(screen_position.y * height));
+
+    ImGui::SetCursorPos(image_position);
+
+    ImGui::Image(
+        (void*)sprite.texture_id,
+        image_size,
+        ImVec2(uv0.x, 1.0f - uv0.y),
+        ImVec2(uv1.x, 1.0f - uv1.y),
+        fColorToImVec4(tint_color),
+        fColorToImVec4(border_color)
+    );
+
 }

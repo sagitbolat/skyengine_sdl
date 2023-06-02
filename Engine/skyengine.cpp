@@ -5,8 +5,10 @@
 #ifdef INCLUDE_IMGUI
 #include "UI/sky_ui_imgui.cpp"
 #endif
-
-
+// NOTE: includes nuklear UI
+#ifdef INCLUDE_NUKLEAR
+#include "UI/sky_ui_nuklear.cpp"
+#endif
 
 #include <iostream>
 
@@ -32,9 +34,9 @@ static void GameUpdateAndRender(Vector2Int screen_size, GameMemory* memory, Keyb
     
     static bool first = true;
 
-    #ifdef INCLUDE_IMGUI
+#ifdef INCLUDE_IMGUI
     UI_FrameStart(screen_size);
-    #endif
+#endif
 
     if (first) {
         Start(game_state, keyboard_state);
@@ -44,15 +46,15 @@ static void GameUpdateAndRender(Vector2Int screen_size, GameMemory* memory, Keyb
         Update(game_state, keyboard_state, delta_time);
     }
     
-    #ifdef FPS_SHOW
+#ifdef FPS_SHOW
     double fps = DeltaTimeToFps(delta_time);
     char fps_str[64];
     sprintf(fps_str, "FPS: %f", fps);
     DrawSimpleText(fps_str, {1.0f, 0.0f}, UI_Alignment::TOP_RIGHT);
-    #endif
+#endif
     
-    #ifdef INCLUDE_IMGUI
+#ifdef INCLUDE_IMGUI
     UI_FrameRender(); 
-    #endif
+#endif
     //std::cout << fps << std::endl;
 }
