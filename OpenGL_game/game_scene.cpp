@@ -38,15 +38,14 @@ void GameAwake() {
     sky_srand(199213);
 
     // SECTION: Load Sprites and init player
-    player.sprite = LoadSprite("ship.bmp");
+    player.sprite = LoadSprite("ship.png");
     player.transform.position = {0.0f, 0.0f, 0.0f};
     player.transform.rotation = {0.0f, 0.0f, 0.0f};
     // NOTE: Scale the sprite based on its pixel size.
     player.transform.scale = {(float)player.sprite.pixel_width/PIXELS_PER_UNIT, (float)player.sprite.pixel_height/PIXELS_PER_UNIT, 1.0f};
-
-    bullet_sprite = LoadSprite("bullet.bmp");
+    bullet_sprite = LoadSprite("bullet.png");
     
-    enemy_sprite = LoadSprite("enemy.bmp");
+    enemy_sprite = LoadSprite("enemy.png");
 }
 
 
@@ -194,7 +193,7 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
     // NOTE: Score Tracker
     char score_string[64];
     sprintf(score_string, "Score: %d", player.curr_score);
-    DrawSimpleText(score_string, {0.01, 0.0f}, UI_Alignment::TOP_LEFT, button_font);
+    DrawSimpleText(score_string, {0.01, 0.0f}, UI_Alignment::TOP_LEFT, button_font, font_color);
     // NOTE: Health Tracker
     char health_string[64];
     sprintf(health_string, "Healthy: %d/%d", player.curr_health, PLAYER_MAX_HEALTH);
@@ -206,6 +205,7 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
     
     
     // SECTION: Rendering
+    DrawSprite(bg_sprite, bg_transform, main_camera);
     for (int i = 0; i < bullet_pool.pool_size; ++i) {
         if (!bullet_pool.is_active[i]) continue;
         DrawSprite(bullet_sprite, bullet_pool.data[i], main_camera);

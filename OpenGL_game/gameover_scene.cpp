@@ -19,7 +19,9 @@ void GameoverStart(GameState* gs, KeyboardState* ks, double dt) {
 
 void GameoverUpdate(GameState* gs, KeyboardState* ks, double dt) {
 
-    DrawSimpleText("Game Over", Vector2{0.5f, 0.2f}, UI_Alignment::CENTER_CENTER, title_font);
+    DrawSprite(bg_sprite, bg_transform, main_camera);
+    
+    DrawSimpleText("Game Over", Vector2{0.5f, 0.2f}, UI_Alignment::CENTER_CENTER, title_font, font_color);
     
     if (DrawSimpleButton("Main Menu", Vector2{0.4f, 0.3f}, Vector2{0.2f, 0.1f}, button_font, &main_button_style)) {
         scene_manager.SwitchScene(SCENE_MAIN_MENU, gs, ks, dt);
@@ -37,7 +39,7 @@ void GameoverUpdate(GameState* gs, KeyboardState* ks, double dt) {
     } else {
         sprintf(score_string, "Final Score: %d", last_score);
     }
-    DrawSimpleText(score_string, {0.5, 0.8f}, UI_Alignment::CENTER_CENTER, button_font);
+    DrawSimpleText(score_string, {0.5, 0.8f}, UI_Alignment::CENTER_CENTER, button_font, font_color);
     
     return;
 }

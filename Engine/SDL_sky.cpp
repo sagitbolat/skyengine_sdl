@@ -122,6 +122,7 @@ int main(int argc, char* argv[]) {
     uint64_t currentCounter;
     uint64_t deltaCounter;
 
+
     while(ENGINE_MAIN_LOOP_RUNNING) {
         
         // SECTION: Time keeping

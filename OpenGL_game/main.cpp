@@ -1,6 +1,7 @@
 #define INCLUDE_IMGUI
 //#define FPS_SHOW
 #include "../Engine/SDL_sky.cpp"
+#include "../Engine/skymath.h"
 
 #include "scene.h"
 
@@ -31,8 +32,14 @@ int last_score = 0;
 
 ImFont* button_font = nullptr;
 ImFont* title_font = nullptr;
+fColor font_color = {(float)125/255, (float)212/255, (float)221/255, 1.0f};
 
 ButtonStyle main_button_style = {0.0f};
+
+// NOTE: Background
+Sprite bg_sprite = {0};
+Transform bg_transform = {0.0f};
+
 
 
 #include "mainmenu_scene.cpp"
@@ -41,7 +48,14 @@ ButtonStyle main_button_style = {0.0f};
 
 void Awake(GameMemory *gm)
 {
-
+    // NOTE: Load background texture
+    bg_sprite = LoadSprite("background3.png");
+    
+    bg_transform.position = {0.0f, 0.0f, -10.0f};
+    bg_transform.rotation = {0.0f, 0.0f, 0.0f};
+    bg_transform.scale = {main_camera.width, main_camera.height, 1.0f};
+    
+    
     // SECTION: SceneManager init
     scene_manager.InitManager(NUM_SCENES);
 
@@ -68,15 +82,15 @@ void Awake(GameMemory *gm)
     }
 
     // SECTION: Load Fonts
-    button_font = LoadFont("./pixel.ttf", 32.0f);
-    title_font = LoadFont("./pixel.ttf", 64.0f);
+    button_font = LoadFont("pixel.ttf", 32.0f);
+    title_font = LoadFont("pixel.ttf", 64.0f);
 
     // SECTION: Initializing button style
-    main_button_style.button_idle_color = {1.0f, 1.0f, 1.0f, 1.0f};
-    main_button_style.button_hover_color = {0.7f, 0.7f, 0.7f, 1.0f};
-    main_button_style.button_active_color = {0.9f, 0.9f, 0.9f, 1.0f};
+    main_button_style.button_idle_color = font_color;
+    main_button_style.button_hover_color = font_color * 0.8f;
+    main_button_style.button_active_color = font_color * 0.9f;
 
-    main_button_style.outline_color = {0.4f, 0.4, 0.4f, 1.0f};
+    main_button_style.outline_color = font_color * 0.5f;
     main_button_style.text_color = {0.0f, 0.0f, 0.0f, 1.0f};
     
     main_button_style. button_alpha = 1.0f;

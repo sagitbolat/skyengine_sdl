@@ -9,7 +9,10 @@
 #include <sstream>
 #include <iostream>
 
-#include "image_import.h"
+//#include "image_import.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb/stb_image.h"
+
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -234,19 +237,22 @@ unsigned int InitGPUBuffers(float* vertices, size_t vertices_size, unsigned int*
 // SECTION: Texture Loading and rendering
 unsigned int LoadTexture(const char* image_path, unsigned int* width_p = nullptr, unsigned int* height_p = nullptr) {
     // NOTE: Load the image texture.
-    
-    //int width, height, nrChannels;
-    //unsigned char *data = stbi_load(image_path, &width, &height, &nrChannels, 0);
-    
+#ifdef STB_IMAGE_IMPLEMENTATION
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true);
+    unsigned char *data = stbi_load(image_path, &width, &height, &nrChannels, 0);
+    unsigned int gl_format = (nrChannels == 4) ? GL_RGBA : GL_RGB;
+#else
     ImageData img = {0};
     LoadBitmap(image_path, &img);
     int width = img.width;
     int height = img.height;
     unsigned char* data = (unsigned char*)img.data;
-    
+    unsigned int gl_format = (img.bytes_per_pixel == 4) ? GL_RGBA : GL_RGB;
+#endif
+
     if (width_p != nullptr) *width_p = width;
     if (height_p != nullptr) *height_p = height;
-
     // NOTE: Generate a texture and bind it to current state/context
     unsigned int texture;
     glGenTextures(1, &texture); 
@@ -254,7 +260,7 @@ unsigned int LoadTexture(const char* image_path, unsigned int* width_p = nullptr
     glBindTexture(GL_TEXTURE_2D, texture);
 
     // NOTE: Generate the mipmap
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, gl_format, width, height, 0, gl_format, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     // NOTE: Enable mirrored repeat for both the S and T axes (the x and y axes)
@@ -269,8 +275,11 @@ unsigned int LoadTexture(const char* image_path, unsigned int* width_p = nullptr
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
    
     // NOTE: Free the image afterwards:
-    //stbi_image_free(data);
+#ifdef STB_IMAGE_IMPLEMENTATION
+    stbi_image_free(data);
+#else
     FreeBitmap(&img);
+#endif
     return texture; 
 }
 

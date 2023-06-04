@@ -247,3 +247,13 @@ Vector3 RightVector(Transform transform) {
 Vector3 LeftVector(Transform transform) {
 	return RotationMatrix(transform) * Vector3{-1, 0, 0}; 
 }
+
+
+// SECTION: Color
+
+fColor operator*(fColor c, float a) {
+	return {c.r * a, c.g * a, c.b * a, c.a * a};
+}
+fColor operator*(float a, fColor c) {
+	return c*a;
+}
