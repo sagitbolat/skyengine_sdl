@@ -5,7 +5,7 @@
 #ifdef INCLUDE_IMGUI
 #include "UI/sky_ui_imgui.cpp"
 #endif
-// NOTE: includes nuklear UI
+// NOTE: includes nuklear UI // TODO: This doesnt work now as a backend, so use imgui only
 #ifdef INCLUDE_NUKLEAR
 #include "UI/sky_ui_nuklear.cpp"
 #endif

@@ -13,6 +13,7 @@ int SCREEN_HEIGHT = 720;
 #include "allocation.cpp" 
 
 #include "OpenGL_renderer2D.cpp"
+#include "OpenAL_sound.cpp"
 
 
 float SCREEN_WIDTH_IN_WORLD_SPACE = 10.0f;
@@ -62,8 +63,13 @@ int main(int argc, char* argv[]) {
     Init(&SCREEN_WIDTH, &SCREEN_HEIGHT, &SCREEN_WIDTH_IN_WORLD_SPACE, &LAUNCH_FULLSCREEN, &CLEAR_COLOR);
     
 
+    // NOTE: Init OpenGL for graphics
     // TODO: pass LAUNCH_FULLSCREEN as an argument to the initializer
     WindowState window = InitWindowContext(SCREEN_WIDTH, SCREEN_HEIGHT, "SkyEngine App", CLEAR_COLOR);
+
+
+    // NOTE: Init OpenAL for sound
+    AudioContext audio_context = InitAudioContext();
 
 
     // NOTE: Init the UI
@@ -238,6 +244,8 @@ int main(int argc, char* argv[]) {
 	free(game_memory.permanent_storage.memory);
     free(game_memory.asset_storage.memory);
 #endif
+
+    FreeAudioContext(audio_context);
     FreeWindowContext(window);
     SDL_Quit();
     return 0;

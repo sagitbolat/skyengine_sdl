@@ -1,5 +1,5 @@
 #define INCLUDE_IMGUI
-//#define FPS_SHOW
+#define FPS_SHOW
 #include "../Engine/SDL_sky.cpp"
 #include "../Engine/skymath.h"
 
@@ -14,6 +14,20 @@ void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *cle
     //*clear_color = {0.8f/2, 0.83f/2, 1.0f/2, 1.0f};
     *clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
 }
+
+
+// SECTION: Audio
+AudioSource global_audio_source = {0};
+AudioSource shoot_audio_source  = {0};
+AudioSource hit_audio_source    = {0};
+AudioSource enemy_audio_source  = {0};
+// NOTE: Sound clips
+#define NUM_BACKGROUND_TRACKS 3
+SoundClip laser_sound           = {0};
+SoundClip enemy_death_sound     = {0};
+SoundClip player_death_sound    = {0};
+SoundClip game_over_sound       = {0};
+SoundClip* background_tracks    = {0};
 
 // SCENE
 #define NUM_SCENES 3
@@ -48,6 +62,25 @@ Transform bg_transform = {0.0f};
 
 void Awake(GameMemory *gm)
 {
+
+    // NOTE: Audio Init
+    global_audio_source = LoadAudioSource(false, 0.5f);
+    shoot_audio_source  = LoadAudioSource();
+    hit_audio_source    = LoadAudioSource();
+    enemy_audio_source  = LoadAudioSource();
+    
+    // NOTE: Sound clips
+    background_tracks = (SoundClip*)malloc(sizeof(SoundClip) * NUM_BACKGROUND_TRACKS);
+    background_tracks[0]    = LoadSoundClip("music_track1.ogg");
+    background_tracks[1]    = LoadSoundClip("music_track2.ogg");
+    background_tracks[2]    = LoadSoundClip("music_track3.ogg");
+    laser_sound             = LoadSoundClip("laser_shot.ogg");
+    player_death_sound      = LoadSoundClip("hit_hurt.ogg");
+    game_over_sound         = LoadSoundClip("game_over.ogg");
+    enemy_death_sound       = LoadSoundClip("explosion.ogg");
+
+
+
     // NOTE: Load background texture
     bg_sprite = LoadSprite("background3.png");
     
@@ -103,11 +136,18 @@ void Awake(GameMemory *gm)
 
 void Start(GameState *gs, KeyboardState *ks)
 {
+    // NOTE: Start background music and then start first scene
+    PlaySoundFromSource(&global_audio_source, &background_tracks[0]);
     scene_manager.scenes[0].StartScene(gs, ks, 0.0);
 }
 
 void Update(GameState *gs, KeyboardState *ks, double dt)
 {
+    static int track_num = 1;
+    if (!global_audio_source.IsPlaying()) {
+        PlaySoundFromSource(&global_audio_source, &background_tracks[track_num % NUM_BACKGROUND_TRACKS]);
+        ++track_num;
+    }
     scene_manager.SceneUpdate(gs, ks, dt);
 }
 
@@ -117,6 +157,21 @@ void UserFree()
     scene_manager.FreeScene(1);
     scene_manager.FreeScene(2);
     scene_manager.FreeManager();
+
+    // NOTE: Sounds freeing
+    FreeSoundClip(&background_tracks[0]);
+    FreeSoundClip(&background_tracks[1]);
+    FreeSoundClip(&background_tracks[2]);
+    free(background_tracks);
+    FreeSoundClip(&laser_sound);
+    FreeSoundClip(&player_death_sound);
+    FreeSoundClip(&game_over_sound);
+    FreeSoundClip(&enemy_death_sound);
+    
+    FreeAudioSource(&global_audio_source);
+    FreeAudioSource(&shoot_audio_source);
+    FreeAudioSource(&hit_audio_source);
+    FreeAudioSource(&enemy_audio_source);
 
     // TODO: Save the highscore into a file
     FILE *file;

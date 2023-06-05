@@ -37,10 +37,10 @@ float enemy_spawn_delay; //NOTE: A spawndelay of 10 makes an enemy spawn every 1
 void GameAwake() {
     sky_srand(199213);
 
+
     // SECTION: Load Sprites and init player
     player.sprite = LoadSprite("ship.png");
-    player.transform.position = {0.0f, 0.0f, 0.0f};
-    player.transform.rotation = {0.0f, 0.0f, 0.0f};
+
     // NOTE: Scale the sprite based on its pixel size.
     player.transform.scale = {(float)player.sprite.pixel_width/PIXELS_PER_UNIT, (float)player.sprite.pixel_height/PIXELS_PER_UNIT, 1.0f};
     bullet_sprite = LoadSprite("bullet.png");
@@ -50,8 +50,13 @@ void GameAwake() {
 
 
 void GameStart(GameState* gs, KeyboardState* ks, double dt) {
+ 
     bullet_pool.AllocAndInit(BULLET_POOL_SIZE);  
-    enemy_pool.AllocAndInit(ENEMY_POOL_SIZE);  
+    enemy_pool.AllocAndInit(ENEMY_POOL_SIZE);     
+    
+    
+    player.transform.position = {0.0f, 0.0f, 0.0f};
+    player.transform.rotation = {0.0f, 0.0f, 0.0f};
 
     enemy_spawn_delay = INITIAL_ENEMY_SPAWN_DELAY;
 
@@ -102,11 +107,7 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
         //transform.position = transform.position + UpVector(transform) * player_speed;
         bullet_pool.SpawnBullet(player.transform, bullet_sprite);
         reset_timer=true;
-    }
-    if (ks->state.MBR && fire_timer > fire_delay) {
-        //transform.position = transform.position + UpVector(transform) * player_speed;
-        bullet_pool.SpawnBullet(player.transform, bullet_sprite);
-        reset_timer=true;
+        PlaySoundFromSource(&shoot_audio_source, &laser_sound);
     }
     if (reset_timer) {
         fire_timer=0;
@@ -168,6 +169,9 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
             player.curr_health--;
             if (player.curr_health <= 0) {
                 scene_manager.SwitchScene(SCENE_GAME_OVER, gs, ks, dt);
+                PlaySoundFromSource(&hit_audio_source, &game_over_sound);
+            } else {
+                PlaySoundFromSource(&hit_audio_source, &player_death_sound);
             }
         }
 
@@ -183,6 +187,8 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
             enemy_pool.is_active[en] = false;
             bullet_pool.is_active[bul] = false;
             player.curr_score += 1;
+            PlaySoundFromSource(&enemy_audio_source, &enemy_death_sound);
+            // NOTE: Shorten the spawn_delay so enemies spawn as player kills them
             if (enemy_spawn_delay > 300.0f) {
                 enemy_spawn_delay *= 0.98;
             }
@@ -221,6 +227,9 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
 }
 
 void GameClose(GameState* gs, KeyboardState* ks, double dt) {
+    enemy_pool.Free();
+    bullet_pool.Free();
+
     last_score = player.curr_score;
     return;
 }

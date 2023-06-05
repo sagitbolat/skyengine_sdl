@@ -67,6 +67,11 @@ struct BulletPool {
             this->curr_pointer = 0;
         }
     }
+    void Free() {
+        free(this->data);
+        free(this->is_active);
+    }
+
 };
 
 struct EnemyPool {
@@ -116,5 +121,8 @@ struct EnemyPool {
             this->curr_pointer = 0;
         }
     }
-
+    void Free() {
+        free(this->data);
+        free(this->is_active);
+    }
 };

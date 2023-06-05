@@ -206,19 +206,19 @@ Matrix3 RotationMatrix(Transform transform) {
     float Cy = CosDeg(transform.rotation.y);
     float Cz = CosDeg(transform.rotation.z);
 
-	Matrix3 R = {0.0f};
+	Matrix3 return_matrix = {0.0f};
 
-	R.E[0][0]=Cy*Cz;
-	R.E[0][1]=-Cy*Sz;
-	R.E[0][2]=Sy;
-	R.E[1][0]=Cz*Sx*Sy+Cx*Sz;
-	R.E[1][1]=Cx*Cz-Sx*Sy*Sz;
-	R.E[1][2]=-Cy*Sx;
-	R.E[2][0]=-Cx*Cz*Sy+Sx*Sz;
-	R.E[2][1]=Cz*Sx+Cx*Sy*Sz;
-	R.E[2][2]=Cx*Cy;
+	return_matrix.E[0][0]=Cy*Cz;
+	return_matrix.E[0][1]=-Cy*Sz;
+	return_matrix.E[0][2]=Sy;
+	return_matrix.E[1][0]=Cz*Sx*Sy+Cx*Sz;
+	return_matrix.E[1][1]=Cx*Cz-Sx*Sy*Sz;
+	return_matrix.E[1][2]=-Cy*Sx;
+	return_matrix.E[2][0]=-Cx*Cz*Sy+Sx*Sz;
+	return_matrix.E[2][1]=Cz*Sx+Cx*Sy*Sz;
+	return_matrix.E[2][2]=Cx*Cy;
 	
-	return R;
+	return return_matrix;
 }
 // SECTION: Direction Vectors
 // NOTE: RETURN the transform's direction vectors (normalized):

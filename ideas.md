@@ -6,18 +6,10 @@
     * [O] - Working on it now or need to start working on it soon. 
 
 # TODO NOW:
-* [ ]Take out all struct and data types into a seperate "skytypes.h" that will be included in every file.
-* [ ]Change so that game bitmap buffer gets passed as a param instead of being global.
 
-* [O]ADD MOUSE BUTTON SUPPORT INTO INPUT SYSTEM.
+* [ ] Take out UI, OpenAL, and OpenGL files into their own translation units, so they can be compiled seperately, since compile time is so long right now. Will also help with abstraction since internal OpenGL, OpenAL, and ImGui functions will not be exposed in the include header, and therefore be unavailable to the rest of the engine and the end user of the engine.
 
-* [O]Change alpha to work with continuous alpha values (eg. 0.1, 0.332) instead of a binary alpha value (0 or 1 only).
-
-* [O]Make DisplayText work with colors.
-
-* [O]Make DisplayText work with centered text (right now can only place text from a top left corner coordinate).
-
-* [O]Implement common data sctuctures and put them in the "Engine/Datastructs/.." folder as includes for the user:
+* [O] Implement common data sctuctures and put them in the "Engine/Datastructs/.." folder as includes for the user:
     * Dynamic Array
         * Make a 2D version?
     * Linked list
@@ -38,48 +30,16 @@
 
 
 
-* [O]Make dt more persise than just ms. Need more something like microseconds.
-    * apparently that is not easy to do, since CPUs work off ms not microseconds.
-    * I can try to LIMIT the FPS to be 60 frames, and have a system that is similar to FixedUpdate() in unity. This way I have constant dt to fall back onto.
-
-
-* [O]Rotation of bitmaps. Do the rotation code inside the BlitBitmap function.
-    * The bitmap gets rotated when it is blitted, not beforehand.
-        * Maybe find a way to save a rotated bitmap's data as well, in case we need to cache the rotated bitmap (if a rotation shows up alot, best to just save it).
-    * figure out where to store the rotated bitmap data. Do I make a new frame-wide Arena and allocate rotated image data there? Maybe? Idk.
-        * I added a [USER DEFINED] frame-arena, which is a memory arena with a lifetime of a frame. Maybe I should move the frame arena to be part of the game_memory struct??
-        * On the other hand, I might not need frame arenas all the time, but it seems universally useful. Will need to think about it.
-
-
-* [?]Also try and make a second coordinate system for objects that appear outside the screen (such as asteroids spawning offscreen).
-* [?]Add a virtual camera module, so that you can specify where in world coordinates your virtual camera is. 
-
 # TODO (for later):
 
 
 # DONE:
-* [V]Fix the BlitBitmap() method to work properly at different scales. Right now, higher scales cause jittery movement, 
-    likely because we are bitting at large pixel-steps (the whole scale is one step).
-
-* [V]Change the rendering code (and drawing code) so that if user tries to draw outside the bounds, we handle it instead of having segmentation fault.
-
-* [V]Exporting of bitmaps. Make it work with 32-bit colors instead of 24-bit colors.
-
-* [V] Refactor all image data to have an alpha channel as well.
+* Take out all struct and data types into a seperate "skytypes.h" that will be included in every file.
+* Make dt more persise than just ms. Need more something like microseconds.
+* 2D collisions.
 
 ### Features to implement:
-* 2D collisions.
 * 2D kinematics.
-* Add an alpha channel when storing bitmaps, so they can have transparency when rendering.
-* Log mouse input in the input buffer
-    * Position (x, y)
-    * Mouse buttons (left and right click)
-* More drawing methods (for primitives):
-    * Drawing individual pixel
-    * Drawing cirles and elipses
-    * Drawing lines of variable thickness
-    * Drawing Triangles
-* Add a method to blit a whole bitmap to the screen.
 * Physics engine. (simple kinematics only for now).
 * Sound
 

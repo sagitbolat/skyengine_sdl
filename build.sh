@@ -1,5 +1,5 @@
 mkdir ./$1/build
 pushd ./$1/build
-    g++ ../$2.cpp -Wall -lSDL2 -lGLEW  -lGL -I PWD -o $2
+    g++ ../$2.cpp -Wall -lSDL2 -lGLEW  -lGL -lopenal -I PWD -o $2
     ./$2
 popd
