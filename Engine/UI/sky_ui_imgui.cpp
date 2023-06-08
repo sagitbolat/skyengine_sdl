@@ -1,9 +1,8 @@
-#pragma once
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
 #include <GL/gl.h>
 
-#include "../sky_structs.h"
+#include "sky_ui.h"
 #define IMGUI_IMPL_OPENGL_LOADER_CUSTOM
 #include "imgui/imgui.cpp"
 #include "imgui/imgui_tables.cpp"
@@ -16,7 +15,7 @@
 // SECTION: engine code. Not for user access
 
 // NOTE: Called before gameloop
-void InitUI(WindowState *ws)
+void InitUI(WindowContext *ws)
 {
     ImGui::CreateContext();
     ImGui_ImplSDL2_InitForOpenGL(ws->window, ws->gl_context);
@@ -50,42 +49,21 @@ void UI_FrameRender()
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
+bool SkyUI_ProcessEvent(const SDL_Event* e) {
+    return ImGui_ImplSDL2_ProcessEvent(e);
+}
+
 // SECTION: user code. Should be called inside the update or start methods of the game.
 
 
-struct ButtonStyle {
-    // SECTION: Coloring
-    fColor button_idle_color;
-    fColor button_hover_color;
-    fColor button_active_color;
-    fColor outline_color;
-    fColor text_color;
 
-    // SECTION: Styling
-    float button_alpha;
-    Vector2 text_alignment; // NOTE: {0.5, 0.5} will center the text
-    float corner_rounding;
-    float border_size;
-    Vector2 frame_padding; // How much padding around the button there is. Useful for imagebutton for the image to take up all the space
-};
 
-inline ImVec4 fColorToImVec4(fColor c) {
+static inline ImVec4 fColorToImVec4(fColor c) {
     return ImVec4(c.r, c.g, c.b, c.a);
 }
 
 
-// NOTE: Goes in order Y_X. Used for UI alignment 
-enum UI_Alignment {
-    TOP_LEFT,
-    TOP_CENTER,
-    TOP_RIGHT,
-    CENTER_LEFT,
-    CENTER_CENTER,
-    CENTER_RIGHT,
-    BOTTOM_LEFT,
-    BOTTOM_CENTER,
-    BOTTOM_RIGHT
-};
+
 
 
 // NOTE: The screen_position ans scale should be passed with values between 0.0f and 1.0f.
@@ -136,7 +114,7 @@ bool DrawSimpleButton(
     const char* label, 
     Vector2 screen_position, Vector2 scale, 
     ImFont* font, 
-    const ButtonStyle* style = nullptr
+    const ButtonStyle* style
 ) {
     int height = ImGui::GetWindowSize().y;
     int width = ImGui::GetWindowSize().x;
@@ -170,11 +148,11 @@ bool DrawSimpleButton(
 bool DrawSimpleImageButton(
     const char* button_id, Sprite sprite, 
     Vector2 screen_position, Vector2 scale, 
-    const ButtonStyle* style = nullptr,
-    fColor background_color = {0.0f, 0.0f, 0.0f, 0.0f}, 
-    fColor tint_color = {1.0f, 1.0f, 1.0f, 1.0f},
-    Vector2 uv0 = {0.0f, 0.0f}, 
-    Vector2 uv1 = {1.0f, 1.0f}
+    const ButtonStyle* style,
+    fColor background_color, 
+    fColor tint_color,
+    Vector2 uv0, 
+    Vector2 uv1
 ) {
     int height = ImGui::GetWindowSize().y;
     int width = ImGui::GetWindowSize().x;
@@ -194,7 +172,7 @@ bool DrawSimpleImageButton(
     PushStyle(style); 
 
     bool r = ImGui::ImageButton(
-        button_id, (void*)sprite.texture_id, 
+        button_id, (void*)SkyGetGLID(sprite.texture_id), 
         button_size, 
         ImVec2(uv0.x, 1.0f - uv0.y), ImVec2(uv1.x, 1.0f - uv1.y), 
         fColorToImVec4(background_color),
@@ -213,11 +191,11 @@ void DrawSimpleText(
     const char* text, 
     Vector2 screen_position, 
     UI_Alignment alignment, 
-    ImFont* font = nullptr,
-    fColor text_color = {1.0f, 1.0f, 1.0f, 1.0f} 
+    ImFont* font,
+    fColor text_color 
 ) {
-    int height = SCREEN_HEIGHT;
-    int width = SCREEN_WIDTH;
+    int height = ImGui::GetWindowSize().y;
+    int width = ImGui::GetWindowSize().x;
 
     if(font != nullptr) ImGui::PushFont(font);
 
@@ -287,10 +265,10 @@ void DrawSimpleImage(
     Sprite sprite, 
     Vector2 screen_position, 
     Vector2 scale, 
-    fColor tint_color = {1.0f, 1.0f, 1.0f, 1.0f},
-    fColor border_color = {0.0f, 0.0f, 0.0f, 0.0f},
-    Vector2 uv0 = {0.0f, 0.0f}, 
-    Vector2 uv1 = {1.0f, 1.0f}
+    fColor tint_color,
+    fColor border_color,
+    Vector2 uv0, 
+    Vector2 uv1
 ) {
     int height = ImGui::GetWindowSize().y;
     int width = ImGui::GetWindowSize().x;
@@ -308,12 +286,17 @@ void DrawSimpleImage(
     ImGui::SetCursorPos(image_position);
 
     ImGui::Image(
-        (void*)sprite.texture_id,
+        (void*)SkyGetGLID(sprite.texture_id),
         image_size,
         ImVec2(uv0.x, 1.0f - uv0.y),
         ImVec2(uv1.x, 1.0f - uv1.y),
         fColorToImVec4(tint_color),
         fColorToImVec4(border_color)
     );
+
+}
+
+// NOTE: Float slider
+void DrawSimpleFloatSlider(const char* label, float* float_val, float min, float max) {
 
 }

@@ -69,9 +69,13 @@ into a custom asset file.
 
 
 
+# Color Puzzle Game Ideas
+* You unlock colors as you progress. First you start in black and white. Then you unlock a color channel (continous 0.0 - 1.0). You then unlock a second channel, so you now have combinations of red-green, or blue-green, or red-blue. Finally you unlock all 3 color channels. Eventually, you unlock the alpha channel, which will let you make objects disappear.
+
+* The gameworld is a 2D tilemap with tile objects that emit lasers of different colors (depending on the number of channels you have unlocked). Other tile objects can either reflect or redirect or fork or recolor the lasers. You need to rotate, move or construct these objects to connect the laser emitter signal to appropriate recievers. Each reciever requires a specific laser color.
 
 
-# Game ideas:
+# RPG Game ideas:
 
 ## Graphical styles:
 * Instead of having bitmaps such that pixels are adjacent, leave a gap between the pixels, so that the seperation between pixels is visible. It looks like a cool way to render pixels.

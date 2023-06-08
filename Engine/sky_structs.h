@@ -61,14 +61,7 @@ struct fColor {
 };
 
 
-// SECTION: OpenGL Rendering
-struct Sprite {
-    unsigned int pixel_width;
-    unsigned int pixel_height;
-    unsigned int shader_id;
-    unsigned int texture_id;
-    unsigned int VAO;
-};
+
 struct Transform {
     Vector3 position;
     Vector3 rotation;
@@ -89,6 +82,23 @@ struct Camera {
     float FOV;
 
     CameraProjectionType projection;
+};
+
+// SECTION: UI
+struct ButtonStyle {
+    // SECTION: Coloring
+    fColor button_idle_color;
+    fColor button_hover_color;
+    fColor button_active_color;
+    fColor outline_color;
+    fColor text_color;
+
+    // SECTION: Styling
+    float button_alpha;
+    Vector2 text_alignment; // NOTE: {0.5, 0.5} will center the text
+    float corner_rounding;
+    float border_size;
+    Vector2 frame_padding; // How much padding around the button there is. Useful for imagebutton for the image to take up all the space
 };
 
 // SECTION: Image Loading
@@ -257,8 +267,24 @@ struct GameState {
 
 
 // SECTION: Platform-specific
-
-struct WindowState {
+struct WindowContext {
     SDL_Window* window;
     SDL_GLContext gl_context;
+};
+
+// NOTE: OpenGL implementation
+struct GL_ID;
+
+struct GPUBufferIDs {
+    GL_ID* vao;
+    GL_ID* vbo;
+    GL_ID* ebo;
+};
+
+struct Sprite {
+    unsigned int pixel_width;
+    unsigned int pixel_height;
+    GL_ID* shader_id;
+    GL_ID* texture_id;
+    GPUBufferIDs buffers;
 };

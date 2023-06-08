@@ -1,8 +1,7 @@
 #pragma once
 #include <SDL2/SDL.h>
 
-#include <GL/glew.h>
-#include <GL/gl.h>
+
 
 // SECTION: Window Size
 int SCREEN_WIDTH = 1280;
@@ -12,8 +11,8 @@ int SCREEN_HEIGHT = 720;
 #include "skyengine.cpp"
 #include "allocation.cpp" 
 
-#include "OpenGL_renderer2D.cpp"
-#include "OpenAL_sound.cpp"
+#include "sky_renderer2D.h"
+#include "sky_sound.h"
 
 
 float SCREEN_WIDTH_IN_WORLD_SPACE = 10.0f;
@@ -65,17 +64,15 @@ int main(int argc, char* argv[]) {
 
     // NOTE: Init OpenGL for graphics
     // TODO: pass LAUNCH_FULLSCREEN as an argument to the initializer
-    WindowState window = InitWindowContext(SCREEN_WIDTH, SCREEN_HEIGHT, "SkyEngine App", CLEAR_COLOR);
+    WindowContext* window = InitWindowContext(SCREEN_WIDTH, SCREEN_HEIGHT, "SkyEngine App", CLEAR_COLOR);
 
 
     // NOTE: Init OpenAL for sound
-    AudioContext audio_context = InitAudioContext();
+    AudioContext* audio_context = InitAudioContext();
 
 
     // NOTE: Init the UI
-    #ifdef INCLUDE_IMGUI
-    InitUI(&window);
-    #endif
+    InitUI(window);
 
 
     main_camera.position = {0.0f, 0.0f, 3.0f};
@@ -143,7 +140,7 @@ int main(int argc, char* argv[]) {
 
 
         // NOTE: Copying current state into previous state.
-        // TODO: Should I use memcpy or assignment here?
+        // TODO: Should I use memcpy or assignment here? Answer: assignment is better.
         keyboard_state.prev_state = keyboard_state.state;
         //memcpy(&keyboard_state.prev_state, &keyboard_state.state, sizeof(KeyState));
         
@@ -153,9 +150,7 @@ int main(int argc, char* argv[]) {
 
         while (SDL_PollEvent(&e)) {
 
-#ifdef INCLUDE_IMGUI
-            ImGui_ImplSDL2_ProcessEvent(&e);
-#endif
+            SkyUI_ProcessEvent(&e);
 
             switch(e.type) {
                 case SDL_QUIT:
@@ -191,6 +186,7 @@ int main(int argc, char* argv[]) {
                     if (SDL_keyboard_state[SDL_SCANCODE_V]) keyboard_state.state.V = 1;  
                     if (SDL_keyboard_state[SDL_SCANCODE_SPACE]) keyboard_state.state.SPACE = 1;    
                     if (SDL_keyboard_state[SDL_SCANCODE_RETURN]) keyboard_state.state.ENTER = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_ESCAPE]) keyboard_state.state.ESC = 1;    
                 } break;
                 case SDL_KEYUP: {
                     if (!SDL_keyboard_state[SDL_SCANCODE_Q]) keyboard_state.state.Q = 0;    
@@ -212,6 +208,7 @@ int main(int argc, char* argv[]) {
                     if (!SDL_keyboard_state[SDL_SCANCODE_V]) keyboard_state.state.V = 0;   
                     if (!SDL_keyboard_state[SDL_SCANCODE_SPACE]) keyboard_state.state.SPACE = 0;    
                     if (!SDL_keyboard_state[SDL_SCANCODE_RETURN]) keyboard_state.state.ENTER = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_ESCAPE]) keyboard_state.state.ESC = 0;    
                 } break;
                 default:
                     break;
@@ -226,13 +223,10 @@ int main(int argc, char* argv[]) {
         GameUpdateAndRender(Vector2Int{SCREEN_WIDTH, SCREEN_HEIGHT}, &game_memory, &keyboard_state, delta_time); 
         
         // Swap buffers
-        SDL_GL_SwapWindow(window.window);
+        SDL_GL_SwapWindow(window->window);
 
     }
     
-#ifdef INCLUDE_IMGUI
-    DeinitUI();
-#endif
 
     UserFree();
 
@@ -245,6 +239,7 @@ int main(int argc, char* argv[]) {
     free(game_memory.asset_storage.memory);
 #endif
 
+    DeinitUI();
     FreeAudioContext(audio_context);
     FreeWindowContext(window);
     SDL_Quit();

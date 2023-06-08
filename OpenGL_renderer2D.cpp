@@ -234,18 +234,28 @@ GPUBufferIDs InitGPUBuffers(
     float* vertices, size_t vertices_size, 
     unsigned int* indices, size_t indices_size
 ) {
-    float vertices_arr[] = {
-        // positions          // texture coords
-        0.5f,  0.5f, 0.0f,    1.0f, 1.0f,   // top right
-        0.5f, -0.5f, 0.0f,    1.0f, 0.0f,   // bottom right
-        -0.5f, -0.5f, 0.0f,   0.0f, 0.0f,   // bottom left
-        -0.5f,  0.5f, 0.0f,   0.0f, 1.0f    // top left 
-    };
-    
-    unsigned int indices_arr[] = { 
-        0, 1, 2,   // first triangle
-        0, 2, 3    // second triangle
-    };
+    // NOTE: Provide default vertices and indicies arrays
+    if (vertices == nullptr || vertices_size == 0) {
+        float vertices_arr[] = {
+            // positions          // texture coords
+            0.5f,  0.5f, 0.0f,    1.0f, 1.0f,   // top right
+            0.5f, -0.5f, 0.0f,    1.0f, 0.0f,   // bottom right
+            -0.5f, -0.5f, 0.0f,   0.0f, 0.0f,   // bottom left
+            -0.5f,  0.5f, 0.0f,   0.0f, 1.0f    // top left 
+        };
+        vertices = vertices_arr;
+        vertices_size = sizeof(vertices_arr);
+    }
+
+    if (indices == nullptr || indices_size == 0) {
+        unsigned int indices_arr[] = { 
+            0, 1, 2,   // first triangle
+            0, 2, 3    // second triangle
+        };
+        indices = indices_arr; 
+        indices_size = sizeof(indices_arr);
+    }
+
 
 
     GLuint VBO, VAO, EBO;
@@ -255,15 +265,9 @@ GPUBufferIDs InitGPUBuffers(
 
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    if (vertices == nullptr || vertices_size == 0)
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_arr), vertices_arr, GL_STATIC_DRAW);
-    else 
-        glBufferData(GL_ARRAY_BUFFER, vertices_size, vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices_size, vertices, GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    if (indices == nullptr || indices_size == 0)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices_arr), (GLuint*)indices_arr, GL_STATIC_DRAW);
-    else 
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, (GLuint*)indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, (GLuint*)indices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0); 
@@ -428,8 +432,7 @@ Sprite LoadSprite(
     GPUBufferIDs buffers 
 ) {
 
-
-
+    
 
     Sprite sprite = {0};
 
@@ -441,6 +444,10 @@ Sprite LoadSprite(
 }
 
 void FreeSprite(Sprite sprite) {
+    sprite.shader_id = nullptr;
+    sprite.buffers.vbo = nullptr;
+    sprite.buffers.vao = nullptr;
+    sprite.buffers.ebo = nullptr;
     FreeTexture(sprite.texture_id);
 }
 
@@ -448,8 +455,12 @@ void DrawSprite(Sprite sprite, Transform transform, Camera camera) {
     ShaderUse(sprite.shader_id);
 
     ShaderSetTransform(sprite.shader_id, "transform", CameraToMatrix(camera) * TransformToMatrix(transform));
-    
-    DrawTexture(sprite.shader_id, sprite.texture_id, sprite.buffers.vao);
+    glBindTexture(GL_TEXTURE_2D, sprite.texture_id->id);
+    glBindVertexArray(sprite.buffers.vao->id);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    //DrawTexture(sprite.shader_id, sprite.texture_id, sprite.buffers.vao);
 }
 
 unsigned int SkyGetGLID(GL_ID* id) {

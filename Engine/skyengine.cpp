@@ -2,13 +2,8 @@
 #include "skyengine.h"
 
 // NOTE: includes imgui UI
-#ifdef INCLUDE_IMGUI
-#include "UI/sky_ui_imgui.cpp"
-#endif
+#include "UI/sky_ui.h"
 // NOTE: includes nuklear UI // TODO: This doesnt work now as a backend, so use imgui only
-#ifdef INCLUDE_NUKLEAR
-#include "UI/sky_ui_nuklear.cpp"
-#endif
 
 #include <iostream>
 
@@ -34,9 +29,7 @@ static void GameUpdateAndRender(Vector2Int screen_size, GameMemory* memory, Keyb
     
     static bool first = true;
 
-#ifdef INCLUDE_IMGUI
     UI_FrameStart(screen_size);
-#endif
 
     if (first) {
         Start(game_state, keyboard_state);
@@ -53,8 +46,6 @@ static void GameUpdateAndRender(Vector2Int screen_size, GameMemory* memory, Keyb
     DrawSimpleText(fps_str, {1.0f, 0.0f}, UI_Alignment::TOP_RIGHT);
 #endif
     
-#ifdef INCLUDE_IMGUI
     UI_FrameRender(); 
-#endif
     //std::cout << fps << std::endl;
 }

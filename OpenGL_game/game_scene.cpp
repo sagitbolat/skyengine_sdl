@@ -39,13 +39,13 @@ void GameAwake() {
 
 
     // SECTION: Load Sprites and init player
-    player.sprite = LoadSprite("ship.png");
+    player.sprite = LoadSprite("ship.png", shaders, gpu_buffers);
 
     // NOTE: Scale the sprite based on its pixel size.
     player.transform.scale = {(float)player.sprite.pixel_width/PIXELS_PER_UNIT, (float)player.sprite.pixel_height/PIXELS_PER_UNIT, 1.0f};
-    bullet_sprite = LoadSprite("bullet.png");
+    bullet_sprite = LoadSprite("bullet.png", shaders, gpu_buffers);
     
-    enemy_sprite = LoadSprite("enemy.png");
+    enemy_sprite = LoadSprite("enemy.png", shaders, gpu_buffers);
 }
 
 
@@ -64,7 +64,11 @@ void GameStart(GameState* gs, KeyboardState* ks, double dt) {
     player.curr_score = 0;
 }
 
+bool paused = false;
+
 void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
+
+    if (paused) dt = 0.0f;
     if (ks->state.SPACE) {
         // NOTE: Slow down time
         dt *= 0.5f;
@@ -72,10 +76,10 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
 
     float player_speed = 6.0f;
     float bullet_speed_scaled = 10.0f * ((float)dt / 1000.0f); 
-    float fire_delay = 40.0f; //NOTE: A firedelay of 10 makes the bullet fire every 10 milliseconds. 1000 means every second
+    float fire_delay = 120.0f; //NOTE: A firedelay of 10 makes the bullet fire every 10 milliseconds. 1000 means every second
     float enemy_speed_scaled = 6.0f * ((float)dt / 1000.0f); 
      
-    Vector3 player_movement_direction = {};
+    Vector3 player_movement_direction = {0.0f};
     
     // SECTION: input    
     if (ks->state.W) {
@@ -96,9 +100,10 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
         player.transform.position.y = player.transform.position.y + (player_movement_direction.y * player_speed * ((float)dt / 1000.0f));
     }
     
-    Vector2 mouse_pos = GetMousePositionInWorldCoords(); 
-    player.transform.rotation = Vector2LookAt(Vec2(player.transform.position), mouse_pos);
-
+    if (!paused) {
+        Vector2 mouse_pos = GetMousePositionInWorldCoords(); 
+        player.transform.rotation = Vector2LookAt(Vec2(player.transform.position), mouse_pos);
+    }
     // SECTION: Firing
     static float fire_timer = 0;
     fire_timer += (float)dt;
@@ -107,13 +112,17 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
         //transform.position = transform.position + UpVector(transform) * player_speed;
         bullet_pool.SpawnBullet(player.transform, bullet_sprite);
         reset_timer=true;
-        PlaySoundFromSource(&shoot_audio_source, &laser_sound);
+        PlaySoundFromSource(shoot_audio_source, laser_sound);
     }
     if (reset_timer) {
         fire_timer=0;
         reset_timer = false;
     }
-    
+
+
+    if (ks->state.ESC && !ks->prev_state.ESC) {
+        paused = !paused;
+    } 
     
     static float enemy_spawn_timer = 0;
     enemy_spawn_timer += (float)dt;
@@ -169,9 +178,9 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
             player.curr_health--;
             if (player.curr_health <= 0) {
                 scene_manager.SwitchScene(SCENE_GAME_OVER, gs, ks, dt);
-                PlaySoundFromSource(&hit_audio_source, &game_over_sound);
+                PlaySoundFromSource(hit_audio_source, game_over_sound);
             } else {
-                PlaySoundFromSource(&hit_audio_source, &player_death_sound);
+                PlaySoundFromSource(hit_audio_source, player_death_sound);
             }
         }
 
@@ -187,7 +196,7 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
             enemy_pool.is_active[en] = false;
             bullet_pool.is_active[bul] = false;
             player.curr_score += 1;
-            PlaySoundFromSource(&enemy_audio_source, &enemy_death_sound);
+            PlaySoundFromSource(enemy_audio_source, enemy_death_sound);
             // NOTE: Shorten the spawn_delay so enemies spawn as player kills them
             if (enemy_spawn_delay > 300.0f) {
                 enemy_spawn_delay *= 0.98;
@@ -205,9 +214,10 @@ void GameUpdate(GameState* gs, KeyboardState* ks, double dt) {
     sprintf(health_string, "Healthy: %d/%d", player.curr_health, PLAYER_MAX_HEALTH);
     for (int hp = 0; hp < player.curr_health; ++hp) {
         DrawSimpleImage(player.sprite, {0.005f + (0.05f * hp), 0.92f}, {-1.0f, 0.07f});
-    }    
-    //DrawSimpleText(health_string, {0.01, 1.0f}, UI_Alignment::BOTTOM_LEFT, button_font);
-
+    }   
+    if (paused) { 
+        DrawSimpleText("PAUSED", {0.5f, 0.5f}, UI_Alignment::CENTER_CENTER, large_font, font_color);
+    }
     
     
     // SECTION: Rendering
@@ -235,5 +245,8 @@ void GameClose(GameState* gs, KeyboardState* ks, double dt) {
 }
 
 void GameFree() {
+    FreeSprite(player.sprite);
+    FreeSprite(enemy_sprite);
+    FreeSprite(bullet_sprite);
     return;
 }

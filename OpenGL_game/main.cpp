@@ -17,17 +17,18 @@ void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *cle
 
 
 // SECTION: Audio
-AudioSource global_audio_source = {0};
-AudioSource shoot_audio_source  = {0};
-AudioSource hit_audio_source    = {0};
-AudioSource enemy_audio_source  = {0};
+AudioSource* global_audio_source    = nullptr;
+AudioSource* shoot_audio_source     = nullptr;
+AudioSource* hit_audio_source       = nullptr;
+AudioSource* enemy_audio_source     = nullptr;
 // NOTE: Sound clips
+SoundClip* laser_sound              = nullptr;
+SoundClip* enemy_death_sound        = nullptr;
+SoundClip* player_death_sound       = nullptr;
+SoundClip* game_over_sound          = nullptr;
+
 #define NUM_BACKGROUND_TRACKS 3
-SoundClip laser_sound           = {0};
-SoundClip enemy_death_sound     = {0};
-SoundClip player_death_sound    = {0};
-SoundClip game_over_sound       = {0};
-SoundClip* background_tracks    = {0};
+SoundClip* background_tracks[NUM_BACKGROUND_TRACKS] = {nullptr};
 
 // SCENE
 #define NUM_SCENES 3
@@ -46,9 +47,16 @@ int last_score = 0;
 
 ImFont* button_font = nullptr;
 ImFont* title_font = nullptr;
+ImFont* large_font = nullptr;
 fColor font_color = {(float)125/255, (float)212/255, (float)221/255, 1.0f};
 
 ButtonStyle main_button_style = {0.0f};
+
+
+// SECTION: Rendering
+GL_ID* shaders = nullptr;
+GPUBufferIDs gpu_buffers = {nullptr};
+
 
 // NOTE: Background
 Sprite bg_sprite = {0};
@@ -63,14 +71,16 @@ Transform bg_transform = {0.0f};
 void Awake(GameMemory *gm)
 {
 
+    main_camera.width*=1.5f;
+    main_camera.height*=1.5f;
+
     // NOTE: Audio Init
     global_audio_source = LoadAudioSource(false, 0.5f);
-    shoot_audio_source  = LoadAudioSource();
+    shoot_audio_source  = LoadAudioSource(false, 0.3f);
     hit_audio_source    = LoadAudioSource();
     enemy_audio_source  = LoadAudioSource();
     
     // NOTE: Sound clips
-    background_tracks = (SoundClip*)malloc(sizeof(SoundClip) * NUM_BACKGROUND_TRACKS);
     background_tracks[0]    = LoadSoundClip("music_track1.ogg");
     background_tracks[1]    = LoadSoundClip("music_track2.ogg");
     background_tracks[2]    = LoadSoundClip("music_track3.ogg");
@@ -80,9 +90,13 @@ void Awake(GameMemory *gm)
     enemy_death_sound       = LoadSoundClip("explosion.ogg");
 
 
+    // SECTION: renderer initializations
+    shaders = ShaderInit();
+    gpu_buffers = InitGPUBuffers();
+
 
     // NOTE: Load background texture
-    bg_sprite = LoadSprite("background3.png");
+    bg_sprite = LoadSprite("background3.png", shaders, gpu_buffers);
     
     bg_transform.position = {0.0f, 0.0f, -10.0f};
     bg_transform.rotation = {0.0f, 0.0f, 0.0f};
@@ -117,6 +131,7 @@ void Awake(GameMemory *gm)
     // SECTION: Load Fonts
     button_font = LoadFont("pixel.ttf", 32.0f);
     title_font = LoadFont("pixel.ttf", 64.0f);
+    large_font = LoadFont("pixel.ttf", 128.0f);
 
     // SECTION: Initializing button style
     main_button_style.button_idle_color = font_color;
@@ -137,15 +152,15 @@ void Awake(GameMemory *gm)
 void Start(GameState *gs, KeyboardState *ks)
 {
     // NOTE: Start background music and then start first scene
-    PlaySoundFromSource(&global_audio_source, &background_tracks[0]);
+    PlaySoundFromSource(global_audio_source, background_tracks[0]);
     scene_manager.scenes[0].StartScene(gs, ks, 0.0);
 }
 
 void Update(GameState *gs, KeyboardState *ks, double dt)
 {
     static int track_num = 1;
-    if (!global_audio_source.IsPlaying()) {
-        PlaySoundFromSource(&global_audio_source, &background_tracks[track_num % NUM_BACKGROUND_TRACKS]);
+    if (!global_audio_source->IsPlaying()) {
+        PlaySoundFromSource(global_audio_source, background_tracks[track_num % NUM_BACKGROUND_TRACKS]);
         ++track_num;
     }
     scene_manager.SceneUpdate(gs, ks, dt);
@@ -158,20 +173,30 @@ void UserFree()
     scene_manager.FreeScene(2);
     scene_manager.FreeManager();
 
+    // NOTE: Graphics freeing
+    FreeSprite(bg_sprite);
+
+
     // NOTE: Sounds freeing
-    FreeSoundClip(&background_tracks[0]);
-    FreeSoundClip(&background_tracks[1]);
-    FreeSoundClip(&background_tracks[2]);
-    free(background_tracks);
-    FreeSoundClip(&laser_sound);
-    FreeSoundClip(&player_death_sound);
-    FreeSoundClip(&game_over_sound);
-    FreeSoundClip(&enemy_death_sound);
+    FreeSoundClip(background_tracks[0]);
+    FreeSoundClip(background_tracks[1]);
+    FreeSoundClip(background_tracks[2]);
+    FreeSoundClip(laser_sound);
+    FreeSoundClip(player_death_sound);
+    FreeSoundClip(game_over_sound);
+    FreeSoundClip(enemy_death_sound);
     
-    FreeAudioSource(&global_audio_source);
-    FreeAudioSource(&shoot_audio_source);
-    FreeAudioSource(&hit_audio_source);
-    FreeAudioSource(&enemy_audio_source);
+    FreeAudioSource(global_audio_source);
+    FreeAudioSource(shoot_audio_source);
+    FreeAudioSource(hit_audio_source);
+    FreeAudioSource(enemy_audio_source);
+
+
+    // NOTE: Renderer Freeing
+
+    FreeShaders(shaders);
+    FreeGPUBuffers(gpu_buffers);
+
 
     // TODO: Save the highscore into a file
     FILE *file;
