@@ -74,6 +74,7 @@ into a custom asset file.
 
 * The gameworld is a 2D tilemap with tile objects that emit lasers of different colors (depending on the number of channels you have unlocked). Other tile objects can either reflect or redirect or fork or recolor the lasers. You need to rotate, move or construct these objects to connect the laser emitter signal to appropriate recievers. Each reciever requires a specific laser color.
 
+* Higher level idea: The progression from 1-bit to monochrome to colored represents a graphical timeline similar to how computer graphics developed as the art of game dev grew. Similarly, the sound track should reflect that with the level sound tracks being classical music from periods between pre-1400s to renaissants to classical, played first with only wind and percussion instruments, then moving to string then eventually more recent instruments like piano.
 
 # RPG Game ideas:
 
