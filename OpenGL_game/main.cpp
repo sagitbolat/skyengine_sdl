@@ -91,8 +91,9 @@ void Awake(GameMemory *gm)
 
 
     // SECTION: renderer initializations
-    shaders = ShaderInit();
+    shaders = ShaderInit("shader.vs", "shader.fs");
     gpu_buffers = InitGPUBuffers();
+    ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 0.0f, 1.0f});
 
 
     // NOTE: Load background texture

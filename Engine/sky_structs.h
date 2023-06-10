@@ -18,6 +18,12 @@ union Vector3 {
         float x, y, z;
     };
 };
+union Vector4 {
+    float E[4];
+    struct {
+        float x, y, z, w;
+    };
+};
 struct Vector2Int {
     int x, y;
 };

@@ -28,21 +28,25 @@ const char *default_vertex_shader_source = "#version 330 core\n"
     "layout (location = 0) in vec3 a_pos;\n"
     "layout (location = 1) in vec2 a_texture_coord;\n"
     "out vec2 tex_coord;\n"
+    "out vec4 color_multiplier;\n"
     "uniform mat4 transform;\n"
     "uniform mat4 view;\n"
+    "uniform vec4 i_color_multiplier;\n"
     "void main()\n"
     "{\n"
     "   gl_Position = transform * vec4(a_pos.x, a_pos.y, a_pos.z, 1.0);\n"
     "   tex_coord = a_texture_coord;\n"
+    "   color_multiplier = i_color_multiplier;\n"
     "}\0";
 
 const char *default_fragment_shader_source = "#version 330 core\n"
     "in vec2 tex_coord;\n"
+    "in vec4 color_multiplier;\n"
     "out vec4 FragColor;\n"
     "uniform sampler2D texture1;\n"
     "void main()\n"
     "{\n"
-    "   FragColor = texture(texture1, tex_coord);\n"
+    "   FragColor = texture(texture1, tex_coord) * color_multiplier;\n"
     "}\0";
 
 
@@ -57,32 +61,53 @@ GL_ID* ShaderInit(const char* vertex_path, const char* fragment_path) {
         v_shader_code = default_vertex_shader_source;
         f_shader_code = default_fragment_shader_source;
     } else {
-        std::string vertex_code;
-        std::string fragment_code;
-        std::ifstream v_shader_file;
-        std::ifstream f_shader_file;
-        
-        v_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        f_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        try {
-            v_shader_file.open(vertex_path);
-            f_shader_file.open(fragment_path);
-            
-            std::stringstream v_shader_stream, f_shader_stream;
-            
-            v_shader_stream << v_shader_file.rdbuf();
-            f_shader_stream << f_shader_file.rdbuf();
-            
-            v_shader_file.close();
-            f_shader_file.close();
-
-            vertex_code = v_shader_stream.str();
-            fragment_code = f_shader_stream.str();
-        } catch(std::ifstream::failure const &e) {
-            std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ " << e.what() << std::endl;
+        FILE *vs_file = fopen(vertex_path, "rb");
+        if (vs_file == NULL) {
+            printf("VERTEX SHADER FILE ERROR");
         }
-        v_shader_code = vertex_code.c_str();
-        f_shader_code = fragment_code.c_str();
+        FILE *fs_file = fopen(fragment_path, "rb");
+        if (fs_file == NULL) {
+            printf("FRAGMENT SHADER FILE ERROR");
+        }
+
+
+        fseek(vs_file, 0, SEEK_END);
+        long vs_file_size = ftell(vs_file);
+        fseek(vs_file, 0, SEEK_SET);
+        fseek(fs_file, 0, SEEK_END);
+        long fs_file_size = ftell(fs_file);
+        fseek(fs_file, 0, SEEK_SET);
+
+
+        char* vs_shader_code = (char *)malloc(vs_file_size + 1);
+        char* fs_shader_code = (char *)malloc(fs_file_size + 1);
+    
+
+        size_t vs_bytes_read = fread(vs_shader_code, 1, vs_file_size, vs_file);
+        if (vs_bytes_read != vs_file_size) {
+            // Handle reading error
+            printf("VERTEX SHADER READING ERROR");
+        }
+        size_t fs_bytes_read = fread(fs_shader_code, 1, fs_file_size, fs_file);
+        if (fs_bytes_read != fs_file_size) {
+            // Handle reading error
+            printf("FRAGMENT SHADER READING ERROR");
+        }  
+    
+
+        fclose(vs_file);
+        fclose(fs_file);
+
+
+        vs_shader_code[vs_file_size] = '\0';
+        fs_shader_code[fs_file_size] = '\0';
+
+        v_shader_code = vs_shader_code;
+        f_shader_code = fs_shader_code;
+
+        free(vs_shader_code);
+        free(fs_shader_code);
+    
     }
  
  
@@ -111,7 +136,7 @@ GL_ID* ShaderInit(const char* vertex_path, const char* fragment_path) {
     if(!success)
     {
         glGetShaderInfoLog(fragment, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
     };
 
 
@@ -133,6 +158,9 @@ GL_ID* ShaderInit(const char* vertex_path, const char* fragment_path) {
     GL_ID* shader = (GL_ID*)malloc(sizeof(GL_ID));
     shader->id = ID;
 
+    glUseProgram(ID);
+    
+    
     return shader;
 } 
 
@@ -154,6 +182,10 @@ void ShaderSetInt(GL_ID* shader, const char* name, int value) {
 }
 void ShaderSetFloat(GL_ID* shader, const char* name, float value) { 
     glUniform1f(glGetUniformLocation(shader->id, name), value); 
+}
+void ShaderSetVector(GL_ID* shader, const char* name, Vector4 v) {
+    GLfloat value[4] = {v.x, v.y, v.z, v.w};
+    glUniform4fv(glGetUniformLocation(shader->id, name), 1, value);
 } 
 void ShaderSetTransform(GL_ID* shader, const char* name, glm::mat4 trans) {
     glUniformMatrix4fv(glGetUniformLocation(shader->id, name), 1, GL_FALSE, glm::value_ptr(trans));
@@ -445,7 +477,6 @@ void FreeSprite(Sprite sprite) {
 }
 
 void DrawSprite(Sprite sprite, Transform transform, Camera camera) {
-    ShaderUse(sprite.shader_id);
 
     ShaderSetTransform(sprite.shader_id, "transform", CameraToMatrix(camera) * TransformToMatrix(transform));
     

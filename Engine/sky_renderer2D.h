@@ -13,6 +13,7 @@ void ShaderUse(GL_ID* shader);
 void ShaderSetBool(GL_ID* shader, const char* name, bool value);
 void ShaderSetInt(GL_ID* shader, const char* name, int value);
 void ShaderSetFloat(GL_ID* shader, const char* name, float value);
+void ShaderSetVector(GL_ID* shader, const char* name, Vector4 v);
 
 // SECTION: Rendering
 WindowContext* InitWindowContext(int width, int height, const char* window_name, fColor clear_color);
