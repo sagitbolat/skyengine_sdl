@@ -1,16 +1,18 @@
 #define INCLUDE_IMGUI
 #define FPS_SHOW
+
 #include "../Engine/SDL_sky.cpp"
 #include "../Engine/skymath.h"
 
 #include "scene.h"
+
 
 // SECTION: Initialization of stuff...
 void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *clear_color)
 {
     //*w = 640;
     //*h = 480;
-    *w_in_world_space = 15.0f;
+    *w_in_world_space = 15.0f * 1.5f;
     //*clear_color = {0.8f/2, 0.83f/2, 1.0f/2, 1.0f};
     *clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
 }
@@ -71,9 +73,25 @@ Transform bg_transform = {0.0f};
 void Awake(GameMemory *gm)
 {
 
-    main_camera.width*=1.5f;
-    main_camera.height*=1.5f;
 
+
+
+
+    // SECTION: renderer initializations
+    shaders = ShaderInit();
+    gpu_buffers = InitGPUBuffers();
+    ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
+
+
+    // NOTE: Load background texture
+    bg_sprite = LoadSprite("background3.png", shaders, gpu_buffers);
+    
+    bg_transform.position = {0.0f, 0.0f, -10.0f};
+    bg_transform.rotation = {0.0f, 0.0f, 0.0f};
+    bg_transform.scale = {main_camera.width, main_camera.height, 1.0f};
+    
+    
+    
     // NOTE: Audio Init
     global_audio_source = LoadAudioSource(false, 0.5f);
     shoot_audio_source  = LoadAudioSource(false, 0.3f);
@@ -87,22 +105,7 @@ void Awake(GameMemory *gm)
     laser_sound             = LoadSoundClip("laser_shot.ogg");
     player_death_sound      = LoadSoundClip("hit_hurt.ogg");
     game_over_sound         = LoadSoundClip("game_over.ogg");
-    enemy_death_sound       = LoadSoundClip("explosion.ogg");
-
-
-    // SECTION: renderer initializations
-    shaders = ShaderInit("shader.vs", "shader.fs");
-    gpu_buffers = InitGPUBuffers();
-    ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 0.0f, 1.0f});
-
-
-    // NOTE: Load background texture
-    bg_sprite = LoadSprite("background3.png", shaders, gpu_buffers);
-    
-    bg_transform.position = {0.0f, 0.0f, -10.0f};
-    bg_transform.rotation = {0.0f, 0.0f, 0.0f};
-    bg_transform.scale = {main_camera.width, main_camera.height, 1.0f};
-    
+    enemy_death_sound       = LoadSoundClip("explosion.ogg");   
     
     // SECTION: SceneManager init
     scene_manager.InitManager(NUM_SCENES);

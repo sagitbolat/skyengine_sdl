@@ -56,6 +56,8 @@ GL_ID* ShaderInit(const char* vertex_path, const char* fragment_path) {
     const char* v_shader_code;
     const char* f_shader_code;
 
+    char* fs_shader_code = nullptr;
+    char* vs_shader_code = nullptr;
 
     if (vertex_path == nullptr || fragment_path == nullptr) {
         v_shader_code = default_vertex_shader_source;
@@ -63,11 +65,11 @@ GL_ID* ShaderInit(const char* vertex_path, const char* fragment_path) {
     } else {
         FILE *vs_file = fopen(vertex_path, "rb");
         if (vs_file == NULL) {
-            printf("VERTEX SHADER FILE ERROR");
+            printf("VERTEX SHADER FILE ERROR\n");
         }
         FILE *fs_file = fopen(fragment_path, "rb");
         if (fs_file == NULL) {
-            printf("FRAGMENT SHADER FILE ERROR");
+            printf("FRAGMENT SHADER FILE ERROR\n");
         }
 
 
@@ -79,19 +81,19 @@ GL_ID* ShaderInit(const char* vertex_path, const char* fragment_path) {
         fseek(fs_file, 0, SEEK_SET);
 
 
-        char* vs_shader_code = (char *)malloc(vs_file_size + 1);
-        char* fs_shader_code = (char *)malloc(fs_file_size + 1);
+        char* vs_shader_code = (char *)calloc(vs_file_size + 1, 1);
+        char* fs_shader_code = (char *)calloc(fs_file_size + 1, 1);
     
 
         size_t vs_bytes_read = fread(vs_shader_code, 1, vs_file_size, vs_file);
         if (vs_bytes_read != vs_file_size) {
             // Handle reading error
-            printf("VERTEX SHADER READING ERROR");
+            printf("VERTEX SHADER READING ERROR\n");
         }
         size_t fs_bytes_read = fread(fs_shader_code, 1, fs_file_size, fs_file);
         if (fs_bytes_read != fs_file_size) {
             // Handle reading error
-            printf("FRAGMENT SHADER READING ERROR");
+            printf("FRAGMENT SHADER READING ERROR\n");
         }  
     
 
@@ -104,12 +106,9 @@ GL_ID* ShaderInit(const char* vertex_path, const char* fragment_path) {
 
         v_shader_code = vs_shader_code;
         f_shader_code = fs_shader_code;
-
-        free(vs_shader_code);
-        free(fs_shader_code);
-    
+        
     }
- 
+   
  
     unsigned int vertex, fragment;
     int success;
@@ -160,6 +159,8 @@ GL_ID* ShaderInit(const char* vertex_path, const char* fragment_path) {
 
     glUseProgram(ID);
     
+    if (vs_shader_code != nullptr) free(vs_shader_code);
+    if (fs_shader_code != nullptr) free(fs_shader_code);
     
     return shader;
 } 
@@ -183,6 +184,10 @@ void ShaderSetInt(GL_ID* shader, const char* name, int value) {
 void ShaderSetFloat(GL_ID* shader, const char* name, float value) { 
     glUniform1f(glGetUniformLocation(shader->id, name), value); 
 }
+void ShaderSetVector(GL_ID* shader, const char* name, Vector2 v) {
+    GLfloat value[2] = {v.x, v.y};
+    glUniform2fv(glGetUniformLocation(shader->id, name), 1, value);
+} 
 void ShaderSetVector(GL_ID* shader, const char* name, Vector4 v) {
     GLfloat value[4] = {v.x, v.y, v.z, v.w};
     glUniform4fv(glGetUniformLocation(shader->id, name), 1, value);

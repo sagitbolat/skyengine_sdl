@@ -13,6 +13,7 @@ void ShaderUse(GL_ID* shader);
 void ShaderSetBool(GL_ID* shader, const char* name, bool value);
 void ShaderSetInt(GL_ID* shader, const char* name, int value);
 void ShaderSetFloat(GL_ID* shader, const char* name, float value);
+void ShaderSetVector(GL_ID* shader, const char* name, Vector2 v);
 void ShaderSetVector(GL_ID* shader, const char* name, Vector4 v);
 
 // SECTION: Rendering

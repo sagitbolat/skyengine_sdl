@@ -18,6 +18,8 @@ int SCREEN_HEIGHT = 720;
 float SCREEN_WIDTH_IN_WORLD_SPACE = 10.0f;
 bool LAUNCH_FULLSCREEN = 0;
 fColor CLEAR_COLOR = {0.05, 0.0, 0.15, 1.0};
+const char* startup_img = "startup.png";
+
 SDL_bool ENGINE_MAIN_LOOP_RUNNING = SDL_TRUE;
 
 Camera main_camera = {0};
@@ -65,16 +67,7 @@ int main(int argc, char* argv[]) {
     // NOTE: Init OpenGL for graphics
     // TODO: pass LAUNCH_FULLSCREEN as an argument to the initializer
     WindowContext* window = InitWindowContext(SCREEN_WIDTH, SCREEN_HEIGHT, "SkyEngine App", CLEAR_COLOR);
-
-
-    // NOTE: Init OpenAL for sound
-    AudioContext* audio_context = InitAudioContext();
-
-
-    // NOTE: Init the UI
-    InitUI(window);
-
-
+    
     main_camera.position = {0.0f, 0.0f, 3.0f};
     main_camera.up_direction = {0.0f, 0.1f, 0.0f};
     main_camera.look_target = {0.0f, 0.0f, 0.0f};
@@ -85,7 +78,31 @@ int main(int argc, char* argv[]) {
     main_camera.FOV = 90.0f;
     main_camera.projection = ORTHOGRAPHIC_CAMERA;
 
+    // DRAW STARTUP IMAGE
+    {
+        ClearScreen();
+        GL_ID* shaders = ShaderInit();
+        GPUBufferIDs gpu_buffers = InitGPUBuffers();
+        ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
+        Sprite starup_sprite = LoadSprite(startup_img, shaders, gpu_buffers);
+        Transform startup_transform = {0};
+        startup_transform.position = {0.0f, 0.0f, 0.0f};
+        startup_transform.rotation = {0.0f, 0.0f, 0.0f};
+        startup_transform.scale = {main_camera.width/2, main_camera.height/2, 1.0f};
+        DrawSprite(starup_sprite, startup_transform, main_camera);
+        SDL_GL_SwapWindow(window->window);
+    }
 
+    // NOTE: Init OpenAL for sound
+    AudioContext* audio_context = InitAudioContext();
+
+
+    // NOTE: Init the UI
+    InitUI(window);
+
+
+    
+    
 
     // NOTE: Initialize the freelist allocator
     size_t alignment = 64; // TODO: Change to reflect the machine architecture.
