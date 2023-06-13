@@ -68,6 +68,7 @@ int main(int argc, char* argv[]) {
     // TODO: pass LAUNCH_FULLSCREEN as an argument to the initializer
     WindowContext* window = InitWindowContext(SCREEN_WIDTH, SCREEN_HEIGHT, "SkyEngine App", CLEAR_COLOR);
     
+
     main_camera.position = {0.0f, 0.0f, 3.0f};
     main_camera.up_direction = {0.0f, 0.1f, 0.0f};
     main_camera.look_target = {0.0f, 0.0f, 0.0f};
@@ -88,7 +89,7 @@ int main(int argc, char* argv[]) {
         Transform startup_transform = {0};
         startup_transform.position = {0.0f, 0.0f, 0.0f};
         startup_transform.rotation = {0.0f, 0.0f, 0.0f};
-        startup_transform.scale = {main_camera.width/2, main_camera.height/2, 1.0f};
+        startup_transform.scale = {main_camera.width/3, main_camera.height/3, 1.0f};
         DrawSprite(starup_sprite, startup_transform, main_camera);
         SDL_GL_SwapWindow(window->window);
     }

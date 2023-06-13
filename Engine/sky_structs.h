@@ -115,21 +115,6 @@ struct ImageData {
     uint8_t* data;
 };
 
-// SECTION: Tilemapping
-struct Tileset {
-    uint16_t tile_width;
-    uint16_t tile_height;
-    uint16_t num_tiles;
-    ImageData* tiles;
-    uint16_t width_in_tiles; // NOTE: Represents the width of the full tileset in tiles.
-};
-struct Tilemap {
-    int width;
-    int height;
-    int num_layers;
-    uint16_t* tile_data;
-    uint8_t* collider_data;
-};
 
 
 // SECTION: ttf loading
