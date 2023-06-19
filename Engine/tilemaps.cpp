@@ -1,7 +1,6 @@
 #pragma once
 #include <stdint.h>
 
-#include "bmp.cpp"
 
 #include "sky_structs.h"
 
