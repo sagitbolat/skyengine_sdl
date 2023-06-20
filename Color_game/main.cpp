@@ -6,22 +6,36 @@
 
 
 
+int tilemap[15*9] = {
+    10,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,11,
+    9, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 7,
+    9, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 7,
+    9, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 7,
+    9, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 7,
+    9, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 7,
+    9, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 7,
+    9, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 7,
+    5,13,13,13,13,13,13,13,13,13,13,13,13,13, 6
+};
+
+
+
 // SECTION: Initialization of stuff...
 void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *clear_color)
 {
     //*w = 640;
     //*h = 480;
-    *w_in_world_space = 15.0f;
+    *w_in_world_space = 16.0f;
     //*clear_color = {0.8f/2, 0.83f/2, 1.0f/2, 1.0f};
     *clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
 }
 
-struct Tilemap {
+struct Tileset {
     Sprite atlas;
     int width_in_tiles;
     int height_in_tiles;
 };
-Tilemap tilemap = {0};
+Tileset tileset = {0};
 
 
 GL_ID* shaders = nullptr;
@@ -35,9 +49,9 @@ void Awake(GameMemory *gm)
     ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
 
     Sprite sprite = LoadSprite("assets/tileset.png", shaders, gpu_buffers);
-    tilemap.atlas = sprite;
-    tilemap.width_in_tiles = 8;
-    tilemap.height_in_tiles = 5;
+    tileset.atlas = sprite;
+    tileset.width_in_tiles = 5;
+    tileset.height_in_tiles = 4;
 
     transform.position = {0.0f, 0.0f, 0.0f};
     transform.rotation = {0.0f, 0.0f, 0.0f};
@@ -48,7 +62,7 @@ void Start(GameState *gs, KeyboardState *ks) {
 
 }
 
-void DrawTile(Tilemap map, Vector2 world_position, int atlas_x, int atlas_y) {
+void DrawTile(Tileset map, Vector2 world_position, int atlas_x, int atlas_y) {
     float uv_width = float(1)/float(map.width_in_tiles);
     float uv_height = float(1)/float(map.height_in_tiles);
     float uv_x_offset = atlas_x * uv_width;
@@ -60,7 +74,7 @@ void DrawTile(Tilemap map, Vector2 world_position, int atlas_x, int atlas_y) {
     transform.position = Vector3{world_position.x, world_position.y, transform.position.z};
     DrawSprite(map.atlas, transform, main_camera);
 }
-void DrawTile(Tilemap map, Vector2 world_position, uint8_t atlas_index) {
+void DrawTile(Tileset map, Vector2 world_position, uint8_t atlas_index) {
     int atlas_x = atlas_index % map.width_in_tiles;
     int atlas_y = atlas_index / map.width_in_tiles;
     DrawTile(map, world_position, atlas_x, atlas_y);
@@ -74,7 +88,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         for (int y = 0; y < 9; ++y) {
             int x_ = x - 7;
             int y_ = y - 4;
-            DrawTile(tilemap, {float(x_), float(y_)}, 2, 1);
+            DrawTile(tileset, {float(x_), float(y_)}, tilemap[(8-y)*15 + x]);
         }
     }
     

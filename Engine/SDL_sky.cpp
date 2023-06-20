@@ -2,6 +2,9 @@
 #include <SDL2/SDL.h>
 
 
+// TODO: Remove if dont need delay on startup
+#include <time.h>
+
 
 // SECTION: Window Size
 int SCREEN_WIDTH = 1280;
@@ -80,6 +83,7 @@ int main(int argc, char* argv[]) {
     main_camera.projection = ORTHOGRAPHIC_CAMERA;
 
     // DRAW STARTUP IMAGE
+    // TODO: If you dont need a startup logo, remove this scope
     {
         ClearScreen();
         GL_ID* shaders = ShaderInit();
@@ -92,6 +96,14 @@ int main(int argc, char* argv[]) {
         startup_transform.scale = {main_camera.width/3, main_camera.height/3, 1.0f};
         DrawSprite(starup_sprite, startup_transform, main_camera);
         SDL_GL_SwapWindow(window->window);
+        
+
+        // NOTE: Waits for 1 second, so the logo is visible even if load times are fast 
+        clock_t end_time = clock() + 1 * CLOCKS_PER_SEC;
+    
+        while (clock() < end_time) {
+            // Do nothing, just wait
+        } 
     }
 
     // NOTE: Init OpenAL for sound

@@ -86,16 +86,16 @@ GL_ID* ShaderInit(const char* vertex_path, const char* fragment_path) {
     
 
         size_t vs_bytes_read = fread(vs_shader_code, 1, vs_file_size, vs_file);
-        if (vs_bytes_read != vs_file_size) {
+        if (vs_bytes_read != (size_t)vs_file_size) {
             // Handle reading error
             printf("VERTEX SHADER READING ERROR\n");
         }
         size_t fs_bytes_read = fread(fs_shader_code, 1, fs_file_size, fs_file);
-        if (fs_bytes_read != fs_file_size) {
+        if (fs_bytes_read != (size_t)fs_file_size) {
             // Handle reading error
             printf("FRAGMENT SHADER READING ERROR\n");
         }  
-    
+        
 
         fclose(vs_file);
         fclose(fs_file);

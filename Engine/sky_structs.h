@@ -107,24 +107,17 @@ struct ButtonStyle {
     Vector2 frame_padding; // How much padding around the button there is. Useful for imagebutton for the image to take up all the space
 };
 
-// SECTION: Image Loading
+
+#ifndef STB_IMAGE_IMPLEMENTATION
+// SECTION: Image Loading 
+// NOTE: Not needed if using stb_image
 struct ImageData {
     uint16_t width;
     uint16_t height;
     uint8_t bytes_per_pixel;
     uint8_t* data;
 };
-
-
-
-// SECTION: ttf loading
-struct FontData {
-    // TODO: Figure out how to store font asset info and stuff.
-    uint16_t width[128], height[128];
-    uint16_t pixel_height;
-    uint8_t bytes_per_pixel;
-    uint8_t** data;  // TODO: Is this the right number to fit all ascii chars?
-};
+#endif
 
 
 // SECTION: Input system
