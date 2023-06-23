@@ -81,3 +81,12 @@ inline int IntClamp(int val, int min, int max) {
 inline float FloatClamp(float val, float min, float max) {
     return (val < min) ? min : ((val > max) ? max : val);
 }
+
+
+// SECTION: Lerping
+inline float Lerp(float start, float end, float t) {
+	return start * (1.0f - t) + end * t;
+}
+inline float ClampedLerp(float start, float end, float t) {
+    return Lerp(start, end, FloatClamp(t, 0.0f, 1.0f));
+}

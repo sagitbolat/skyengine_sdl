@@ -7,6 +7,8 @@
 #include "skyintrinsics.h"
 #include "sky_structs.h"
 
+
+
 /********************************
  *
  * Vector Math
@@ -15,6 +17,8 @@
 
 #define SQUARE(a) ((a)*(a))
 #define CUBE(a) ((a)*(a)*(a))
+
+
 
 
 // SECTION: 2D Vectors
