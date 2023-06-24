@@ -200,7 +200,7 @@ void ShaderSetTransform(GL_ID* shader, const char* name, glm::mat4 trans) {
 
 // SECTION: Rendering
 
-WindowContext* InitWindowContext(int width, int height, const char* window_name, fColor clear_color) {
+WindowContext* InitWindowContext(int width, int height, const char* window_name, fColor clear_color, bool fullscreen) {
     WindowContext* window_context = (WindowContext*)malloc(sizeof(WindowContext*)); 
 
 
@@ -217,12 +217,17 @@ WindowContext* InitWindowContext(int width, int height, const char* window_name,
     // NOTE: Turn off vsync
     SDL_GL_SetSwapInterval(0);
     
-    
+    uint32_t sdl_window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
+    if (fullscreen) {
+        sdl_window_flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+        width = 0;
+        height = 0;
+    }
     // Create an SDL window
     SDL_Window* window = SDL_CreateWindow(window_name,
                                           SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                           width, height,
-                                          SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+                                          sdl_window_flags);
     if (window == NULL) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create SDL window: %s", SDL_GetError());
     }

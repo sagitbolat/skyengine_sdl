@@ -63,13 +63,15 @@ void QuitApp() {
 int main(int argc, char* argv[]) {
 
 
+    const char* window_name = "SkyEngine App";
+
     // NOTE: The skyengine function that the user implements
     Init(&SCREEN_WIDTH, &SCREEN_HEIGHT, &SCREEN_WIDTH_IN_WORLD_SPACE, &LAUNCH_FULLSCREEN, &CLEAR_COLOR);
     
 
     // NOTE: Init OpenGL for graphics
     // TODO: pass LAUNCH_FULLSCREEN as an argument to the initializer
-    WindowContext* window = InitWindowContext(SCREEN_WIDTH, SCREEN_HEIGHT, "SkyEngine App", CLEAR_COLOR);
+    WindowContext* window = InitWindowContext(SCREEN_WIDTH, SCREEN_HEIGHT, window_name, CLEAR_COLOR, LAUNCH_FULLSCREEN);
     
 
     main_camera.position = {0.0f, 0.0f, 3.0f};
