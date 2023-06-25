@@ -45,6 +45,7 @@ struct Entity {
     Vector2Int position;
     bool movable; // NOTE: whether an entity is movable by the player.
     float seconds_per_block; // NOTE: measure of how long it takes the player to move 1 block
+    float move_timer;
     bool moving; // NOTE: whether the player is moving
 };
 
@@ -60,10 +61,11 @@ void EntityInit (
     entity->id                = id;
     entity->sprite            = sprite;
     entity->active            = active;
-    entity->prev_position     = position;
+    entity->prev_position     = position; // NOTE: Cached for transform updates. Do not modify manually
     entity->position          = position;
     entity->movable           = movable;
     entity->seconds_per_block = seconds_per_block;
+    entity->move_timer        = 0.0f;
     entity->moving            = false;
 
     Transform transform = {0.0f};
@@ -74,8 +76,7 @@ void EntityInit (
     entity->transform   = transform;
 }
 
-Entity* player;
-Entity* push_blocks;
+int player; // NOTE: entity id of player. Should be 0.
 int* entity_id_map; // NOTE: acts as a lookup table from tilemap coordinate to an entity. a negative value indicates no entity at coordinate.
 Entity* entities_array; // Array of entities in the game. Player is always first element.
 
@@ -156,8 +157,7 @@ void Awake(GameMemory *gm)
         SetEntityMapID(x, y, entities_array[e].id);
     }
 
-    player = &entities_array[0];
-    push_blocks = &entities_array[1];
+    player = entities_array[0].id;
 
 
     main_camera.position.x = float(tilemap.width/2);
@@ -195,9 +195,84 @@ void DrawTile(Tileset tileset, Vector2 world_position, uint8_t atlas_index) {
 // NOTE: Returns true if colliding with wall, false if not colliding with wall.
 bool TestTileCollide(Tilemap map, Vector2Int tile_pos) {
     int tile = map.map[tile_pos.y * map.width + tile_pos.x];
-    if ((tile == 1 || tile == 0) && GetEntityMapID(tile_pos.x, tile_pos.y) < 0) return false;
+    if ((tile == 1 || tile == 0)) return false;
     else return true;
 }
+
+// NOTE: Returns true if colliding with an entity, false if not colliding with an entity.
+bool TestEntityCollide(Vector2Int tile_pos) {
+    int entity_id = GetEntityMapID(tile_pos.x, tile_pos.y);
+    if (entity_id < 0) return false;
+    else return true;
+}
+
+// NOTE: Returns true if moving was successful. false if was unable to move the entity
+bool EntityMove(int entity_id, Vector2Int direction, Tilemap map, int* entity_id_map, Entity* entity_array) {
+    Entity* entity = &entity_array[entity_id];
+    
+    if (!entity->movable) return false;
+
+    Vector2Int new_position = entity->position + direction;
+
+    if (TestTileCollide(map, new_position)) return false;
+
+
+    int new_entity_id = GetEntityMapID(new_position.x, new_position.y);
+    Entity* new_entity = &entity_array[new_entity_id]; 
+
+    if (new_entity_id < 0 || !new_entity->active) {
+        entity->moving = true;
+
+        entity->position = entity->position + direction;
+
+        SetEntityMapID(entity->position.x, entity->position.y, entity->id);
+        SetEntityMapID(entity->prev_position.x, entity->prev_position.y, -1);
+        
+        return true;
+    }
+    
+    
+    if (!new_entity->movable) return false;
+
+    bool could_move_new_entity = EntityMove(new_entity_id, direction, map, entity_id_map, entity_array);
+
+    if (could_move_new_entity) {
+        entity->moving = true;
+
+        entity->position = entity->position + direction;
+
+        SetEntityMapID(entity->position.x, entity->position.y, entity->id);
+        SetEntityMapID(entity->prev_position.x, entity->prev_position.y, -1);
+        
+        return true;
+    } else return false;
+
+
+}
+
+void EntityUpdateTransform(int entity_id, Entity* entity_array, float dt) {
+    Entity* entity = &entity_array[entity_id];
+
+    if (!entity->active) return;
+
+    if (entity->moving) entity->move_timer += dt;
+    float move_t = entity->move_timer / (entity->seconds_per_block * 1000);
+
+    entity->transform.position.y = Lerp((float)entity->prev_position.y, (float)entity->position.y, move_t);
+    entity->transform.position.x = Lerp((float)entity->prev_position.x, (float)entity->position.x, move_t);
+
+    if (move_t >= 1.0f) {
+        entity->transform.position.y = (float)entity->position.y;
+        entity->transform.position.x = (float)entity->position.x;
+
+
+        entity->move_timer = 0.0f;
+        entity->moving = false;
+        entity->prev_position = entity->position;
+    }
+}
+
+
 
 
 
@@ -205,45 +280,32 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
 
     
-    if (ks->state.W && !player->moving && !TestTileCollide(tilemap, {player->position.x, player->position.y+1})) {
-        player->moving = true;
-        ++player->position.y;
+    if (ks->state.W && !entities_array[player].moving) { 
+        EntityMove(player, {0, 1}, tilemap, entity_id_map, entities_array);
     }
-    if (ks->state.S && !player->moving && !TestTileCollide(tilemap, {player->position.x, player->position.y-1})) {
-        player->moving = true;
-        --player->position.y;
+    if (ks->state.S && !entities_array[player].moving) {
+        EntityMove(player, {0, -1}, tilemap, entity_id_map, entities_array);
     }
-    if (ks->state.A && !player->moving && !TestTileCollide(tilemap, {player->position.x-1, player->position.y})) {
-        player->moving = true;
-        --player->position.x;
+    if (ks->state.A && !entities_array[player].moving) {
+        EntityMove(player, {-1, 0}, tilemap, entity_id_map, entities_array);
     }
-    if (ks->state.D && !player->moving && !TestTileCollide(tilemap, {player->position.x+1, player->position.y})) {
-        player->moving = true;
-        ++player->position.x;
+    if (ks->state.D && !entities_array[player].moving) {
+        EntityMove(player, {1, 0}, tilemap, entity_id_map, entities_array);
     }
 
 
-    static float move_timer = 0.0f;
-    if (player->moving) move_timer += dt;
-    float move_t = move_timer / (player->seconds_per_block * 1000);
-
-    player->transform.position.y = Lerp((float)player->prev_position.y, (float)player->position.y, move_t);
-    player->transform.position.x = Lerp((float)player->prev_position.x, (float)player->position.x, move_t);
-
-    if (move_t >= 1.0f) {
-        player->transform.position.y = (float)player->position.y;
-        player->transform.position.x = (float)player->position.x;
-
-        SetEntityMapID(player->position.x, player->position.y, player->id);
-        SetEntityMapID(player->prev_position.x, player->prev_position.y, -1);
-
-        move_timer = 0.0f;
-        player->moving = false;
-        player->prev_position = player->position;
+    if (ks->state.SPACE && !ks->prev_state.SPACE) {
+        printf("############################\n");
+        for (int id = 0; id < NUM_ENTITIES; ++id) {
+            Vector2Int position = entities_array[id].position;
+            printf("Entity %d position: {%d, %d} %d\n", id, position.x, position.y, entities_array[id].movable);
+        }
     }
 
 
-
+    for (int id = 0; id < NUM_ENTITIES; ++id) {
+        EntityUpdateTransform(id, entities_array, dt);
+    }
 
     for(int x = 0; x < tilemap.width; ++x) {
         for (int y = 0; y < tilemap.height; ++y) {
@@ -269,8 +331,8 @@ void UserFree()
     tilemap.map = nullptr;
 
     FreeSprite(tileset.atlas);
-    FreeSprite(player->sprite);
-    player->active = false;
+    FreeSprite(entities_array[player].sprite);
+    entities_array[player].active = false;
 
     FreeSprite(entities_array[1].sprite);
 

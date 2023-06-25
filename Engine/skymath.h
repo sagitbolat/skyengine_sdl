@@ -95,6 +95,25 @@ inline Vector3 operator/(const Vector3 a, const float b) {
 }
 
 
+// SECTION: VectorInts:
+inline Vector2Int Vec2(int x, int y) {
+	return { x, y};
+}
+inline Vector2Int Vec2(Vector2Int v) {
+	return { v.x, v.y};
+}
+inline Vector2Int Vec2(Vector3Int v) {
+	return { v.x, v.y}; // NOTE: This initialization drops the z component of a vector.
+}
+
+inline Vector2Int operator+(const Vector2Int a, const Vector2Int b) {
+	return Vector2Int{ a.x + b.x, a.y + b.y};
+}
+inline Vector2Int operator-(const Vector2Int a, const Vector2Int b) {
+	return Vector2Int{ a.x - b.x, a.y - b.y};
+}
+
+
 
 // SECTION: Standard Vector Functions
 
