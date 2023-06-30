@@ -7,6 +7,9 @@
     * Opaque
 * Laser emitter entity
     * different colors of emmisions
+* Restructure entity array into seperate arrays for each entity type.
+* Finish code for emitters to update the emission map
+
 # DOING:
 
 # DONE: 

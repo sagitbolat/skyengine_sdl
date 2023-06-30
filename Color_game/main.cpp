@@ -1,25 +1,25 @@
 #define INCLUDE_IMGUI
-
+#define FPS_SHOW
 #include "../Engine/SDL_sky.cpp"
 #include "../Engine/skymath.h"
 
 #define NUM_PUSH_BLOCKS 4
 #define NUM_STATIC_BLOCKS 2
-#define NUM_ENTITIES (1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS)
+#define NUM_EMITTERS 1
+#define NUM_ENTITIES (1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS)
 #include "tilemap.h"
 #include "entity.h"
 
 
 
-Sprite player_sprite;
-Sprite push_block_sprite;
+
 
 // SECTION: Initialization of stuff...
 void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *clear_color)
 {
     //*w = 640;
     //*h = 480;
-    *w_in_world_space = 16.0f;
+    *w_in_world_space = 17.0f;
     *fullscreen = false;
     //*clear_color = {0.8f/2, 0.83f/2, 1.0f/2, 1.0f};
     *clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
@@ -30,10 +30,16 @@ Tileset tileset = {0};
 Tilemap tilemap = {0};
 
 
-int player; // NOTE: entity id of player. Should be 0.
+int player;         // NOTE: entity id of player. Should be 0.
+int push_block;     // NOTE: entity id of first push_block.
+int static_block;   // NOTE: entity id of first static_block.
+int emitter;        // NOTE: entity id of first emitter.
+int emission;       // NOTE: entity id of first emission.
+
 EntityMap entity_id_map; // NOTE: acts as a lookup table from tilemap coordinate to an entity. a negative value indicates no entity at coordinate.
 Entity* entities_array; // Array of entities in the game. Player is always first element.
-
+EmissionMap emission_map;
+Sprite emission_sprite;
 
 GL_ID* shaders = nullptr;
 GPUBufferIDs gpu_buffers = {nullptr};
@@ -47,6 +53,8 @@ void Awake(GameMemory *gm)
     shaders = ShaderInit("shader.vs", "shader.fs");
     gpu_buffers = InitGPUBuffers();
     ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
+
+
 
     Sprite tileset_sprite = LoadSprite("assets/tileset.png", shaders, gpu_buffers);
     tileset.atlas = tileset_sprite;
@@ -70,39 +78,57 @@ void Awake(GameMemory *gm)
     memcpy(tilemap.map, map, sizeof(int) * tilemap.height * tilemap.width);
 
 
-    tile_default_transform.position = {0.0f, 0.0f, 0.0f};
+
+    tile_default_transform.position = {0.0f, 0.0f, -1.0f};
     tile_default_transform.rotation = {0.0f, 0.0f, 0.0f};
     tile_default_transform.scale    = {1.0f, 1.0f, 1.0f};
 
 
-    Sprite player_sprite     = LoadSprite("assets/player.png", shaders, gpu_buffers);
-    Sprite push_block_sprite = LoadSprite("assets/push_block.png", shaders, gpu_buffers);
+
+    Sprite player_sprite       = LoadSprite("assets/player.png", shaders, gpu_buffers);
+    Sprite push_block_sprite   = LoadSprite("assets/push_block.png", shaders, gpu_buffers);
     Sprite static_block_sprite = LoadSprite("assets/static_block.png", shaders, gpu_buffers);
+    Sprite emitter_sprite      = LoadSprite("assets/emitter.png", shaders, gpu_buffers);
+    emission_sprite     = LoadSprite("assets/emission.png", shaders, gpu_buffers);
+
+
 
     entity_id_map.width = tilemap.width;
     entity_id_map.height = tilemap.height;
-    entity_id_map.map = (int*)malloc(sizeof(int) * tilemap.height * tilemap.width);
-    for (int i = 0; i < tilemap.height * tilemap.width; ++i) entity_id_map.map[i] = -1;
+    entity_id_map.depth = 2;
+    entity_id_map.map = (int*)malloc(sizeof(int) * tilemap.height * tilemap.width * entity_id_map.depth);
+    for (int i = 0; i < tilemap.height * tilemap.width * entity_id_map.depth; ++i) entity_id_map.map[i] = -1;
 
     entities_array = (Entity*)malloc(sizeof(Entity) * NUM_ENTITIES);
+
+    emission_map.width = tilemap.width;
+    emission_map.height = tilemap.height;
+    emission_map.map = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
+
+
 
     
     PlayerInit(&entities_array[0], player_sprite, {7,4}, 0.2f);
     player = entities_array[0].id;
+    entity_id_map.SetID(entities_array[0].position.x, entities_array[0].position.y, entities_array[0].entity_layer, 0);
 
     Vector2Int push_block_positions[NUM_PUSH_BLOCKS] = {{2,2}, {3,3}, {4,4}, {5,5}};
     for (int e = 1; e < 1 + NUM_PUSH_BLOCKS; ++e) {
         PushblockInit(&entities_array[e], e, push_block_sprite, push_block_positions[e-1], entities_array[player]);
         int x = entities_array[e].position.x;
         int y = entities_array[e].position.y;
-        entity_id_map.SetID(x, y, entities_array[e].id);
+        entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
     }
     Vector2Int static_block_positions[NUM_STATIC_BLOCKS] = {{8,5}, {9,3}};
     for (int e = 1 + NUM_PUSH_BLOCKS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS; ++e) {
         StaticBlockInit(&entities_array[e], e, static_block_sprite, static_block_positions[e-NUM_PUSH_BLOCKS-1]);
         int x = entities_array[e].position.x;
         int y = entities_array[e].position.y;
-        entity_id_map.SetID(x, y, entities_array[e].id);
+        entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
+    }
+    for (int e = 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS; ++e) {
+        EmitterInit(&entities_array[e], e, emitter_sprite, {5,3}, {1.0f, 1.0f, 1.0f, 1.0f});
+        entity_id_map.SetID(5, 3, entities_array[e].entity_layer, entities_array[e].id);
     }
 
 
@@ -146,16 +172,16 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     
     if (ks->state.W && !entities_array[player].movable.moving) { 
-        EntityMove(player, {0, 1}, tilemap, entity_id_map, entities_array);
+        EntityMove(player, {0, 1}, tilemap, entity_id_map, entities_array, NUM_PUSH_BLOCKS);
     }
     if (ks->state.S && !entities_array[player].movable.moving) {
-        EntityMove(player, {0, -1}, tilemap, entity_id_map, entities_array);
+        EntityMove(player, {0,-1}, tilemap, entity_id_map, entities_array, NUM_PUSH_BLOCKS);
     }
     if (ks->state.A && !entities_array[player].movable.moving) {
-        EntityMove(player, {-1, 0}, tilemap, entity_id_map, entities_array);
+        EntityMove(player, {-1,0}, tilemap, entity_id_map, entities_array, NUM_PUSH_BLOCKS);
     }
     if (ks->state.D && !entities_array[player].movable.moving) {
-        EntityMove(player, {1, 0}, tilemap, entity_id_map, entities_array);
+        EntityMove(player, {1, 0}, tilemap, entity_id_map, entities_array, NUM_PUSH_BLOCKS);
     }
 
 
@@ -163,13 +189,16 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         printf("############################\n");
         for (int id = 0; id < NUM_ENTITIES; ++id) {
             Vector2Int position = entities_array[id].position;
-            printf("Entity %d position: {%d, %d} %d\n", id, position.x, position.y, entities_array[id].movable.active);
+            printf("Entity %d position: {%d, %d}: %d\n", id, position.x, position.y, entities_array[id].active);
         }
     }
-
+    if (ks->state.Q) {
+        Vector2Int set_position = entities_array[player].position;
+        emission_map.SetEmissionTile(set_position.x, set_position.y, {true, true, {1.0f, 0.0f, 1.0f, 0.5f}});
+    }
 
     for (int id = 0; id < NUM_ENTITIES; ++id) {
-        EntityUpdateTransform(id, entities_array, dt);
+        EntityUpdate(id, entities_array, dt);
     }
 
     for(int x = 0; x < tilemap.width; ++x) {
@@ -183,9 +212,10 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
     for (int e = 0; e < NUM_ENTITIES; ++e) {
-        if (!entities_array[e].active) continue;
-        DrawSprite(entities_array[e].sprite, entities_array[e].transform, main_camera);
+        EntityRender(e, entities_array); 
     }
+
+    EmissionRender(emission_map, emission_sprite, shaders);
 
 }
 
@@ -195,9 +225,18 @@ void UserFree()
     free(tilemap.map);
     tilemap.map = nullptr;
 
+    free(entity_id_map.map);
+    entity_id_map.map = nullptr;
+
+    free(emission_map.map);
+    emission_map.map = nullptr;
+
+
     FreeSprite(tileset.atlas);
     FreeSprite(entities_array[player].sprite);
     entities_array[player].active = false;
+
+
 
     FreeSprite(entities_array[1].sprite);
 

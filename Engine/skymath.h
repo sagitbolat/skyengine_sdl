@@ -114,6 +114,9 @@ inline Vector2Int operator-(const Vector2Int a, const Vector2Int b) {
 }
 
 
+inline Vector4 Vec4(fColor c) {
+    return Vector4{c.r, c.g, c.b, c.a};
+}
 
 // SECTION: Standard Vector Functions
 
