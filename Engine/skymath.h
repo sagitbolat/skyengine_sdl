@@ -114,9 +114,22 @@ inline Vector2Int operator-(const Vector2Int a, const Vector2Int b) {
 }
 
 
+
+// SECTION: COLOR MATH
+
 inline Vector4 Vec4(fColor c) {
     return Vector4{c.r, c.g, c.b, c.a};
 }
+
+inline fColor operator+(const fColor a, const fColor b) {
+	return fColor{
+		FloatClamp(a.r + b.r, 0.0f, 1.0f), 
+		FloatClamp(a.g + b.g, 0.0f, 1.0f),
+		FloatClamp(a.b + b.b, 0.0f, 1.0f),
+		FloatClamp(a.a + b.a, 0.0f, 1.0f)
+	};
+}
+
 
 // SECTION: Standard Vector Functions
 

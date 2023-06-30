@@ -194,10 +194,12 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     }
     if (ks->state.Q) {
         Vector2Int set_position = entities_array[player].position;
-        emission_map.SetEmissionTile(set_position.x, set_position.y, {true, true, {1.0f, 0.0f, 1.0f, 0.5f}});
+        emission_map.SetEmissionTile(set_position.x, set_position.y, EmissionTile{true, EmissionTile::HORIZONTAL, {1.0f, 0.0f, 1.0f, 0.5f}});
     }
 
     for (int id = 0; id < NUM_ENTITIES; ++id) {
+
+        EntityUpdateEmit(id, tilemap, entity_id_map, emission_map, entities_array);
         EntityUpdate(id, entities_array, dt);
     }
 

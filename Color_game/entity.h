@@ -21,7 +21,7 @@ void EntityMap::SetID(int x, int y, int z, int id) {
 
 struct EmissionTile {
     bool active;
-    bool orientation;
+    enum ORIENTATION_ENUM {HORIZONTAL, VERTICAL, CROSSED} orientation;
     fColor color;
 };
 struct EmissionMap {
@@ -51,6 +51,9 @@ struct EntityComponentMover { // NOTE: Whether movable by the player
 struct EntityComponentEmitter { // NOTE: Laser emitter struct
     bool active;
     fColor emission_color;
+    enum DIRECTION_ENUM {UP, DOWN, LEFT, RIGHT} direction;
+
+
 };
 
 void EntityComponentMoverInit(EntityComponentMover* component, float seconds_per_tile, bool active = true) {
@@ -89,9 +92,7 @@ void EntityInit (
     bool        movable_active=true, 
     float       seconds_per_tile=0.2f,
     bool        emitter_active=true,
-    fColor      emitter_color={1.0f, 1.0f, 1.0f, 1.0f},
-    bool        emission_active=false,
-    fColor      emission_color={1.0f, 1.0f, 1.0f, 1.0f}
+    fColor      emitter_color={1.0f, 1.0f, 1.0f, 1.0f}
 ) {
     entity->id            = id;
     entity->sprite        = sprite;
@@ -117,7 +118,7 @@ void PlayerInit(
     Vector2Int init_position,
     float move_speed=0.2f
 ) {
-    EntityInit(player, 0, sprite, init_position, 1, true, true, move_speed);
+    EntityInit(player, 0, sprite, init_position, 1.0f, true, true, move_speed);
 }
 void PushblockInit(
     Entity* pushblock,
@@ -126,7 +127,7 @@ void PushblockInit(
     Vector2Int init_position,
     Entity player
 ) {
-    EntityInit(pushblock, id, sprite, init_position, 1, true, true, player.movable.seconds_per_tile);
+    EntityInit(pushblock, id, sprite, init_position, 1.0f, true, true, player.movable.seconds_per_tile);
 }
 void StaticBlockInit(
     Entity* static_block,
@@ -134,7 +135,7 @@ void StaticBlockInit(
     Sprite sprite,
     Vector2Int init_position
 ) {
-    EntityInit(static_block, id, sprite, init_position, 1, true, false);
+    EntityInit(static_block, id, sprite, init_position, 1.0f, true, false);
 }
 void EmitterInit(
     Entity* emitter,
@@ -143,7 +144,7 @@ void EmitterInit(
     Vector2Int init_position,
     fColor emitter_color
 ) {
-    EntityInit(emitter, id, sprite, init_position, 1, true, false, 0.2f, true, emitter_color);
+    EntityInit(emitter, id, sprite, init_position, 1.0f, true, false, 0.2f, true, emitter_color);
 }
 
 
@@ -191,9 +192,55 @@ bool EntityMove(int entity_id, Vector2Int direction, Tilemap map, EntityMap enti
 }
 
 // NOTE: EntityComponentEmitter state change. Sets layer 2 to laser tiles.
-Vector2Int EntityEmit(int entity_id, Tilemap map, EntityMap entity_id_map, Entity* entity_array) {
-    // TODO:
-    return {0, 0}; 
+// Returns the position of the object hit by the laser. Returns {-1,-1} if no emission can be performed
+Vector2Int EntityUpdateEmit(int entity_id, Tilemap map, EntityMap entity_id_map, EmissionMap emission_map, Entity* entity_array) {
+    if (entity_id < 0) return {-1, -1};
+
+    Entity entity = entity_array[entity_id];
+
+    if(!entity.active) return {-1, -1};
+    if(!entity.emitter.active) return {-1, -1};     
+
+
+    Vector2Int direction = {0,0};
+    EmissionTile::ORIENTATION_ENUM orient = EmissionTile::VERTICAL;
+    if      (entity.emitter.direction == EntityComponentEmitter::UP   ) direction = {0, 1};
+    else if (entity.emitter.direction == EntityComponentEmitter::DOWN ) direction = {0,-1};
+    else if (entity.emitter.direction == EntityComponentEmitter::LEFT ) {direction = {-1,0}; orient = EmissionTile::HORIZONTAL;}
+    else if (entity.emitter.direction == EntityComponentEmitter::RIGHT) {direction = {1, 0}; orient = EmissionTile::HORIZONTAL;}
+
+
+
+    Vector2Int curr_direction = direction;
+    while (true) {
+        Vector2Int new_position = entity.position + curr_direction;
+        int new_entity_id = entity_id_map.GetID(new_position.x, new_position.y, 1);
+
+        if (new_entity_id >= 0) {
+            return (new_position - direction);
+        } else if (new_position.x < 0 || new_position.y < 0) {
+            return (new_position - direction);
+        } else if (new_position.x >= map.width || new_position.y >= map.height) {
+            return (new_position - direction);
+        }
+
+        EmissionTile tile = emission_map.GetEmissionTile(new_position.x, new_position.y);
+
+        if (tile.active) {
+            if (tile.orientation == orient) tile.color = tile.color + entity.emitter.emission_color;
+            else {
+                tile.orientation = EmissionTile::CROSSED;
+                tile.color = tile.color + entity.emitter.emission_color;
+            }
+        } else {
+            tile.color = entity.emitter.emission_color;
+            tile.orientation = orient;
+        }
+
+        curr_direction = curr_direction + direction;
+
+    }
+
 }
 
 
@@ -242,13 +289,15 @@ void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shader
     
     for (int y = 0; y < map.height; ++y) {
         for (int x = 0; x < map.width; ++x) {
-            if (map.GetEmissionTile(x, y).active == false) continue;
+            EmissionTile tile = map.GetEmissionTile(x, y);
+            if (tile.active == false) continue;
 
-
-            float uv_x_offset = (map.GetEmissionTile(x, y).orientation) ? 0.5f : 0.0f;
+            float uv_x_offset = 0.0f;
+            if (tile.orientation == EmissionTile::VERTICAL) uv_x_offset = (1.0f/3.0f);
+            if (tile.orientation == EmissionTile::CROSSED) uv_x_offset = (2.0f/3.0f);
 
             ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
-            ShaderSetVector(shaders, "top_right_uv", Vector2{0.5f, 1.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f/3.0f, 1.0f});
             ShaderSetVector(shaders, "uv_offset", Vector2{uv_x_offset, 0.0f});
             ShaderSetVector(shaders, "i_color_multiplier", Vec4(map.GetEmissionTile(x,y).color));
             Transform transform = {0.0f};
@@ -260,7 +309,7 @@ void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shader
             ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
             ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
 
-            EmissionTile tile = {false, false, {0.0f, 0.0f, 0.0f, 0.0f}};
+            tile = {false, EmissionTile::HORIZONTAL, fColor{0.0f, 0.0f, 0.0f, 0.0f}};
             map.SetEmissionTile(x, y, tile);
 
         }
