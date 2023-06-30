@@ -62,9 +62,10 @@ void EntityComponentMoverInit(EntityComponentMover* component, float seconds_per
     component->move_timer = 0.0f;
     component->moving = false;
 }
-void EntityComponentEmitterInit(EntityComponentEmitter* component, fColor emission_color, bool active = true) {
+void EntityComponentEmitterInit(EntityComponentEmitter* component, fColor emission_color,  EntityComponentEmitter::DIRECTION_ENUM dir, bool active = true) {
     component->active = active;
     component->emission_color = emission_color;
+    component->direction = dir;
 }
 
 
@@ -91,8 +92,9 @@ void EntityInit (
     bool        active=true, 
     bool        movable_active=true, 
     float       seconds_per_tile=0.2f,
-    bool        emitter_active=true,
-    fColor      emitter_color={1.0f, 1.0f, 1.0f, 1.0f}
+    bool        emitter_active=false,
+    fColor      emitter_color={1.0f, 1.0f, 1.0f, 1.0f},
+    EntityComponentEmitter::DIRECTION_ENUM emitter_dir = EntityComponentEmitter::UP
 ) {
     entity->id            = id;
     entity->sprite        = sprite;
@@ -102,7 +104,7 @@ void EntityInit (
     entity->entity_layer  = entity_layer;
 
     EntityComponentMoverInit(&entity->movable, seconds_per_tile, movable_active);
-    EntityComponentEmitterInit(&entity->emitter, emitter_color, emitter_active);
+    EntityComponentEmitterInit(&entity->emitter, emitter_color, emitter_dir, emitter_active);
 
     Transform transform = {0.0f};
     transform.position  = {(float)position.x, (float)position.y, float(entity_layer)};
@@ -142,9 +144,10 @@ void EmitterInit(
     int id,
     Sprite sprite,
     Vector2Int init_position,
-    fColor emitter_color
+    fColor emitter_color,
+    EntityComponentEmitter::DIRECTION_ENUM direction
 ) {
-    EntityInit(emitter, id, sprite, init_position, 1.0f, true, false, 0.2f, true, emitter_color);
+    EntityInit(emitter, id, sprite, init_position, 1.0f, true, false, 0.2f, true, emitter_color, direction);
 }
 
 
@@ -202,26 +205,46 @@ Vector2Int EntityUpdateEmit(int entity_id, Tilemap map, EntityMap entity_id_map,
     if(!entity.emitter.active) return {-1, -1};     
 
 
-    Vector2Int direction = {0,0};
+    Vector2Int _direction = {0,0};
     EmissionTile::ORIENTATION_ENUM orient = EmissionTile::VERTICAL;
-    if      (entity.emitter.direction == EntityComponentEmitter::UP   ) direction = {0, 1};
-    else if (entity.emitter.direction == EntityComponentEmitter::DOWN ) direction = {0,-1};
-    else if (entity.emitter.direction == EntityComponentEmitter::LEFT ) {direction = {-1,0}; orient = EmissionTile::HORIZONTAL;}
-    else if (entity.emitter.direction == EntityComponentEmitter::RIGHT) {direction = {1, 0}; orient = EmissionTile::HORIZONTAL;}
+    if (entity.emitter.direction == EntityComponentEmitter::UP) {
+        _direction.x = 0;
+        _direction.y = 1;
+    }
+    else if (entity.emitter.direction == EntityComponentEmitter::DOWN ) {
+        _direction.x = 0;
+        _direction.y = -1;
+    }
+    else if (entity.emitter.direction == EntityComponentEmitter::LEFT ) {
+        _direction.x = -1;
+        _direction.y = 0;
+        orient = EmissionTile::HORIZONTAL;
+    }
+    else if (entity.emitter.direction == EntityComponentEmitter::RIGHT) {
+        _direction.x = 1;
+        _direction.y = 0;
+        orient = EmissionTile::HORIZONTAL;
+    }
 
 
-
-    Vector2Int curr_direction = direction;
+    Vector2Int curr_direction = {0,0};
     while (true) {
+        curr_direction = curr_direction + _direction;
         Vector2Int new_position = entity.position + curr_direction;
         int new_entity_id = entity_id_map.GetID(new_position.x, new_position.y, 1);
 
         if (new_entity_id >= 0) {
-            return (new_position - direction);
-        } else if (new_position.x < 0 || new_position.y < 0) {
-            return (new_position - direction);
+            return (new_position - _direction);
+        }
+
+        if (TestTileCollide(map, new_position)) {
+            return (new_position - _direction);
+        }
+
+        if (new_position.x < 0 || new_position.y < 0) {
+            return (new_position - _direction);
         } else if (new_position.x >= map.width || new_position.y >= map.height) {
-            return (new_position - direction);
+            return (new_position - _direction);
         }
 
         EmissionTile tile = emission_map.GetEmissionTile(new_position.x, new_position.y);
@@ -233,11 +256,13 @@ Vector2Int EntityUpdateEmit(int entity_id, Tilemap map, EntityMap entity_id_map,
                 tile.color = tile.color + entity.emitter.emission_color;
             }
         } else {
+            tile.active = true;
             tile.color = entity.emitter.emission_color;
             tile.orientation = orient;
         }
 
-        curr_direction = curr_direction + direction;
+        emission_map.SetEmissionTile(new_position.x, new_position.y, tile);
+
 
     }
 

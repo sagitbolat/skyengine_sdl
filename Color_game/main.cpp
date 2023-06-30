@@ -19,7 +19,7 @@ void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *cle
 {
     //*w = 640;
     //*h = 480;
-    *w_in_world_space = 17.0f;
+    *w_in_world_space = 18.0f;
     *fullscreen = false;
     //*clear_color = {0.8f/2, 0.83f/2, 1.0f/2, 1.0f};
     *clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
@@ -104,7 +104,7 @@ void Awake(GameMemory *gm)
     emission_map.width = tilemap.width;
     emission_map.height = tilemap.height;
     emission_map.map = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
-
+    for (int i = 0; i < emission_map.width * emission_map.height; ++i) emission_map.map[i] = {0};
 
 
     
@@ -127,7 +127,7 @@ void Awake(GameMemory *gm)
         entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
     }
     for (int e = 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS; ++e) {
-        EmitterInit(&entities_array[e], e, emitter_sprite, {5,3}, {1.0f, 1.0f, 1.0f, 1.0f});
+        EmitterInit(&entities_array[e], e, emitter_sprite, {5,3}, {0.0f, 1.0f, 1.0f, 1.0f}, EntityComponentEmitter::LEFT);
         entity_id_map.SetID(5, 3, entities_array[e].entity_layer, entities_array[e].id);
     }
 
@@ -189,7 +189,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         printf("############################\n");
         for (int id = 0; id < NUM_ENTITIES; ++id) {
             Vector2Int position = entities_array[id].position;
-            printf("Entity %d position: {%d, %d}: %d\n", id, position.x, position.y, entities_array[id].active);
+            printf("Entity %d position: {%d, %d}: %d\n", id, position.x, position.y, entities_array[id].emitter.active);
         }
     }
     if (ks->state.Q) {
@@ -197,10 +197,11 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         emission_map.SetEmissionTile(set_position.x, set_position.y, EmissionTile{true, EmissionTile::HORIZONTAL, {1.0f, 0.0f, 1.0f, 0.5f}});
     }
 
+    //printf("############################\n");
     for (int id = 0; id < NUM_ENTITIES; ++id) {
-
         EntityUpdateEmit(id, tilemap, entity_id_map, emission_map, entities_array);
         EntityUpdate(id, entities_array, dt);
+        //printf("Entity %d emission: {%d, %d}: %d\n", id, position.x, position.y, entities_array[id].emitter.active);
     }
 
     for(int x = 0; x < tilemap.width; ++x) {
