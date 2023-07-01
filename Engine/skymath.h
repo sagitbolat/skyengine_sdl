@@ -129,6 +129,15 @@ inline fColor operator+(const fColor a, const fColor b) {
 		FloatClamp(a.a + b.a, 0.0f, 1.0f)
 	};
 }
+inline bool ComparefColor(const fColor a, const fColor b, float epsilon=0.01f) {
+	if (
+		fabs(a.r - b.r) > epsilon || 
+		fabs(a.g - b.g) > epsilon ||
+		fabs(a.b - b.b) > epsilon ||
+		fabs(a.a - b.a) > epsilon  
+	) {return false;}
+	return true;
+}
 
 
 // SECTION: Standard Vector Functions

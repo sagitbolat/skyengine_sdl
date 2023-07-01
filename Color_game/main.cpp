@@ -6,7 +6,8 @@
 #define NUM_PUSH_BLOCKS 4
 #define NUM_STATIC_BLOCKS 2
 #define NUM_EMITTERS 1
-#define NUM_ENTITIES (1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS)
+#define NUM_RECEIVERS 1
+#define NUM_ENTITIES (1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS + NUM_RECEIVERS)
 #include "tilemap.h"
 #include "entity.h"
 
@@ -19,7 +20,7 @@ void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *cle
 {
     //*w = 640;
     //*h = 480;
-    *w_in_world_space = 18.0f;
+    *w_in_world_space = 14.0f;
     *fullscreen = false;
     //*clear_color = {0.8f/2, 0.83f/2, 1.0f/2, 1.0f};
     *clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
@@ -65,13 +66,13 @@ void Awake(GameMemory *gm)
     tilemap.height = 9;
     int map[tilemap.width * tilemap.height] = {
         10,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,11,
-        9, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 7,
-        9, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 7,
-        9, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 7,
-        9, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 7,
-        9, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 7,
-        9, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 7,
-        9, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 7,
+        9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7,
+        9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7,
+        9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7,
+        9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7,
+        9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7,
+        9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7,
+        9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7,
         5,13,13,13,13,13,13,13,13,13,13,13,13,13, 6
     };
     tilemap.map = (int*)calloc(tilemap.width * tilemap.height, sizeof(int));
@@ -85,11 +86,16 @@ void Awake(GameMemory *gm)
 
 
 
-    Sprite player_sprite       = LoadSprite("assets/player.png", shaders, gpu_buffers);
-    Sprite push_block_sprite   = LoadSprite("assets/push_block.png", shaders, gpu_buffers);
-    Sprite static_block_sprite = LoadSprite("assets/static_block.png", shaders, gpu_buffers);
-    Sprite emitter_sprite      = LoadSprite("assets/emitter.png", shaders, gpu_buffers);
-    emission_sprite     = LoadSprite("assets/emission.png", shaders, gpu_buffers);
+    Sprite player_sprite            = LoadSprite("assets/player.png", shaders, gpu_buffers);
+    Sprite push_block_sprite        = LoadSprite("assets/push_block.png", shaders, gpu_buffers);
+    Sprite static_block_sprite      = LoadSprite("assets/static_block.png", shaders, gpu_buffers);
+    Sprite emitter_sprite           = LoadSprite("assets/emitter.png", shaders, gpu_buffers);
+    Sprite emitter_nozzle_sprite    = LoadSprite("assets/emitter_nozzle.png", shaders, gpu_buffers);
+    Sprite emitter_indicator_sprite = LoadSprite("assets/emitter_indicator.png", shaders, gpu_buffers);
+    Sprite receiver_sprite          = LoadSprite("assets/receiver.png", shaders, gpu_buffers);
+    Sprite receiver_nozzle_sprite   = LoadSprite("assets/receiver_nozzle.png", shaders, gpu_buffers);
+    Sprite receiver_indicator_sprite = LoadSprite("assets/receiver_indicator.png", shaders, gpu_buffers);
+    emission_sprite                 = LoadSprite("assets/emission.png", shaders, gpu_buffers);
 
 
 
@@ -127,8 +133,12 @@ void Awake(GameMemory *gm)
         entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
     }
     for (int e = 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS; ++e) {
-        EmitterInit(&entities_array[e], e, emitter_sprite, {5,3}, {0.0f, 1.0f, 1.0f, 1.0f}, EntityComponentEmitter::LEFT);
-        entity_id_map.SetID(5, 3, entities_array[e].entity_layer, entities_array[e].id);
+        EmitterInit(&entities_array[e], e, emitter_sprite, emitter_nozzle_sprite, emitter_indicator_sprite, {5,7}, {1.0f, 1.0f, 1.0f, 1.0f}, true, EntityComponentEmitter::DOWN);
+        entity_id_map.SetID(5, 7, entities_array[e].entity_layer, entities_array[e].id);
+    }
+    for (int e = 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS + NUM_RECEIVERS; ++e) {
+        ReceiverInit(&entities_array[e], e, receiver_sprite, receiver_nozzle_sprite, receiver_indicator_sprite, {5,1}, {0.5f, 1.0f, 0.5f, 1.0f}, true);
+        entity_id_map.SetID(5, 1, entities_array[e].entity_layer, entities_array[e].id);
     }
 
 
@@ -172,16 +182,16 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     
     if (ks->state.W && !entities_array[player].movable.moving) { 
-        EntityMove(player, {0, 1}, tilemap, entity_id_map, entities_array, NUM_PUSH_BLOCKS);
+        EntityMove(player, {0, 1}, tilemap, entity_id_map, entities_array, NUM_ENTITIES);
     }
     if (ks->state.S && !entities_array[player].movable.moving) {
-        EntityMove(player, {0,-1}, tilemap, entity_id_map, entities_array, NUM_PUSH_BLOCKS);
+        EntityMove(player, {0,-1}, tilemap, entity_id_map, entities_array, NUM_ENTITIES);
     }
     if (ks->state.A && !entities_array[player].movable.moving) {
-        EntityMove(player, {-1,0}, tilemap, entity_id_map, entities_array, NUM_PUSH_BLOCKS);
+        EntityMove(player, {-1,0}, tilemap, entity_id_map, entities_array, NUM_ENTITIES);
     }
     if (ks->state.D && !entities_array[player].movable.moving) {
-        EntityMove(player, {1, 0}, tilemap, entity_id_map, entities_array, NUM_PUSH_BLOCKS);
+        EntityMove(player, {1, 0}, tilemap, entity_id_map, entities_array, NUM_ENTITIES);
     }
 
 
@@ -192,33 +202,36 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             printf("Entity %d position: {%d, %d}: %d\n", id, position.x, position.y, entities_array[id].emitter.active);
         }
     }
-    if (ks->state.Q) {
-        Vector2Int set_position = entities_array[player].position;
-        emission_map.SetEmissionTile(set_position.x, set_position.y, EmissionTile{true, EmissionTile::HORIZONTAL, {1.0f, 0.0f, 1.0f, 0.5f}});
+    if (ks->state.Q && entities_array[8].receiver.signal_received) {
+        printf("Signal Received.\n");
+    }
+    if (ks->state.Q && entities_array[8].receiver.signal_accepted) {
+        printf("Signal Accepted\n");
+    }
+    
+
+
+    for(int x = 0; x < tilemap.width; ++x) {
+        for (int y = 0; y < tilemap.height; ++y) {
+            DrawTile(tileset, {float(x), float(y)}, tilemap.map[(8-y)*15 + x]);
+        }
     }
 
+    for (int e = 0; e < NUM_ENTITIES; ++e) {
+        EntityRender(e, entities_array, shaders); 
+    }
+
+    EmissionRender(emission_map, emission_sprite, shaders);
+    
+
+    // NOTE: This is done after rendering so that rendering that depends on the movable.moving flag doesnt flicker every block 
     //printf("############################\n");
     for (int id = 0; id < NUM_ENTITIES; ++id) {
         EntityUpdateEmit(id, tilemap, entity_id_map, emission_map, entities_array);
         EntityUpdate(id, entities_array, dt);
         //printf("Entity %d emission: {%d, %d}: %d\n", id, position.x, position.y, entities_array[id].emitter.active);
     }
-
-    for(int x = 0; x < tilemap.width; ++x) {
-        for (int y = 0; y < tilemap.height; ++y) {
-            if (x == 0 || y == 0 || x == (tilemap.width-1) || y == (tilemap.height-1))
-                ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
-            else ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
-            DrawTile(tileset, {float(x), float(y)}, tilemap.map[(8-y)*15 + x]);
-        }
-    }
-
-    ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
-    for (int e = 0; e < NUM_ENTITIES; ++e) {
-        EntityRender(e, entities_array); 
-    }
-
-    EmissionRender(emission_map, emission_sprite, shaders);
+    
 
 }
 

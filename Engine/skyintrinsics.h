@@ -13,7 +13,7 @@ inline int Abs(int a) {
     return abs(a);
 }
 inline float fAbs(float a) {
-    return fabs(a);
+    return fabsf(a);
 }
 
 inline float SquareRoot(float a) {

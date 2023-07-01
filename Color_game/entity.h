@@ -50,10 +50,19 @@ struct EntityComponentMover { // NOTE: Whether movable by the player
 };
 struct EntityComponentEmitter { // NOTE: Laser emitter struct
     bool active;
+    Sprite nozzle_sprite;
+    Sprite indicator_sprite;
     fColor emission_color;
     enum DIRECTION_ENUM {UP, DOWN, LEFT, RIGHT} direction;
-
-
+};
+struct EntityComponentReceiver { // NOTE: Laser reciever struct
+    bool active;
+    Sprite nozzle_sprite;
+    Sprite indicator_sprite;
+    fColor accepted_color;
+    bool signal_received; // NOTE: turns true if a laser hits the Reciever
+    bool signal_accepted; // NOTE: turns true if the laser is of the correct color.
+    fColor signal_color;
 };
 
 void EntityComponentMoverInit(EntityComponentMover* component, float seconds_per_tile, bool active = true) {
@@ -66,6 +75,13 @@ void EntityComponentEmitterInit(EntityComponentEmitter* component, fColor emissi
     component->active = active;
     component->emission_color = emission_color;
     component->direction = dir;
+}
+void EntityComponentReceiverInit(EntityComponentReceiver* component, fColor accepted_color, bool active=true) {
+    component->active = active;
+    component->accepted_color = accepted_color; // NOTE: The color that the receiver accepts as valid.
+    component->signal_received = false;
+    component->signal_accepted = false;
+    component->signal_color = {0.0f, 0.0f, 0.0f, 0.0f};
 }
 
 
@@ -81,6 +97,7 @@ struct Entity {
     int         entity_layer; // NOTE: Layer 0: floor buttons and other features. Layer 1: Pushblocks, emitters, player etc. 
     EntityComponentMover movable;
     EntityComponentEmitter emitter;
+    EntityComponentReceiver receiver;
 }; 
 
 void EntityInit (
@@ -93,7 +110,8 @@ void EntityInit (
     bool        movable_active=true, 
     float       seconds_per_tile=0.2f,
     bool        emitter_active=false,
-    fColor      emitter_color={1.0f, 1.0f, 1.0f, 1.0f},
+    bool        receiver_active=false,
+    fColor      color={1.0f, 1.0f, 1.0f, 1.0f},
     EntityComponentEmitter::DIRECTION_ENUM emitter_dir = EntityComponentEmitter::UP
 ) {
     entity->id            = id;
@@ -104,7 +122,8 @@ void EntityInit (
     entity->entity_layer  = entity_layer;
 
     EntityComponentMoverInit(&entity->movable, seconds_per_tile, movable_active);
-    EntityComponentEmitterInit(&entity->emitter, emitter_color, emitter_dir, emitter_active);
+    EntityComponentEmitterInit(&entity->emitter, color, emitter_dir, emitter_active);
+    EntityComponentReceiverInit(&entity->receiver, color, receiver_active);
 
     Transform transform = {0.0f};
     transform.position  = {(float)position.x, (float)position.y, float(entity_layer)};
@@ -143,11 +162,30 @@ void EmitterInit(
     Entity* emitter,
     int id,
     Sprite sprite,
+    Sprite nozzle_sprite,
+    Sprite indicator_sprite,
     Vector2Int init_position,
     fColor emitter_color,
+    bool emitter_movable,
     EntityComponentEmitter::DIRECTION_ENUM direction
 ) {
-    EntityInit(emitter, id, sprite, init_position, 1.0f, true, false, 0.2f, true, emitter_color, direction);
+    EntityInit(emitter, id, sprite, init_position, 1.0f, true, emitter_movable, 0.2f, true, false, emitter_color, direction);
+    emitter->emitter.nozzle_sprite = nozzle_sprite;
+    emitter->emitter.indicator_sprite = indicator_sprite;
+}
+void ReceiverInit(
+    Entity* receiver,
+    int id,
+    Sprite sprite,
+    Sprite nozzle_sprite,
+    Sprite indicator_sprite,
+    Vector2Int init_position,
+    fColor accepted_signal_color,
+    bool receiver_movable
+) {
+    EntityInit(receiver, id, sprite, init_position, 1.0f, true, receiver_movable, 0.2f, false, true, accepted_signal_color);
+    receiver->receiver.nozzle_sprite = nozzle_sprite;
+    receiver->receiver.indicator_sprite = indicator_sprite;
 }
 
 
@@ -199,41 +237,54 @@ bool EntityMove(int entity_id, Vector2Int direction, Tilemap map, EntityMap enti
 Vector2Int EntityUpdateEmit(int entity_id, Tilemap map, EntityMap entity_id_map, EmissionMap emission_map, Entity* entity_array) {
     if (entity_id < 0) return {-1, -1};
 
-    Entity entity = entity_array[entity_id];
+    Entity* entity = &entity_array[entity_id];
 
-    if(!entity.active) return {-1, -1};
-    if(!entity.emitter.active) return {-1, -1};     
-
+    if(!entity->active) return {-1, -1};
+    if(!entity->emitter.active) return {-1, -1};     
+    if(entity->movable.active && entity->movable.moving) return {-1, -1}; // NOTE: do not emit if the emitter is moving
 
     Vector2Int _direction = {0,0};
     EmissionTile::ORIENTATION_ENUM orient = EmissionTile::VERTICAL;
-    if (entity.emitter.direction == EntityComponentEmitter::UP) {
+    if (entity->emitter.direction == EntityComponentEmitter::UP) {
         _direction.x = 0;
         _direction.y = 1;
+        entity->transform.rotation.z = 0.0f;
     }
-    else if (entity.emitter.direction == EntityComponentEmitter::DOWN ) {
+    else if (entity->emitter.direction == EntityComponentEmitter::DOWN ) {
         _direction.x = 0;
         _direction.y = -1;
+        entity->transform.rotation.z = 180.0f;
     }
-    else if (entity.emitter.direction == EntityComponentEmitter::LEFT ) {
+    else if (entity->emitter.direction == EntityComponentEmitter::LEFT ) {
         _direction.x = -1;
         _direction.y = 0;
         orient = EmissionTile::HORIZONTAL;
+        entity->transform.rotation.z = 90.0f;
     }
-    else if (entity.emitter.direction == EntityComponentEmitter::RIGHT) {
+    else if (entity->emitter.direction == EntityComponentEmitter::RIGHT) {
         _direction.x = 1;
         _direction.y = 0;
         orient = EmissionTile::HORIZONTAL;
+        entity->transform.rotation.z = 270.0f;
     }
 
 
     Vector2Int curr_direction = {0,0};
     while (true) {
         curr_direction = curr_direction + _direction;
-        Vector2Int new_position = entity.position + curr_direction;
+        Vector2Int new_position = entity->position + curr_direction;
         int new_entity_id = entity_id_map.GetID(new_position.x, new_position.y, 1);
 
         if (new_entity_id >= 0) {
+
+            //SECTION: Activate the receiver if its hit
+            Entity* new_entity = &entity_array[new_entity_id];
+            if (new_entity->receiver.active) {
+                new_entity->receiver.signal_color = entity->emitter.emission_color;
+                new_entity->receiver.signal_received = true;
+            }
+
+
             return (new_position - _direction);
         }
 
@@ -250,14 +301,14 @@ Vector2Int EntityUpdateEmit(int entity_id, Tilemap map, EntityMap entity_id_map,
         EmissionTile tile = emission_map.GetEmissionTile(new_position.x, new_position.y);
 
         if (tile.active) {
-            if (tile.orientation == orient) tile.color = tile.color + entity.emitter.emission_color;
+            if (tile.orientation == orient) tile.color = tile.color + entity->emitter.emission_color;
             else {
                 tile.orientation = EmissionTile::CROSSED;
-                tile.color = tile.color + entity.emitter.emission_color;
+                tile.color = tile.color + entity->emitter.emission_color;
             }
         } else {
             tile.active = true;
-            tile.color = entity.emitter.emission_color;
+            tile.color = entity->emitter.emission_color;
             tile.orientation = orient;
         }
 
@@ -295,19 +346,63 @@ void EntityUpdateMover(int entity_id, Entity* entity_array, float dt) {
     }
 }
 
+void EntityUpdateReceiver(int entity_id, Entity* entity_array) {
+    Entity* entity = &entity_array[entity_id];
+    if (entity->receiver.active && entity->receiver.signal_received) {
+        if (ComparefColor(entity->receiver.signal_color, entity->receiver.accepted_color)) {
+            entity->receiver.signal_accepted = true;
+        } 
+    } else if (!entity->receiver.signal_received) {
+        entity->receiver.signal_color = {0.0f, 0.0f, 0.0f, 0.0f};
+        entity->receiver.signal_accepted = false;
+    }
+
+}
+
+
 void EntityUpdate(int entity_id, Entity* entity_array, float dt) {
     EntityUpdateMover(entity_id, entity_array, dt);
+    EntityUpdateReceiver(entity_id, entity_array);
 }
 
 
 
 // SECTION: Render methods. Should be called after update methods when you actually do the rendering.
-void EntityRender(int entity_id, Entity* entity_array, Tilemap* tilemap=nullptr, EntityMap* entity_id_map=nullptr) {
+void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders) {
     Entity* entity = &entity_array[entity_id];
 
     if (!entity->active) return;
 
     DrawSprite(entity->sprite, entity->transform, main_camera);
+
+
+    // SECTION: Emitter rendering
+    if (entity->emitter.active && !entity->movable.moving) {
+        Transform transform = entity->transform;
+        transform.position.z += 0.1f;
+        ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->emitter.emission_color));
+        DrawSprite(entity->emitter.nozzle_sprite, transform, main_camera);
+        ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
+    }
+    // SECTION: Receiver rendering
+    if (entity->receiver.active) {
+        Transform transform = entity->transform;
+        transform.position.z += 0.1f;
+        ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->receiver.accepted_color));
+        DrawSprite(entity->receiver.indicator_sprite, transform, main_camera);
+        ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
+        transform.position.z += 0.1f;
+        if (entity->receiver.signal_received) {
+            ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->receiver.signal_color));
+        }
+        DrawSprite(entity->receiver.nozzle_sprite, transform, main_camera);
+        ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
+        // NOTE: now that we finished rendering, we can mark receiver non-signaled.
+        entity->receiver.signal_received = false;
+    }
+
+
+
 
 }
 void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shaders) {
@@ -333,6 +428,7 @@ void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shader
             ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
             ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
             ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
 
             tile = {false, EmissionTile::HORIZONTAL, fColor{0.0f, 0.0f, 0.0f, 0.0f}};
             map.SetEmissionTile(x, y, tile);
