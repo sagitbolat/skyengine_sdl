@@ -18,8 +18,12 @@ enum UI_Alignment {
 
 void InitUI(WindowContext *ws);
 void DeinitUI();
-void UI_FrameStart(Vector2Int screen_size);
+void UI_FrameStart();
 void UI_FrameRender();
+
+void UI_WindowStart(const char* window_name, Vector2Int window_size, Vector2Int window_pos); 
+void UI_WindowEnd();
+
 
 ImFont* LoadFont(const char* font_path, float font_size);
 void PushStyle(const ButtonStyle* style);

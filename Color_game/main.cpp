@@ -1,5 +1,5 @@
 #define INCLUDE_IMGUI
-#define FPS_SHOW
+#define DEBUG_UI
 #include "../Engine/SDL_sky.cpp"
 #include "../Engine/skymath.h"
 
@@ -8,6 +8,7 @@
 #define NUM_EMITTERS 1
 #define NUM_RECEIVERS 1
 #define NUM_ENTITIES (1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS + NUM_RECEIVERS)
+#define MAX_ENTITIES 20
 #include "tilemap.h"
 #include "entity.h"
 
@@ -18,8 +19,8 @@
 // SECTION: Initialization of stuff...
 void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *clear_color)
 {
-    //*w = 640;
-    //*h = 480;
+    *w = 1280;
+    *h = 720;
     *w_in_world_space = 14.0f;
     *fullscreen = false;
     //*clear_color = {0.8f/2, 0.83f/2, 1.0f/2, 1.0f};
@@ -31,11 +32,25 @@ Tileset tileset = {0};
 Tilemap tilemap = {0};
 
 
+Sprite player_sprite; 
+Sprite push_block_sprite;        
+Sprite static_block_sprite;      
+Sprite emitter_sprite;     
+Sprite emitter_nozzle_sprite;    
+Sprite emitter_indicator_sprite; 
+Sprite receiver_sprite;          
+Sprite receiver_nozzle_sprite;   
+Sprite receiver_indicator_sprite;
+
+
+
+
 int player;         // NOTE: entity id of player. Should be 0.
 int push_block;     // NOTE: entity id of first push_block.
 int static_block;   // NOTE: entity id of first static_block.
 int emitter;        // NOTE: entity id of first emitter.
 int emission;       // NOTE: entity id of first emission.
+
 
 EntityMap entity_id_map; // NOTE: acts as a lookup table from tilemap coordinate to an entity. a negative value indicates no entity at coordinate.
 Entity* entities_array; // Array of entities in the game. Player is always first element.
@@ -86,16 +101,16 @@ void Awake(GameMemory *gm)
 
 
 
-    Sprite player_sprite            = LoadSprite("assets/player.png", shaders, gpu_buffers);
-    Sprite push_block_sprite        = LoadSprite("assets/push_block.png", shaders, gpu_buffers);
-    Sprite static_block_sprite      = LoadSprite("assets/static_block.png", shaders, gpu_buffers);
-    Sprite emitter_sprite           = LoadSprite("assets/emitter.png", shaders, gpu_buffers);
-    Sprite emitter_nozzle_sprite    = LoadSprite("assets/emitter_nozzle.png", shaders, gpu_buffers);
-    Sprite emitter_indicator_sprite = LoadSprite("assets/emitter_indicator.png", shaders, gpu_buffers);
-    Sprite receiver_sprite          = LoadSprite("assets/receiver.png", shaders, gpu_buffers);
-    Sprite receiver_nozzle_sprite   = LoadSprite("assets/receiver_nozzle.png", shaders, gpu_buffers);
-    Sprite receiver_indicator_sprite = LoadSprite("assets/receiver_indicator.png", shaders, gpu_buffers);
-    emission_sprite                 = LoadSprite("assets/emission.png", shaders, gpu_buffers);
+    player_sprite            = LoadSprite("assets/player.png", shaders, gpu_buffers);
+    push_block_sprite        = LoadSprite("assets/push_block.png", shaders, gpu_buffers);
+    static_block_sprite      = LoadSprite("assets/static_block.png", shaders, gpu_buffers);
+    emitter_sprite           = LoadSprite("assets/emitter.png", shaders, gpu_buffers);
+    emitter_nozzle_sprite    = LoadSprite("assets/emitter_nozzle.png", shaders, gpu_buffers);
+    emitter_indicator_sprite = LoadSprite("assets/emitter_indicator.png", shaders, gpu_buffers);
+    receiver_sprite          = LoadSprite("assets/receiver.png", shaders, gpu_buffers);
+    receiver_nozzle_sprite   = LoadSprite("assets/receiver_nozzle.png", shaders, gpu_buffers);
+    receiver_indicator_sprite= LoadSprite("assets/receiver_indicator.png", shaders, gpu_buffers);
+    emission_sprite          = LoadSprite("assets/emission.png", shaders, gpu_buffers);
 
 
 
@@ -105,7 +120,7 @@ void Awake(GameMemory *gm)
     entity_id_map.map = (int*)malloc(sizeof(int) * tilemap.height * tilemap.width * entity_id_map.depth);
     for (int i = 0; i < tilemap.height * tilemap.width * entity_id_map.depth; ++i) entity_id_map.map[i] = -1;
 
-    entities_array = (Entity*)malloc(sizeof(Entity) * NUM_ENTITIES);
+    entities_array = (Entity*)calloc(sizeof(Entity), MAX_ENTITIES);
 
     emission_map.width = tilemap.width;
     emission_map.height = tilemap.height;
@@ -133,11 +148,12 @@ void Awake(GameMemory *gm)
         entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
     }
     for (int e = 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS; ++e) {
-        EmitterInit(&entities_array[e], e, emitter_sprite, emitter_nozzle_sprite, emitter_indicator_sprite, {5,7}, {1.0f, 1.0f, 1.0f, 1.0f}, true, EntityComponentEmitter::DOWN);
+        EmitterInit(&entities_array[e], e, emitter_sprite, emitter_nozzle_sprite, emitter_indicator_sprite, {5,7}, {0.0, 0.0, 0.0, 1.0f}, true, EntityComponentEmitter::DOWN);
         entity_id_map.SetID(5, 7, entities_array[e].entity_layer, entities_array[e].id);
+        //{0.094, 0.24, 0.63, 1.0f}
     }
     for (int e = 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS + NUM_RECEIVERS; ++e) {
-        ReceiverInit(&entities_array[e], e, receiver_sprite, receiver_nozzle_sprite, receiver_indicator_sprite, {5,1}, {0.5f, 1.0f, 0.5f, 1.0f}, true);
+        ReceiverInit(&entities_array[e], e, receiver_sprite, receiver_nozzle_sprite, receiver_indicator_sprite, {5,1}, {0.0, 0.0f, 0.0f, 1.0f}, true);
         entity_id_map.SetID(5, 1, entities_array[e].entity_layer, entities_array[e].id);
     }
 
@@ -176,9 +192,75 @@ void DrawTile(Tileset tileset, Vector2 world_position, uint8_t atlas_index) {
 
 
 
-
 void Update(GameState *gs, KeyboardState *ks, double dt) {
 
+    
+
+#ifdef DEBUG_UI
+    UI_WindowStart("Entity Spawn Select", {1280, 108}, {0,0});
+
+
+    static int entity_array_offset = NUM_ENTITIES;
+    static int entity_type_to_spawn = 0;
+
+    if ( DrawSimpleImageButton (
+            "PushBlockButton", 
+            push_block_sprite, 
+            {float(108)/float(1280) * 0.2, 0.2}, 
+            {float(108)/float(1280) * 0.6, 0.6f}
+        )
+    ) {
+        entity_type_to_spawn = 1;
+    } 
+    if ( DrawSimpleImageButton (
+            "StaticBlockButton", 
+            static_block_sprite, 
+            {float(108)/float(1280) * 1.0, 0.2}, 
+            {float(108)/float(1280) * 0.6, 0.6f}
+        )
+    ) {
+        entity_type_to_spawn = 2;
+    } 
+    
+    if (ks->state.MBR && !ks->prev_state.MBR) {
+
+        int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
+        int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
+
+        printf("Mouse_pos: {%d, %d} | entity_type: %d \n", tile_mouse_x, tile_mouse_y, entity_type_to_spawn);
+
+        switch (entity_type_to_spawn)
+        {
+            case 1: {
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1) >= 0) break;
+                if (TestTileCollide(tilemap, {tile_mouse_x, tile_mouse_y})) break;
+
+                int e = entity_array_offset;
+                entity_array_offset++;
+                PushblockInit(&entities_array[e], e, push_block_sprite, {tile_mouse_x, tile_mouse_y}, entities_array[player]);
+                int x = entities_array[e].position.x;
+                int y = entities_array[e].position.y;
+                entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
+            } break;
+            case 2: {
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1) >= 0) break;
+                if (TestTileCollide(tilemap, {tile_mouse_x, tile_mouse_y})) break;
+
+                int e = entity_array_offset;
+                entity_array_offset++;
+
+                StaticBlockInit(&entities_array[e], e, static_block_sprite, {tile_mouse_x, tile_mouse_y});
+                int x = entities_array[e].position.x;
+                int y = entities_array[e].position.y;
+                entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
+            } break;
+            default:
+                break;
+        }
+    }
+
+    UI_WindowEnd();
+#endif
 
     
     if (ks->state.W && !entities_array[player].movable.moving) { 
@@ -197,9 +279,9 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     if (ks->state.SPACE && !ks->prev_state.SPACE) {
         printf("############################\n");
-        for (int id = 0; id < NUM_ENTITIES; ++id) {
+        for (int id = 0; id < MAX_ENTITIES; ++id) {
             Vector2Int position = entities_array[id].position;
-            printf("Entity %d position: {%d, %d}: %d\n", id, position.x, position.y, entities_array[id].emitter.active);
+            printf("Entity %d position: {%d, %d}: %d\n", id, position.x, position.y, entities_array[id].active);
         }
     }
     if (ks->state.Q && entities_array[8].receiver.signal_received) {
@@ -217,7 +299,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         }
     }
 
-    for (int e = 0; e < NUM_ENTITIES; ++e) {
+    for (int e = 0; e < MAX_ENTITIES; ++e) {
         EntityRender(e, entities_array, shaders); 
     }
 
@@ -226,7 +308,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     // NOTE: This is done after rendering so that rendering that depends on the movable.moving flag doesnt flicker every block 
     //printf("############################\n");
-    for (int id = 0; id < NUM_ENTITIES; ++id) {
+    for (int id = 0; id < MAX_ENTITIES; ++id) {
         EntityUpdateEmit(id, tilemap, entity_id_map, emission_map, entities_array);
         EntityUpdate(id, entities_array, dt);
         //printf("Entity %d emission: {%d, %d}: %d\n", id, position.x, position.y, entities_array[id].emitter.active);

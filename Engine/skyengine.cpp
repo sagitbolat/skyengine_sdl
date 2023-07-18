@@ -29,8 +29,9 @@ static void GameUpdateAndRender(Vector2Int screen_size, GameMemory* memory, Keyb
     
     static bool first = true;
 
-    UI_FrameStart(screen_size);
-
+    UI_FrameStart();
+    
+    
     if (first) {
         Start(game_state, keyboard_state);
         first = false;
@@ -40,6 +41,7 @@ static void GameUpdateAndRender(Vector2Int screen_size, GameMemory* memory, Keyb
     }
     
 #ifdef FPS_SHOW
+    // FIXME: Since moving window code to user space, this doesnt work, since it needs an active window to work. Find a fix?
     double fps = DeltaTimeToFps(delta_time);
     char fps_str[64];
     sprintf(fps_str, "FPS: %f", fps);

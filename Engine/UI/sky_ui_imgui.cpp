@@ -31,23 +31,30 @@ void DeinitUI()
 }
 
 // NOTE: Called before the game's Update/Start function is called
-void UI_FrameStart(Vector2Int screen_size)
+void UI_FrameStart()
 {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
-    ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImVec2(screen_size.x, screen_size.y));
-    ImGui::Begin("Overlay", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
 }
 
 // NOTE: Called after the game's Update/Start function is called
 void UI_FrameRender()
 {
-    ImGui::End();
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
+
+void UI_WindowStart(const char* window_name, Vector2Int window_size, Vector2Int window_pos) {
+    ImGui::SetNextWindowPos(ImVec2(window_pos.x, window_pos.y));
+    ImGui::SetNextWindowSize(ImVec2(window_size.x, window_size.y));
+    ImGui::Begin(window_name, nullptr, ImGuiWindowFlags_NoResize);
+}
+void UI_WindowEnd() {
+    ImGui::End();
+}
+
+
 
 bool SkyUI_ProcessEvent(const SDL_Event* e) {
     return ImGui_ImplSDL2_ProcessEvent(e);

@@ -6,6 +6,7 @@ void ImportAwake() {
 }
 
 void ImportStart(GameState* gs, KeyboardState* ks, double dt) {
+    scene_manager.SwitchScene(1, gs, ks, dt);
     return;
 }
 

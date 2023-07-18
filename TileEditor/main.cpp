@@ -12,6 +12,10 @@ void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *cle
     *clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
 }
 
+GL_ID* shaders = nullptr;
+GPUBufferIDs gpu_buffers = {nullptr};
+
+
 // SECTION: SCENE
 #define NUM_SCENES 2
 
@@ -35,7 +39,13 @@ ButtonStyle button_style = {0.0f};
 #include "editor_scene.cpp"
 
 void Awake(GameMemory *gm)
-{
+{    
+    // SECTION: renderer initializations
+    shaders = ShaderInit("shader.vs", "shader.fs");
+    gpu_buffers = InitGPUBuffers();
+    ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
+
+
 
     // SECTION: SceneManager init
     scene_manager.InitManager(NUM_SCENES);
@@ -51,18 +61,18 @@ void Awake(GameMemory *gm)
     font_l = LoadFont("./roboto.ttf", 32.0f);
 
     // SECTION: Initializing button style
-    main_button_style.button_idle_color = {0.9f, 0.9f, 0.9f, 1.0f};
-    main_button_style.button_hover_color = {0.7f, 0.7f, 0.7f, 1.0f};
-    main_button_style.button_active_color = {1.0f, 1.0f, 1.0f, 1.0f};
+    button_style.button_idle_color = {0.9f, 0.9f, 0.9f, 1.0f};
+    button_style.button_hover_color = {0.7f, 0.7f, 0.7f, 1.0f};
+    button_style.button_active_color = {1.0f, 1.0f, 1.0f, 1.0f};
 
-    main_button_style.outline_color = {0.4f, 0.4, 0.4f, 1.0f};
-    main_button_style.text_color = {0.0f, 0.0f, 0.0f, 1.0f};
+    button_style.outline_color = {0.4f, 0.4, 0.4f, 1.0f};
+    button_style.text_color = {0.0f, 0.0f, 0.0f, 1.0f};
     
-    main_button_style.button_alpha = 1.0f;
-    main_button_style.text_alignment = {0.5f, 0.5f}; // NOTE: Centered
-    main_button_style.corner_rounding = 0.0f;
-    main_button_style.border_size = 0.1f;
-    main_button_style.frame_padding = {0.0f, 0.0f};
+    button_style.button_alpha = 1.0f;
+    button_style.text_alignment = {0.5f, 0.5f}; // NOTE: Centered
+    button_style.corner_rounding = 0.0f;
+    button_style.border_size = 0.1f;
+    button_style.frame_padding = {0.0f, 0.0f};
 
 }
 

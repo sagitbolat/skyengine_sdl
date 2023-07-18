@@ -45,7 +45,7 @@ Vector2 GetMousePositionInWorldCoords() {
     mouse_pos_normalized.x -= 0.5f;
     mouse_pos_normalized.y -= 0.5f;
     mouse_pos_normalized.y *= -1.0f;
-    return {mouse_pos_normalized.x * w, mouse_pos_normalized.y * h};
+    return {mouse_pos_normalized.x * w + main_camera.position.x, mouse_pos_normalized.y * h + main_camera.position.y};
 }
 
 // NOTE: Pass true to enable the mouse cursor and false to disable the mouse cursor.
