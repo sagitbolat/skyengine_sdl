@@ -203,6 +203,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     static int entity_array_offset = NUM_ENTITIES;
     static int entity_type_to_spawn = 0;
 
+
     if ( DrawSimpleImageButton (
             "PushBlockButton", 
             push_block_sprite, 
@@ -221,13 +222,21 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     ) {
         entity_type_to_spawn = 2;
     } 
+    if ( DrawSimpleImageButton (
+            "EmitterBlockButton", 
+            emitter_nozzle_sprite, 
+            {float(108)/float(1280) * 1.8, 0.2}, 
+            {float(108)/float(1280) * 0.6, 0.6f}
+        )
+    ) {
+        entity_type_to_spawn = 3;
+    } 
+    
     
     if (ks->state.MBR && !ks->prev_state.MBR) {
 
         int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
         int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
-
-        printf("Mouse_pos: {%d, %d} | entity_type: %d \n", tile_mouse_x, tile_mouse_y, entity_type_to_spawn);
 
         switch (entity_type_to_spawn)
         {
@@ -254,10 +263,43 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
             } break;
+            case 3: {
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1) >= 0) break;
+                if (TestTileCollide(tilemap, {tile_mouse_x, tile_mouse_y})) break;
+
+                int e = entity_array_offset;
+                entity_array_offset++;
+
+                EmitterInit(&entities_array[e], e, emitter_sprite, emitter_nozzle_sprite, emitter_indicator_sprite, {tile_mouse_x, tile_mouse_y}, {0.0f, 0.0f, 0.0f, 1.0f}, true, EntityComponentEmitter::DOWN); 
+                int x = entities_array[e].position.x;
+                int y = entities_array[e].position.y;
+                entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
+                
+            } break;
             default:
                 break;
         }
     }
+
+    // NOTE: Do rotations of emitters
+    if (ks->state.R && !ks->prev_state.R) {
+        int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
+        int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
+
+        int entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1);
+
+        if (entities_array[entity_id].emitter.active)
+        {
+            entities_array[entity_id].emitter.direction = (EntityComponentEmitter::DIRECTION_ENUM)((entities_array[entity_id].emitter.direction + 1) % 4);
+        }
+
+    }
+
+    // NOTE: Do toggling movability:
+    // TODO:
+
+    // NOTE: Do saving:
+    // TODO:
 
     UI_WindowEnd();
 #endif

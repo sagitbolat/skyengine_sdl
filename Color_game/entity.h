@@ -53,7 +53,7 @@ struct EntityComponentEmitter { // NOTE: Laser emitter struct
     Sprite nozzle_sprite;
     Sprite indicator_sprite;
     fColor emission_color;
-    enum DIRECTION_ENUM {UP, DOWN, LEFT, RIGHT} direction;
+    enum DIRECTION_ENUM {UP, RIGHT, DOWN, LEFT} direction;
 };
 struct EntityComponentReceiver { // NOTE: Laser reciever struct
     bool active;
