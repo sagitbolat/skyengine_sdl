@@ -3,11 +3,11 @@
 ## Table of contents
 
 1. [Installation](#1-installation)
-    1.1 [System Requirements](#11-system-requirements)
-    1.2 [Installation Steps](#12-installation-steps)
+    - [System Requirements](#11-system-requirements)
+    - [Installation Steps](#12-installation-steps)
 2. [Your First Project](#2-your-first-project)
-    2.1 [Creating your projec](#21-creating-your-project)
-    2.2 [Building your project](#22-building-your-project)
+    - [Creating your projec](#21-creating-your-project)
+    - [Building your project](#22-building-your-project)
 3. [Basic Usage](#3-basic-usage)
 
 ## 1. Installation
