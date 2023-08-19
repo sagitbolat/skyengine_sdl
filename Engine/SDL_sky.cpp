@@ -86,6 +86,7 @@ int main(int argc, char* argv[]) {
 
     // DRAW STARTUP IMAGE
     // TODO: If you dont need a startup logo, remove this scope
+#ifndef NO_SPLASH_SCREEN
     {
         ClearScreen();
         GL_ID* shaders = ShaderInit();
@@ -107,6 +108,7 @@ int main(int argc, char* argv[]) {
             // Do nothing, just wait
         } 
     }
+#endif
 
     // NOTE: Init OpenAL for sound
     AudioContext* audio_context = InitAudioContext();
