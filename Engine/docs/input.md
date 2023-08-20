@@ -1,3 +1,12 @@
+# Table of contents
+- [Keyboard Input](#keyboard-input)
+    - [KeyboardState struct](#keyboardstate-struct)
+    - [KeyState struct](#keystate-struct)
+- [Mouse Input](#mouse-input)
+    - [GetMousePosition()](#getmouseposition-function)
+    - [GetMousePositionInWorldCoords()](#getmousepositioninworldcoords-function)
+
+
 # Keyboard Input
 
 Getting key presses in the SkyEngine is easy. As discussed in the [Script Layout Section of the Getting Started Guide](getting_started.md#3-basic-script-layout), the `Update` and `Start` functions provide the user with a `KeyboardState` instance.
@@ -126,7 +135,7 @@ None
 
 ## GetMousePositionInWorldCoords() function
 Signature: `Vector2 GetMousePositionInWorldCoords();`
-### Description:
+
 Used to retrieve the mouse position that corresponds to world coordinates.
 ### Parameters:
 None
