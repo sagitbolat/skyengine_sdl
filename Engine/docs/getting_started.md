@@ -121,6 +121,8 @@ The `Start` function is passed a `KeyboardState` parameter that holds two member
 
 These hold a bitfield of keystates for the keyboard and mouse. Every bit that corresponds to a key that is pressed down will be set to `true`, and otherwise will be set to `false`. For the start method, the `prev_state` will contain only `false` values.
 
+For more information on input, read the [Input Documentation page](input.md).
+
 ### 3.4 Update
 
 The `Update` function runs during **every iteration except the first** of the game loop.
