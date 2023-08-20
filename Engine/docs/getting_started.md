@@ -108,7 +108,7 @@ The `Awake` function runs **after the initialization** of the underlying APIs, b
 
 If you have a relatively small game, it is recommended to pre-allocate your image sprites, audio sources and clips, and any entity state you may require. 
 
-For larger projects, if you are using the Scene Manager, you should initialize it here, and call all individual scene Awake methods here. For a detailed look at how to use the Scene Manger, visit the [SceneManager Documentation Page](#scene_managment.md)
+For larger projects, if you are using the Scene Manager, you should initialize it here, and call all individual scene Awake methods here. For a detailed look at how to use the Scene Manger, visit the [SceneManager Documentation Page](scene_managment.md)
 
 ### 3.3 Start
 
