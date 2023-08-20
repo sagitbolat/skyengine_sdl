@@ -10,5 +10,6 @@ If it is your first time using the SkyEngine, refer to the Getting Started guide
 ## User Manual Sections
 
 - [Getting Started](getting_started.md)
+- [Input](input.md)
 
 
