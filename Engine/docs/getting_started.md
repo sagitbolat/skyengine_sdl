@@ -145,4 +145,7 @@ Note that because this function essentially runs right before the game process t
 There are two other major ways that you can learn to use the SkyEngine effectively.
 
 1. The SkyEngine comes with a number of example projects that can be built with the default build system. You are welcome to explore these, and modify them in any way you like.
-2. The [SkyEngine Documentation](#index.md) provides a complete overlook of the engine features.
+2. The [SkyEngine Documentation](index.md) provides a complete overlook of the engine features.
+
+---
+[Back to homepage](index.md)
