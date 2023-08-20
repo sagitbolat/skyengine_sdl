@@ -64,6 +64,13 @@ struct EntityComponentReceiver { // NOTE: Laser reciever struct
     bool signal_accepted; // NOTE: turns true if the laser is of the correct color.
     fColor signal_color;
 };
+struct EntityComponentDoor { // NOTE: A door that can be open or closed
+    bool active;
+    bool is_open;
+    Sprite open_sprite;
+    Sprite closed_sprite;
+};
+
 
 void EntityComponentMoverInit(EntityComponentMover* component, float seconds_per_tile, bool active = true) {
     component->active = active;
@@ -83,7 +90,10 @@ void EntityComponentReceiverInit(EntityComponentReceiver* component, fColor acce
     component->signal_accepted = false;
     component->signal_color = {0.0f, 0.0f, 0.0f, 0.0f};
 }
-
+void EntityComponentDoorInit(EntityComponentDoor* component, bool active=true) {
+    component->active  = active;
+    component->is_open = false;
+}
 
 // SECTION: Entities
 
@@ -95,9 +105,10 @@ struct Entity {
     Vector2Int  prev_position;
     Vector2Int  position;
     int         entity_layer; // NOTE: Layer 0: floor buttons and other features. Layer 1: Pushblocks, emitters, player etc. 
-    EntityComponentMover movable;
-    EntityComponentEmitter emitter;
+    EntityComponentMover    movable;
+    EntityComponentEmitter  emitter;
     EntityComponentReceiver receiver;
+    EntityComponentDoor     door;
 }; 
 
 void EntityInit (
@@ -111,6 +122,7 @@ void EntityInit (
     float       seconds_per_tile=0.2f,
     bool        emitter_active=false,
     bool        receiver_active=false,
+    bool        door_active=false,
     fColor      color={1.0f, 1.0f, 1.0f, 1.0f},
     EntityComponentEmitter::DIRECTION_ENUM emitter_dir = EntityComponentEmitter::UP
 ) {
@@ -124,7 +136,7 @@ void EntityInit (
     EntityComponentMoverInit(&entity->movable, seconds_per_tile, movable_active);
     EntityComponentEmitterInit(&entity->emitter, color, emitter_dir, emitter_active);
     EntityComponentReceiverInit(&entity->receiver, color, receiver_active);
-
+    EntityComponentDoorInit(&entity->door, door_active);
     Transform transform = {0.0f};
     transform.position  = {(float)position.x, (float)position.y, float(entity_layer)};
     transform.rotation  = {0.0f, 0.0f, 0.0f};
@@ -169,7 +181,7 @@ void EmitterInit(
     bool emitter_movable,
     EntityComponentEmitter::DIRECTION_ENUM direction
 ) {
-    EntityInit(emitter, id, sprite, init_position, 1.0f, true, emitter_movable, 0.2f, true, false, emitter_color, direction);
+    EntityInit(emitter, id, sprite, init_position, 1.0f, true, emitter_movable, 0.2f, true, false, false, emitter_color, direction);
     emitter->emitter.nozzle_sprite = nozzle_sprite;
     emitter->emitter.indicator_sprite = indicator_sprite;
 }
@@ -183,11 +195,24 @@ void ReceiverInit(
     fColor accepted_signal_color,
     bool receiver_movable
 ) {
-    EntityInit(receiver, id, sprite, init_position, 1.0f, true, receiver_movable, 0.2f, false, true, accepted_signal_color);
+    EntityInit(receiver, id, sprite, init_position, 1.0f, true, receiver_movable, 0.2f, false, true, false, accepted_signal_color);
     receiver->receiver.nozzle_sprite = nozzle_sprite;
     receiver->receiver.indicator_sprite = indicator_sprite;
 }
+void DoorInit(
+    Entity* door,
+    int id,
+    Sprite sprite,
+    Sprite open_sprite,
+    Sprite closed_sprite,
+    Vector2Int init_position
+) {
+    //EntityInit(door, id, sprite, init_position, 1.0f, true, false);
 
+    EntityInit(door, id, sprite, init_position, 1.0f, true, false, 0.0f, false, false, true);
+    door->door.open_sprite = open_sprite;
+    door->door.closed_sprite = closed_sprite;
+}
 
 
 
@@ -326,7 +351,7 @@ void EntityUpdateMover(int entity_id, Entity* entity_array, float dt) {
     Entity* entity = &entity_array[entity_id];
 
     if (!entity->active) return;
-
+    if (!entity->movable.active) return;
     if (entity->movable.moving) entity->movable.move_timer += dt;
     float move_t = entity->movable.move_timer / (entity->movable.seconds_per_tile * 1000);
 
@@ -375,6 +400,16 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders) {
 
     DrawSprite(entity->sprite, entity->transform, main_camera);
 
+    // SECTION: Rendering door
+    if (entity->door.active) {
+        Transform transform = entity->transform;
+        transform.position.z += 0.1f;
+        if (entity->door.is_open) {
+            DrawSprite(entity->door.open_sprite, transform, main_camera);
+        } else {
+            DrawSprite(entity->door.closed_sprite, transform, main_camera);
+        }
+    }
 
     // SECTION: Emitter rendering
     if (entity->emitter.active && !entity->movable.moving) {
@@ -400,10 +435,6 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders) {
         // NOTE: now that we finished rendering, we can mark receiver non-signaled.
         entity->receiver.signal_received = false;
     }
-
-
-
-
 }
 void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shaders) {
     

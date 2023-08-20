@@ -7,7 +7,8 @@
 #define NUM_STATIC_BLOCKS 2
 #define NUM_EMITTERS 1
 #define NUM_RECEIVERS 1
-#define NUM_ENTITIES (1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS + NUM_RECEIVERS)
+#define NUM_DOORS 1
+#define NUM_ENTITIES (1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS + NUM_RECEIVERS + NUM_DOORS)
 #define MAX_ENTITIES 20
 #include "tilemap.h"
 #include "entity.h"
@@ -41,6 +42,8 @@ Sprite emitter_indicator_sprite;
 Sprite receiver_sprite;          
 Sprite receiver_nozzle_sprite;   
 Sprite receiver_indicator_sprite;
+Sprite open_door_sprite;
+Sprite closed_door_sprite;
 
 
 
@@ -111,6 +114,8 @@ void Awake(GameMemory *gm)
     receiver_nozzle_sprite   = LoadSprite("assets/receiver_nozzle.png", shaders, gpu_buffers);
     receiver_indicator_sprite= LoadSprite("assets/receiver_indicator.png", shaders, gpu_buffers);
     emission_sprite          = LoadSprite("assets/emission.png", shaders, gpu_buffers);
+    open_door_sprite         = LoadSprite("assets/door_open.png", shaders, gpu_buffers);
+    closed_door_sprite       = LoadSprite("assets/door_closed.png", shaders, gpu_buffers);
 
 
 
@@ -156,6 +161,14 @@ void Awake(GameMemory *gm)
         ReceiverInit(&entities_array[e], e, receiver_sprite, receiver_nozzle_sprite, receiver_indicator_sprite, {5,1}, {0.0, 0.0f, 0.0f, 1.0f}, true);
         entity_id_map.SetID(5, 1, entities_array[e].entity_layer, entities_array[e].id);
     }
+    for (int e = 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS + NUM_RECEIVERS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS + NUM_RECEIVERS + NUM_DOORS; ++e) {
+        DoorInit(&entities_array[e], e, open_door_sprite, open_door_sprite, closed_door_sprite, {1,1});
+        
+        //PushblockInit(&entities_array[e], e, open_door_sprite, {1, 1}, entities_array[player]);
+        entity_id_map.SetID(1, 1, entities_array[e].entity_layer, entities_array[e].id);
+    }
+
+
 
 
 
@@ -193,9 +206,6 @@ void DrawTile(Tileset tileset, Vector2 world_position, uint8_t atlas_index) {
 
 
 void Update(GameState *gs, KeyboardState *ks, double dt) {
-
-    
-
 #ifdef DEBUG_UI
     UI_WindowStart("Entity Spawn Select", {1280, 108}, {0,0});
 
@@ -231,7 +241,15 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     ) {
         entity_type_to_spawn = 3;
     } 
-    
+    if ( DrawSimpleImageButton (
+            "DoorButton", 
+            closed_door_sprite, 
+            {float(108)/float(1280) * 3.4, 0.2}, 
+            {float(108)/float(1280) * 0.6, 0.6f}
+        )
+    ) {
+        entity_type_to_spawn = 5;
+    } 
     
     if (ks->state.MBR && !ks->prev_state.MBR) {
 
@@ -274,8 +292,19 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
-                
             } break;
+            case 5: {
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1) >= 0) break;
+                if (TestTileCollide(tilemap, {tile_mouse_x, tile_mouse_y})) break;
+
+                int e = entity_array_offset;
+                entity_array_offset++;
+
+                DoorInit(&entities_array[e], e, open_door_sprite, open_door_sprite, closed_door_sprite, {tile_mouse_x, tile_mouse_y}); 
+                int x = entities_array[e].position.x;
+                int y = entities_array[e].position.y;
+                entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
+            }
             default:
                 break;
         }
@@ -323,7 +352,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         printf("############################\n");
         for (int id = 0; id < MAX_ENTITIES; ++id) {
             Vector2Int position = entities_array[id].position;
-            printf("Entity %d position: {%d, %d}: %d\n", id, position.x, position.y, entities_array[id].active);
+            printf("Entity %d position: {%d, %d}: Entity Active: %d | Door Active: %d\n", id, position.x, position.y, entities_array[id].active, entities_array[id].door.active);
         }
     }
     if (ks->state.Q && entities_array[8].receiver.signal_received) {
@@ -342,7 +371,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     }
 
     for (int e = 0; e < MAX_ENTITIES; ++e) {
-        EntityRender(e, entities_array, shaders); 
+        EntityRender(e, entities_array, shaders);
     }
 
     EmissionRender(emission_map, emission_sprite, shaders);
