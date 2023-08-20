@@ -8,7 +8,13 @@
 2. [Your First Project](#2-your-first-project)
     - [Creating your projec](#21-creating-your-project)
     - [Building your project](#22-building-your-project)
-3. [Basic Usage](#3-basic-usage)
+3. [Basic Script Layout](#3-basic-usage)
+    - [Init Function](#31-init)
+    - [Awake Function](#32-awake)
+    - [Start Function](#33-start)
+    - [Update Function](#34-update)
+    - [UserFree Function](#35-userfree)
+4. [Additional Resources](#4-additional-resources)
 
 ## 1. Installation
 
@@ -81,7 +87,7 @@ build.bat [project_name] main
 This will significantly speed up the build time, as the renderer, UI system, and sound system no longer need to be recompiled. Any additional sets of the engine still need to be compiled every time, but they take up a negligible amount of time, and all empty projects will still take less than a second to compile with all the extra sets of the engine.
 
 
-## 3. Basic Usage
+## 3. Basic Script Layout
 
 The SkyEngine encapsulates the program entry point within engine code. This makes initialization of the engine and the underlying APIs very easy for the end user. In place of the main function, SkyEngine offers five callback functions: `Init`, `Awake`, `Start`, `Update`, and `UserFree`.
 
