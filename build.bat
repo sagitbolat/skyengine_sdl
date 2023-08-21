@@ -8,15 +8,15 @@ if "%3" == "-gl"    (GOTO CompileGL)
 if "%3" == "-al"    (GOTO CompileAL)
 
 :CompileUI
-    g++ -c Engine\UI\sky_ui_imgui.cpp -IC:\SDL2\include -IC:\glew\include -IC:\glm -o sky_ui_imgui.o -lmingw32 -lSDL2main -lSDL2 -lglew32 -lopengl32 
+    g++ -c -static Engine\UI\sky_ui_imgui.cpp -IC:\SDL2\include -IC:\glew\include -IC:\glm -o sky_ui_imgui.o -lmingw32 -lSDL2main -lSDL2 -lglew32 -lopengl32 
     move .\sky_ui_imgui.o .\%1\build_win
     if "%3" == "-f" (GOTO CompileGL) else (GOTO CompileGame)
 :CompileGL
-    g++ -c Engine\OpenGL_renderer2D.cpp -IC:\SDL2\include -IC:\glew\include -IC:\glm -o OpenGL_renderer2D.o -lmingw32 -lSDL2main -lSDL2 -lglew32 -lopengl32 
+    g++ -c -static Engine\OpenGL_renderer2D.cpp -IC:\SDL2\include -IC:\glew\include -IC:\glm -o OpenGL_renderer2D.o -lmingw32 -lSDL2main -lSDL2 -lglew32 -lopengl32 
     move .\OpenGL_renderer2D.o .\%1\build_win
     if "%3" == "-f" (GOTO CompileAL) else (GOTO CompileGame)
 :CompileAL
-    g++ -c Engine\OpenAL_sound.cpp -IC:\SDL2\include -IC:\glew\include -IC:\OpenAL_SDK\include -o OpenAL_sound.o -lmingw32 -lSDL2main -lSDL2 -lglew32 -lopengl32 -lOpenAL32 
+    g++ -c -static Engine\OpenAL_sound.cpp -IC:\SDL2\include -IC:\glew\include -IC:\OpenAL_SDK\include -o OpenAL_sound.o -lmingw32 -lSDL2main -lSDL2 -lglew32 -lopengl32 -lOpenAL32 
     move .\OpenAL_sound.o .\%1\build_win
 
 :CompileGame
