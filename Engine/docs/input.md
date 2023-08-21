@@ -1,4 +1,6 @@
-# Table of contents
+# Input
+
+## Table Of Contents
 - [Keyboard Input](#keyboard-input)
     - [KeyboardState struct](#keyboardstate-struct)
     - [KeyState struct](#keystate-struct)
@@ -7,11 +9,11 @@
     - [GetMousePositionInWorldCoords()](#getmousepositioninworldcoords-function)
 
 
-# Keyboard Input
+## Keyboard Input
 
 Getting key presses in the SkyEngine is easy. As discussed in the [Script Layout Section of the Getting Started Guide](getting_started.md#3-basic-script-layout), the `Update` and `Start` functions provide the user with a `KeyboardState` instance.
 
-## KeyboardState struct
+### KeyboardState struct
 Contains the  `KeyState` members for the current frame and the previous frame
 
 | Data Type             | Name       | Description |
@@ -19,7 +21,7 @@ Contains the  `KeyState` members for the current frame and the previous frame
 | [`KeyState`](#keystate-struct) | state      | an instance of the KeyState class that corresponds to the current frame's key states  |
 | [`KeyState`](#keystate-struct) | prev_state | an instance of the KeyState class that corresponds to the previous frame's key states |
 
-## KeyState struct
+### KeyState struct
 
 
 Contains a bitfield with an entry for every keyboard and mouse key. 
@@ -117,33 +119,32 @@ Contains a bitfield with an entry for every keyboard and mouse key.
 | 1-bit bitfield     | END          | a bit that takes value 1 if the end button is pressed down, and 0 otherwise |
 | 1-bit bitfield     | PAGEDOWN     | a bit that takes value 1 if the page down button is pressed down, and 0 otherwise |
 
-# Mouse Input
+## Mouse Input
 
 Unlike mouse button input, mouse position is not part of the `KeyboardState` struct. Instead, SkyEngine provides functions that are globally available that return the current position of the mouse cursor. This position is calculated during the function call, rather than at the start of the frame. 
 
 There are two functios that can be used: `GetMousePosition()` and `GetMousePositionInWorldCoords`.
 
-## GetMousePosition() function
-Signature: `Vector2Int GetMousePosition();`
+### GetMousePosition() function
+**Signature:** `Vector2Int GetMousePosition();`
 
-Used to retrieve pixel-perfect mouse position.
-### Parameters:
-None
-### Return value:
+**Description:** Used to retrieve pixel-perfect mouse position.
+
+**Parameters:** None
+
 <!--TODO: Include a link to a description of the Vector2Int struct-->
-[`Vector2Int`]() struct instance. The `x` and `y` correspond to pixel position. For a 1080p screen, the `{0, 0}` coordinate is the **top left** of the screen and the `{1919, 1079}` is the **bottom right** of the screen.
+**Return value:** [`Vector2Int`]() struct instance. The `x` and `y` correspond to pixel position. For a 1080p screen, the `{0, 0}` coordinate is the **top left** of the screen and the `{1919, 1079}` is the **bottom right** of the screen.
 
-## GetMousePositionInWorldCoords() function
-Signature: `Vector2 GetMousePositionInWorldCoords();`
+### GetMousePositionInWorldCoords() function
+**Signature:** `Vector2 GetMousePositionInWorldCoords();`
 
-Used to retrieve the mouse position that corresponds to world coordinates.
-### Parameters:
-None
-### Return value
+**Description:** Used to retrieve the mouse position that corresponds to world coordinates. This is essentially like raycasting from the camera position through the cursor into the world in a 3D engine like Unity. However, since SkyEngine is 2D, this is much easier and faster to do via simple arithmetic operations, therefore no raycasting is necessary.
+
+**Parameters:** None
+
 <!--TODO: Include a link to a description of the Vector2 struct-->
-[`Vector2`]() struct instance. The `x` and `y` correspond to the world coodinates that the cursor is hovering over. If an object is centered on the `{0.0f, 0.0f}` world coordinates, and the mouse hovers over the object's origin, this will return `{0.0f, 0.0f}` regardless of screen resolution, camera position relative to the object or where on the screen the object is rendered. 
+**Return Value:** [`Vector2`]() struct instance. The `x` and `y` correspond to the world coodinates that the cursor is hovering over. If an object is centered on the `{0.0f, 0.0f}` world coordinates, and the mouse hovers over the object's origin, this will return `{0.0f, 0.0f}` regardless of screen resolution, camera position relative to the object or where on the screen the object is rendered. 
 
-This is essentially like raycasting from the camera position through the cursor into the world in a 3D engine like Unity. However, since SkyEngine is 2D, this is much easier and faster to do via simple arithmetic operations, therefore no raycasting is necessary.
 
 ---
 [Back to homepage](index.md)
