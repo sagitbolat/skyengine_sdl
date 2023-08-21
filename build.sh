@@ -29,7 +29,9 @@ if [ "$3" = "-f" ] || [ "$3" = "-al" ]; then
 fi
 
 
-
+cp Engine/assets/glew32.dll $1/build
+cp Engine/assets/SDL2.dll $1/build
+cp Engine/assets/startup.png $1/build
 
 pushd ./$1/build
     # Compile the main program
