@@ -108,8 +108,7 @@ GL_ID* ShaderInit(const char* vertex_path, const char* fragment_path) {
         f_shader_code = fs_shader_code;
         
     }
-   
- 
+    
     unsigned int vertex, fragment;
     int success;
     char infoLog[512];
@@ -138,7 +137,6 @@ GL_ID* ShaderInit(const char* vertex_path, const char* fragment_path) {
         std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
     };
 
-
     GLuint ID = glCreateProgram();
     glAttachShader(ID, vertex);
     glAttachShader(ID, fragment);
@@ -150,6 +148,7 @@ GL_ID* ShaderInit(const char* vertex_path, const char* fragment_path) {
         glGetProgramInfoLog(ID, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
     }
+    
     // delete the shaders as they're linked into our program now and no longer necessary
     glDeleteShader(vertex);
     glDeleteShader(fragment);
