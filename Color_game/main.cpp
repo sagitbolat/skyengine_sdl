@@ -259,6 +259,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         switch (entity_type_to_spawn)
         {
             case 1: {
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0) >= 0) break;
                 if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1) >= 0) break;
                 if (TestTileCollide(tilemap, {tile_mouse_x, tile_mouse_y})) break;
 
@@ -270,6 +271,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
             } break;
             case 2: {
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0) >= 0) break;
                 if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1) >= 0) break;
                 if (TestTileCollide(tilemap, {tile_mouse_x, tile_mouse_y})) break;
 
@@ -282,6 +284,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
             } break;
             case 3: {
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0) >= 0) break;
                 if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1) >= 0) break;
                 if (TestTileCollide(tilemap, {tile_mouse_x, tile_mouse_y})) break;
 
@@ -294,6 +297,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
             } break;
             case 5: {
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0) >= 0) break;
                 if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1) >= 0) break;
                 if (TestTileCollide(tilemap, {tile_mouse_x, tile_mouse_y})) break;
 
@@ -316,10 +320,17 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
 
         int entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1);
-
-        if (entities_array[entity_id].emitter.active)
-        {
-            entities_array[entity_id].emitter.direction = (EntityComponentEmitter::DIRECTION_ENUM)((entities_array[entity_id].emitter.direction + 1) % 4);
+        if (entity_id >= 0) {
+            if (entities_array[entity_id].emitter.active) {
+                entities_array[entity_id].emitter.direction = (EntityComponentEmitter::DIRECTION_ENUM)((entities_array[entity_id].emitter.direction + 1) % 4);
+            }
+        } else {
+            entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
+            if (entity_id >= 0) {
+                if (entities_array[entity_id].door.active) {
+                    entities_array[entity_id].door.is_open = !entities_array[entity_id].door.is_open;
+                }
+            }
         }
 
     }
@@ -370,8 +381,14 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         }
     }
 
-    for (int e = 0; e < MAX_ENTITIES; ++e) {
-        EntityRender(e, entities_array, shaders);
+    for (int z = 0; z < entity_id_map.depth; z++) {
+        for (int y = 0; y < entity_id_map.height; y++) {
+            for (int x = 0; x < entity_id_map.width; x++) {
+                int id = entity_id_map.GetID(x, y, z);
+                if (id < 0) continue;
+                EntityRender(id, entities_array, shaders);
+            }
+        }
     }
 
     EmissionRender(emission_map, emission_sprite, shaders);

@@ -209,7 +209,7 @@ void DoorInit(
 ) {
     //EntityInit(door, id, sprite, init_position, 1.0f, true, false);
 
-    EntityInit(door, id, sprite, init_position, 1.0f, true, false, 0.0f, false, false, true);
+    EntityInit(door, id, sprite, init_position, 0.0f, true, false, 0.0f, false, false, true);
     door->door.open_sprite = open_sprite;
     door->door.closed_sprite = closed_sprite;
 }
@@ -232,6 +232,18 @@ bool EntityMove(int entity_id, Vector2Int direction, Tilemap map, EntityMap enti
 
     if (TestTileCollide(map, new_position)) return false;
 
+    // NOTE: Check for closed door:
+    {
+        int floor_entity_id = entity_id_map.GetID(new_position.x, new_position.y, 0);
+        Entity floor_entity = entity_array[floor_entity_id];
+        if (floor_entity_id >= 0 && 
+            floor_entity.active && 
+            floor_entity.door.active && 
+            !floor_entity.door.is_open
+        ) {
+            return false;
+        }
+    }
 
     int new_entity_id = entity_id_map.GetID(new_position.x, new_position.y, entity->entity_layer);
 
@@ -298,6 +310,8 @@ Vector2Int EntityUpdateEmit(int entity_id, Tilemap map, EntityMap entity_id_map,
     while (true) {
         curr_direction = curr_direction + _direction;
         Vector2Int new_position = entity->position + curr_direction;
+        
+        // NOTE: Layer 1 entities collision
         int new_entity_id = entity_id_map.GetID(new_position.x, new_position.y, 1);
 
         if (new_entity_id >= 0) {
@@ -312,6 +326,20 @@ Vector2Int EntityUpdateEmit(int entity_id, Tilemap map, EntityMap entity_id_map,
 
             return (new_position - _direction);
         }
+
+        //NOTE: Layer 0 (floor) entities collision (for doors when closed)
+        int floor_entity_id = entity_id_map.GetID(new_position.x, new_position.y, 0);
+
+        if (floor_entity_id >= 0) {
+
+            //SECTION: Activate the receiver if its hit
+            Entity* floor_entity = &entity_array[floor_entity_id];
+
+            if (floor_entity->active && floor_entity->door.active && !floor_entity->door.is_open) {
+                return (new_position - _direction);
+            }
+        }
+
 
         if (TestTileCollide(map, new_position)) {
             return (new_position - _direction);
@@ -403,7 +431,7 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders) {
     // SECTION: Rendering door
     if (entity->door.active) {
         Transform transform = entity->transform;
-        transform.position.z += 0.1f;
+        transform.position.z += 0.05f;
         if (entity->door.is_open) {
             DrawSprite(entity->door.open_sprite, transform, main_camera);
         } else {
