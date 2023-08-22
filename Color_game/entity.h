@@ -457,8 +457,8 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders) {
         transform.position.z += 0.1f;
         if (entity->receiver.signal_received) {
             ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->receiver.signal_color));
+            DrawSprite(entity->receiver.nozzle_sprite, transform, main_camera);
         }
-        DrawSprite(entity->receiver.nozzle_sprite, transform, main_camera);
         ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
         // NOTE: now that we finished rendering, we can mark receiver non-signaled.
         entity->receiver.signal_received = false;

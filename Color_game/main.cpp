@@ -138,35 +138,35 @@ void Awake(GameMemory *gm)
     player = entities_array[0].id;
     entity_id_map.SetID(entities_array[0].position.x, entities_array[0].position.y, entities_array[0].entity_layer, 0);
 
-    Vector2Int push_block_positions[NUM_PUSH_BLOCKS] = {{2,2}, {3,3}, {4,4}, {5,5}};
-    for (int e = 1; e < 1 + NUM_PUSH_BLOCKS; ++e) {
-        PushblockInit(&entities_array[e], e, push_block_sprite, push_block_positions[e-1], entities_array[player]);
-        int x = entities_array[e].position.x;
-        int y = entities_array[e].position.y;
-        entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
-    }
-    Vector2Int static_block_positions[NUM_STATIC_BLOCKS] = {{8,5}, {9,3}};
-    for (int e = 1 + NUM_PUSH_BLOCKS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS; ++e) {
-        StaticBlockInit(&entities_array[e], e, static_block_sprite, static_block_positions[e-NUM_PUSH_BLOCKS-1]);
-        int x = entities_array[e].position.x;
-        int y = entities_array[e].position.y;
-        entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
-    }
-    for (int e = 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS; ++e) {
-        EmitterInit(&entities_array[e], e, emitter_sprite, emitter_nozzle_sprite, emitter_indicator_sprite, {5,7}, {0.0, 0.0, 0.0, 1.0f}, true, EntityComponentEmitter::DOWN);
-        entity_id_map.SetID(5, 7, entities_array[e].entity_layer, entities_array[e].id);
-        //{0.094, 0.24, 0.63, 1.0f}
-    }
-    for (int e = 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS + NUM_RECEIVERS; ++e) {
-        ReceiverInit(&entities_array[e], e, receiver_sprite, receiver_nozzle_sprite, receiver_indicator_sprite, {5,1}, {0.0, 0.0f, 0.0f, 1.0f}, true);
-        entity_id_map.SetID(5, 1, entities_array[e].entity_layer, entities_array[e].id);
-    }
-    for (int e = 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS + NUM_RECEIVERS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS + NUM_RECEIVERS + NUM_DOORS; ++e) {
-        DoorInit(&entities_array[e], e, open_door_sprite, open_door_sprite, closed_door_sprite, {1,1});
-        
-        //PushblockInit(&entities_array[e], e, open_door_sprite, {1, 1}, entities_array[player]);
-        entity_id_map.SetID(1, 1, entities_array[e].entity_layer, entities_array[e].id);
-    }
+    //Vector2Int push_block_positions[NUM_PUSH_BLOCKS] = {{2,2}, {3,3}, {4,4}, {5,5}};
+    //for (int e = 1; e < 1 + NUM_PUSH_BLOCKS; ++e) {
+    //    PushblockInit(&entities_array[e], e, push_block_sprite, push_block_positions[e-1], entities_array[player]);
+    //    int x = entities_array[e].position.x;
+    //    int y = entities_array[e].position.y;
+    //    entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
+    //}
+    //Vector2Int static_block_positions[NUM_STATIC_BLOCKS] = {{8,5}, {9,3}};
+    //for (int e = 1 + NUM_PUSH_BLOCKS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS; ++e) {
+    //    StaticBlockInit(&entities_array[e], e, static_block_sprite, static_block_positions[e-NUM_PUSH_BLOCKS-1]);
+    //    int x = entities_array[e].position.x;
+    //    int y = entities_array[e].position.y;
+    //    entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
+    //}
+    //for (int e = 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS; ++e) {
+    //    EmitterInit(&entities_array[e], e, emitter_sprite, emitter_nozzle_sprite, emitter_indicator_sprite, {5,7}, {1.0, 1.0, 1.0, 1.0f}, true, EntityComponentEmitter::DOWN);
+    //    entity_id_map.SetID(5, 7, entities_array[e].entity_layer, entities_array[e].id);
+    //    //{0.094, 0.24, 0.63, 1.0f}
+    //}
+    //for (int e = 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS + NUM_RECEIVERS; ++e) {
+    //    ReceiverInit(&entities_array[e], e, receiver_sprite, receiver_nozzle_sprite, receiver_indicator_sprite, {5,1}, {1.0, 1.0f, 1.0f, 1.0f}, true);
+    //    entity_id_map.SetID(5, 1, entities_array[e].entity_layer, entities_array[e].id);
+    //}
+    //for (int e = 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS + NUM_RECEIVERS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS + NUM_RECEIVERS + NUM_DOORS; ++e) {
+    //    DoorInit(&entities_array[e], e, open_door_sprite, open_door_sprite, closed_door_sprite, {1,1});
+    //    
+    //    //PushblockInit(&entities_array[e], e, open_door_sprite, {1, 1}, entities_array[player]);
+    //    entity_id_map.SetID(1, 1, entities_array[e].entity_layer, entities_array[e].id);
+    //}
 
 
 
@@ -242,6 +242,15 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         entity_type_to_spawn = 3;
     } 
     if ( DrawSimpleImageButton (
+            "RecieverButton", 
+            receiver_sprite, 
+            {float(108)/float(1280) * 2.6, 0.2}, 
+            {float(108)/float(1280) * 0.6, 0.6f}
+        )
+    ) {
+        entity_type_to_spawn = 4;
+    } 
+    if ( DrawSimpleImageButton (
             "DoorButton", 
             closed_door_sprite, 
             {float(108)/float(1280) * 3.4, 0.2}, 
@@ -291,7 +300,20 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 int e = entity_array_offset;
                 entity_array_offset++;
 
-                EmitterInit(&entities_array[e], e, emitter_sprite, emitter_nozzle_sprite, emitter_indicator_sprite, {tile_mouse_x, tile_mouse_y}, {0.0f, 0.0f, 0.0f, 1.0f}, true, EntityComponentEmitter::DOWN); 
+                EmitterInit(&entities_array[e], e, emitter_sprite, emitter_nozzle_sprite, emitter_indicator_sprite, {tile_mouse_x, tile_mouse_y}, {1.0f, 1.0f, 1.0f, 1.0f}, true, EntityComponentEmitter::DOWN); 
+                int x = entities_array[e].position.x;
+                int y = entities_array[e].position.y;
+                entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
+            } break;
+            case 4: {
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0) >= 0) break;
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1) >= 0) break;
+                if (TestTileCollide(tilemap, {tile_mouse_x, tile_mouse_y})) break;
+
+                int e = entity_array_offset;
+                entity_array_offset++;
+
+                ReceiverInit(&entities_array[e], e, receiver_sprite, receiver_nozzle_sprite, receiver_indicator_sprite, {tile_mouse_x, tile_mouse_y}, {1.0f, 1.0f, 1.0f, 1.0f}, true);
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
