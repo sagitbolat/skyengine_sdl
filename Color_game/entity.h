@@ -43,6 +43,14 @@ void EmissionMap::SetEmissionTile(int x, int y, EmissionTile tile) {
 
 
 // SECTION: Components
+struct EntityComponentPlayer {
+    bool active;
+    Sprite up_sprite;
+    Sprite down_sprite;
+    Sprite left_sprite;
+    Sprite right_sprite;
+    enum DIRECTION_ENUM {UP, RIGHT, DOWN, LEFT, NEUTRAL} direction;
+};
 struct EntityComponentMover { // NOTE: Whether movable by the player
     bool  active;
     float seconds_per_tile;
@@ -107,6 +115,7 @@ struct Entity {
     Vector2Int  prev_position;
     Vector2Int  position;
     int         entity_layer; // NOTE: Layer 0: floor buttons and other features. Layer 1: Pushblocks, emitters, player etc. 
+    EntityComponentPlayer   player;
     EntityComponentMover    movable;
     EntityComponentEmitter  emitter;
     EntityComponentReceiver receiver;
@@ -136,6 +145,7 @@ void EntityInit (
     entity->transform   = transform;
 
     // SECTION: Zero The entity components. Should be unnecessary but done just in case
+    entity->player.active = false;
     EntityComponentMoverInit(&entity->movable, MOVE_SPEED, false);
     EntityComponentEmitterInit(&entity->emitter, {0.0f, 0.0f, 0.0f, 0.0f}, EntityComponentEmitter::DIRECTION_ENUM::DOWN, false);
     EntityComponentReceiverInit(&entity->receiver, {0.0f, 0.0f, 0.0f, 0.0f}, false);
@@ -145,10 +155,19 @@ void EntityInit (
 void PlayerInit(
     Entity* player,
     Sprite sprite,
+    Sprite up_sprite,
+    Sprite down_sprite,
+    Sprite left_sprite,
+    Sprite right_sprite,
     Vector2Int init_position
 ) {
     EntityInit(player, 0, sprite, init_position, 1.0f);
     EntityComponentMoverInit(&player->movable, MOVE_SPEED, true);
+    player->player.active = true;
+    player->player.up_sprite    = up_sprite;
+    player->player.down_sprite  = down_sprite;
+    player->player.left_sprite  = left_sprite;
+    player->player.right_sprite = right_sprite;
 }
 void PushblockInit(
     Entity* pushblock,
@@ -427,6 +446,31 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders) {
     Entity* entity = &entity_array[entity_id];
 
     if (!entity->active) return;
+
+    if (entity->player.active) {
+        switch(entity->player.direction) {
+            case EntityComponentPlayer::DIRECTION_ENUM::UP: {
+                DrawSprite(entity->player.up_sprite, entity->transform, main_camera);
+                return;
+            } break;
+            case EntityComponentPlayer::DIRECTION_ENUM::DOWN: {
+                DrawSprite(entity->player.down_sprite, entity->transform, main_camera);
+                return;
+            } break;
+            case EntityComponentPlayer::DIRECTION_ENUM::LEFT: {
+                DrawSprite(entity->player.left_sprite, entity->transform, main_camera);
+                return;
+            } break;
+            case EntityComponentPlayer::DIRECTION_ENUM::RIGHT: {
+                DrawSprite(entity->player.right_sprite, entity->transform, main_camera);
+                return;
+            } break;
+            case EntityComponentPlayer::DIRECTION_ENUM::NEUTRAL: {
+                DrawSprite(entity->sprite, entity->transform, main_camera);
+                return;
+            } break;
+        }
+    }
 
     DrawSprite(entity->sprite, entity->transform, main_camera);
 

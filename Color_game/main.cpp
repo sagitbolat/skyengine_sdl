@@ -28,6 +28,10 @@ Tilemap tilemap = {0};
 
 
 Sprite player_sprite; 
+Sprite player_up_sprite; 
+Sprite player_down_sprite; 
+Sprite player_left_sprite; 
+Sprite player_right_sprite; 
 Sprite push_block_sprite;        
 Sprite static_block_sprite;      
 Sprite emitter_sprite;     
@@ -99,6 +103,10 @@ void Awake(GameMemory *gm)
 
 
     player_sprite            = LoadSprite("assets/player.png", shaders, gpu_buffers);
+    player_up_sprite         = LoadSprite("assets/player_up.png", shaders, gpu_buffers);
+    player_down_sprite       = LoadSprite("assets/player_down.png", shaders, gpu_buffers);
+    player_left_sprite       = LoadSprite("assets/player_left.png", shaders, gpu_buffers);
+    player_right_sprite      = LoadSprite("assets/player_right.png", shaders, gpu_buffers);
     push_block_sprite        = LoadSprite("assets/push_block.png", shaders, gpu_buffers);
     static_block_sprite      = LoadSprite("assets/static_block.png", shaders, gpu_buffers);
     emitter_sprite           = LoadSprite("assets/emitter.png", shaders, gpu_buffers);
@@ -126,7 +134,15 @@ void Awake(GameMemory *gm)
     emission_map.map = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
     for (int i = 0; i < emission_map.width * emission_map.height; ++i) emission_map.map[i] = {0};
 
-    PlayerInit(&entities_array[0], player_sprite, {7,4});
+    PlayerInit (
+        &entities_array[0], 
+        player_sprite, 
+        player_up_sprite, 
+        player_down_sprite, 
+        player_left_sprite, 
+        player_right_sprite, 
+        {7,4}
+    );
     player = entities_array[0].id;
     entity_id_map.SetID(entities_array[0].position.x, entities_array[0].position.y, entities_array[0].entity_layer, 0);
 
@@ -331,18 +347,28 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     UI_WindowEnd();
 #endif
 
-    const int BLOCK_PUSH_LIMIT = MAX_ENTITIES; 
+    const int BLOCK_PUSH_LIMIT = MAX_ENTITIES;
+
+    
+    if (!entities_array[player].movable.moving) {
+        entities_array[player].player.direction = EntityComponentPlayer::DIRECTION_ENUM::NEUTRAL; 
+    }
+    
     if (ks->state.W && !entities_array[player].movable.moving) { 
         EntityMove(player, {0, 1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
+        entities_array[player].player.direction = EntityComponentPlayer::DIRECTION_ENUM::UP; 
     }
     if (ks->state.S && !entities_array[player].movable.moving) {
         EntityMove(player, {0,-1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
+        entities_array[player].player.direction = EntityComponentPlayer::DIRECTION_ENUM::DOWN; 
     }
     if (ks->state.A && !entities_array[player].movable.moving) {
         EntityMove(player, {-1,0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
+        entities_array[player].player.direction = EntityComponentPlayer::DIRECTION_ENUM::LEFT; 
     }
     if (ks->state.D && !entities_array[player].movable.moving) {
         EntityMove(player, {1, 0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
+        entities_array[player].player.direction = EntityComponentPlayer::DIRECTION_ENUM::RIGHT; 
     }
 
 
