@@ -2,6 +2,7 @@
 #include "../Engine/skymath.h"
 #include "tilemap.h"
 
+#define MOVE_SPEED 0.2f // NOTE: The player's movespeed measured in seconds per block.
 
 struct EntityMap { // NOTE: Similar to a 2D tilemap, but holds entity ids instead of tile ids.
     int* map;       // NOTE: width x height x depth map. width and height matches tilemap. Can contain up to number of depth entities per tile.
@@ -67,6 +68,7 @@ struct EntityComponentReceiver { // NOTE: Laser reciever struct
 struct EntityComponentDoor { // NOTE: A door that can be open or closed
     bool active;
     bool is_open;
+    int connected_reciever_id;
     Sprite open_sprite;
     Sprite closed_sprite;
 };
@@ -117,14 +119,7 @@ void EntityInit (
     Sprite      sprite, 
     Vector2Int  position={0, 0},
     float       entity_layer=0,
-    bool        active=true, 
-    bool        movable_active=true, 
-    float       seconds_per_tile=0.2f,
-    bool        emitter_active=false,
-    bool        receiver_active=false,
-    bool        door_active=false,
-    fColor      color={1.0f, 1.0f, 1.0f, 1.0f},
-    EntityComponentEmitter::DIRECTION_ENUM emitter_dir = EntityComponentEmitter::UP
+    bool        active=true 
 ) {
     entity->id            = id;
     entity->sprite        = sprite;
@@ -133,34 +128,36 @@ void EntityInit (
     entity->position      = position;
     entity->entity_layer  = entity_layer;
 
-    EntityComponentMoverInit(&entity->movable, seconds_per_tile, movable_active);
-    EntityComponentEmitterInit(&entity->emitter, color, emitter_dir, emitter_active);
-    EntityComponentReceiverInit(&entity->receiver, color, receiver_active);
-    EntityComponentDoorInit(&entity->door, door_active);
     Transform transform = {0.0f};
     transform.position  = {(float)position.x, (float)position.y, float(entity_layer)};
     transform.rotation  = {0.0f, 0.0f, 0.0f};
     transform.scale     = {1.0f, 1.0f, 1.0f};
     
     entity->transform   = transform;
+
+    // SECTION: Zero The entity components. Should be unnecessary but done just in case
+    EntityComponentMoverInit(&entity->movable, MOVE_SPEED, false);
+    EntityComponentEmitterInit(&entity->emitter, {0.0f, 0.0f, 0.0f, 0.0f}, EntityComponentEmitter::DIRECTION_ENUM::DOWN, false);
+    EntityComponentReceiverInit(&entity->receiver, {0.0f, 0.0f, 0.0f, 0.0f}, false);
+    EntityComponentDoorInit(&entity->door, false);
 }
 
 void PlayerInit(
     Entity* player,
     Sprite sprite,
-    Vector2Int init_position,
-    float move_speed=0.2f
+    Vector2Int init_position
 ) {
-    EntityInit(player, 0, sprite, init_position, 1.0f, true, true, move_speed);
+    EntityInit(player, 0, sprite, init_position, 1.0f);
+    EntityComponentMoverInit(&player->movable, MOVE_SPEED, true);
 }
 void PushblockInit(
     Entity* pushblock,
     int id,
     Sprite sprite,
-    Vector2Int init_position,
-    Entity player
+    Vector2Int init_position
 ) {
-    EntityInit(pushblock, id, sprite, init_position, 1.0f, true, true, player.movable.seconds_per_tile);
+    EntityInit(pushblock, id, sprite, init_position, 1.0f);
+    EntityComponentMoverInit(&pushblock->movable, MOVE_SPEED, true);
 }
 void StaticBlockInit(
     Entity* static_block,
@@ -168,7 +165,7 @@ void StaticBlockInit(
     Sprite sprite,
     Vector2Int init_position
 ) {
-    EntityInit(static_block, id, sprite, init_position, 1.0f, true, false);
+    EntityInit(static_block, id, sprite, init_position, 1.0f);
 }
 void EmitterInit(
     Entity* emitter,
@@ -181,7 +178,9 @@ void EmitterInit(
     bool emitter_movable,
     EntityComponentEmitter::DIRECTION_ENUM direction
 ) {
-    EntityInit(emitter, id, sprite, init_position, 1.0f, true, emitter_movable, 0.2f, true, false, false, emitter_color, direction);
+    EntityInit(emitter, id, sprite, init_position, 1.0f);
+    EntityComponentEmitterInit(&emitter->emitter, emitter_color, direction, true);
+    EntityComponentMoverInit(&emitter->movable, MOVE_SPEED, emitter_movable);
     emitter->emitter.nozzle_sprite = nozzle_sprite;
     emitter->emitter.indicator_sprite = indicator_sprite;
 }
@@ -195,7 +194,9 @@ void ReceiverInit(
     fColor accepted_signal_color,
     bool receiver_movable
 ) {
-    EntityInit(receiver, id, sprite, init_position, 1.0f, true, receiver_movable, 0.2f, false, true, false, accepted_signal_color);
+    EntityInit(receiver, id, sprite, init_position, 1.0f);
+    EntityComponentReceiverInit(&receiver->receiver, accepted_signal_color, true);
+    EntityComponentMoverInit(&receiver->movable, MOVE_SPEED, receiver_movable);
     receiver->receiver.nozzle_sprite = nozzle_sprite;
     receiver->receiver.indicator_sprite = indicator_sprite;
 }
@@ -209,7 +210,8 @@ void DoorInit(
 ) {
     //EntityInit(door, id, sprite, init_position, 1.0f, true, false);
 
-    EntityInit(door, id, sprite, init_position, 0.0f, true, false, 0.0f, false, false, true);
+    EntityInit(door, id, sprite, init_position, 0.0f);
+    EntityComponentDoorInit(&door->door, true);
     door->door.open_sprite = open_sprite;
     door->door.closed_sprite = closed_sprite;
 }

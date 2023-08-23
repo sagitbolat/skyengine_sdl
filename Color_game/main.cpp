@@ -3,13 +3,7 @@
 #include "../Engine/SDL_sky.cpp"
 #include "../Engine/skymath.h"
 
-#define NUM_PUSH_BLOCKS 4
-#define NUM_STATIC_BLOCKS 2
-#define NUM_EMITTERS 1
-#define NUM_RECEIVERS 1
-#define NUM_DOORS 1
-#define NUM_ENTITIES (1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS + NUM_RECEIVERS + NUM_DOORS)
-#define MAX_ENTITIES 20
+#define MAX_ENTITIES 91 
 #include "tilemap.h"
 #include "entity.h"
 
@@ -132,45 +126,9 @@ void Awake(GameMemory *gm)
     emission_map.map = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
     for (int i = 0; i < emission_map.width * emission_map.height; ++i) emission_map.map[i] = {0};
 
-
-    
-    PlayerInit(&entities_array[0], player_sprite, {7,4}, 0.2f);
+    PlayerInit(&entities_array[0], player_sprite, {7,4});
     player = entities_array[0].id;
     entity_id_map.SetID(entities_array[0].position.x, entities_array[0].position.y, entities_array[0].entity_layer, 0);
-
-    //Vector2Int push_block_positions[NUM_PUSH_BLOCKS] = {{2,2}, {3,3}, {4,4}, {5,5}};
-    //for (int e = 1; e < 1 + NUM_PUSH_BLOCKS; ++e) {
-    //    PushblockInit(&entities_array[e], e, push_block_sprite, push_block_positions[e-1], entities_array[player]);
-    //    int x = entities_array[e].position.x;
-    //    int y = entities_array[e].position.y;
-    //    entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
-    //}
-    //Vector2Int static_block_positions[NUM_STATIC_BLOCKS] = {{8,5}, {9,3}};
-    //for (int e = 1 + NUM_PUSH_BLOCKS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS; ++e) {
-    //    StaticBlockInit(&entities_array[e], e, static_block_sprite, static_block_positions[e-NUM_PUSH_BLOCKS-1]);
-    //    int x = entities_array[e].position.x;
-    //    int y = entities_array[e].position.y;
-    //    entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
-    //}
-    //for (int e = 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS; ++e) {
-    //    EmitterInit(&entities_array[e], e, emitter_sprite, emitter_nozzle_sprite, emitter_indicator_sprite, {5,7}, {1.0, 1.0, 1.0, 1.0f}, true, EntityComponentEmitter::DOWN);
-    //    entity_id_map.SetID(5, 7, entities_array[e].entity_layer, entities_array[e].id);
-    //    //{0.094, 0.24, 0.63, 1.0f}
-    //}
-    //for (int e = 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS + NUM_RECEIVERS; ++e) {
-    //    ReceiverInit(&entities_array[e], e, receiver_sprite, receiver_nozzle_sprite, receiver_indicator_sprite, {5,1}, {1.0, 1.0f, 1.0f, 1.0f}, true);
-    //    entity_id_map.SetID(5, 1, entities_array[e].entity_layer, entities_array[e].id);
-    //}
-    //for (int e = 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS + NUM_RECEIVERS; e < 1 + NUM_PUSH_BLOCKS + NUM_STATIC_BLOCKS + NUM_EMITTERS + NUM_RECEIVERS + NUM_DOORS; ++e) {
-    //    DoorInit(&entities_array[e], e, open_door_sprite, open_door_sprite, closed_door_sprite, {1,1});
-    //    
-    //    //PushblockInit(&entities_array[e], e, open_door_sprite, {1, 1}, entities_array[player]);
-    //    entity_id_map.SetID(1, 1, entities_array[e].entity_layer, entities_array[e].id);
-    //}
-
-
-
-
 
     main_camera.position.x = float(tilemap.width/2);
     main_camera.position.y = float(tilemap.height/2);
@@ -206,11 +164,18 @@ void DrawTile(Tileset tileset, Vector2 world_position, uint8_t atlas_index) {
 
 
 void Update(GameState *gs, KeyboardState *ks, double dt) {
+
+
 #ifdef DEBUG_UI
     UI_WindowStart("Entity Spawn Select", {1280, 108}, {0,0});
 
+    double fps = DeltaTimeToFps(dt);
+    char fps_str[64];
+    sprintf(fps_str, "FPS: %f", fps);
+    DrawSimpleText(fps_str, {0.999f, 0.2f}, UI_Alignment::TOP_RIGHT);
 
-    static int entity_array_offset = NUM_ENTITIES;
+
+    static int entity_array_offset = 1;
     static int entity_type_to_spawn = 0;
 
 
@@ -274,7 +239,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
                 int e = entity_array_offset;
                 entity_array_offset++;
-                PushblockInit(&entities_array[e], e, push_block_sprite, {tile_mouse_x, tile_mouse_y}, entities_array[player]);
+                PushblockInit(&entities_array[e], e, push_block_sprite, {tile_mouse_x, tile_mouse_y});
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
@@ -366,18 +331,18 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     UI_WindowEnd();
 #endif
 
-    
+    const int BLOCK_PUSH_LIMIT = MAX_ENTITIES; 
     if (ks->state.W && !entities_array[player].movable.moving) { 
-        EntityMove(player, {0, 1}, tilemap, entity_id_map, entities_array, NUM_ENTITIES);
+        EntityMove(player, {0, 1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
     }
     if (ks->state.S && !entities_array[player].movable.moving) {
-        EntityMove(player, {0,-1}, tilemap, entity_id_map, entities_array, NUM_ENTITIES);
+        EntityMove(player, {0,-1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
     }
     if (ks->state.A && !entities_array[player].movable.moving) {
-        EntityMove(player, {-1,0}, tilemap, entity_id_map, entities_array, NUM_ENTITIES);
+        EntityMove(player, {-1,0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
     }
     if (ks->state.D && !entities_array[player].movable.moving) {
-        EntityMove(player, {1, 0}, tilemap, entity_id_map, entities_array, NUM_ENTITIES);
+        EntityMove(player, {1, 0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
     }
 
 
@@ -385,14 +350,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         printf("############################\n");
         for (int id = 0; id < MAX_ENTITIES; ++id) {
             Vector2Int position = entities_array[id].position;
-            printf("Entity %d position: {%d, %d}: Entity Active: %d | Door Active: %d\n", id, position.x, position.y, entities_array[id].active, entities_array[id].door.active);
+            printf("Entity %d position: {%d, %d}: Entity Active: %d \n", id, position.x, position.y, entities_array[id].active);
         }
-    }
-    if (ks->state.Q && entities_array[8].receiver.signal_received) {
-        printf("Signal Received.\n");
-    }
-    if (ks->state.Q && entities_array[8].receiver.signal_accepted) {
-        printf("Signal Accepted\n");
     }
     
 
@@ -421,7 +380,6 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     for (int id = 0; id < MAX_ENTITIES; ++id) {
         EntityUpdateEmit(id, tilemap, entity_id_map, emission_map, entities_array);
         EntityUpdate(id, entities_array, dt);
-        //printf("Entity %d emission: {%d, %d}: %d\n", id, position.x, position.y, entities_array[id].emitter.active);
     }
     
 
@@ -441,12 +399,10 @@ void UserFree()
 
 
     FreeSprite(tileset.atlas);
-    FreeSprite(entities_array[player].sprite);
     entities_array[player].active = false;
 
 
 
-    FreeSprite(entities_array[1].sprite);
 
     FreeGPUBuffers(gpu_buffers);
     FreeShaders(shaders);
