@@ -129,6 +129,8 @@ inline fColor operator+(const fColor a, const fColor b) {
 		FloatClamp(a.a + b.a, 0.0f, 1.0f)
 	};
 }
+
+// Returns: true if colors are equal.
 inline bool ComparefColor(const fColor a, const fColor b, float epsilon=0.01f) {
 	if (
 		fabs(a.r - b.r) > epsilon || 

@@ -221,7 +221,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     } 
     if ( DrawSimpleImageButton (
             "EmitterBlockButton", 
-            emitter_nozzle_sprite, 
+            emitter_sprite, 
             {float(108)/float(1280) * 1.8, 0.2}, 
             {float(108)/float(1280) * 0.6, 0.6f}
         )
@@ -323,7 +323,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         }
     }
 
-    // NOTE: Do rotations of emitters
+    // NOTE: Do state changes for entity (entity-type specific)
     if (ks->state.R && !ks->prev_state.R) {
         int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
         int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
@@ -337,7 +337,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
             if (entity_id >= 0) {
                 if (entities_array[entity_id].door.active) {
-                    entities_array[entity_id].door.is_open = !entities_array[entity_id].door.is_open;
+                    entities_array[entity_id].door.require_all_to_unlock = !entities_array[entity_id].door.require_all_to_unlock;
                 }
             }
         }
@@ -371,8 +371,12 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         if (entity_id >= 0) { 
             if (entities_array[entity_id].active && entities_array[entity_id].door.active) {
                 if (selected_receiver_id >= 0) {
-        printf("E released \n");
-                    entities_array[entity_id].door.attached_receiver_id = selected_receiver_id;
+                    Entity* door = &entities_array[entity_id];
+                    if (door->door.num_connected_receivers < MAX_CONNECTED_RECIEVERS) {
+                    printf("Released\n");
+                        door->door.connected_receiver_ids[door->door.num_connected_receivers] = selected_receiver_id;
+                        door->door.num_connected_receivers += 1;
+                    }
                 }
             }
         }
@@ -453,9 +457,17 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     // NOTE: This is done after rendering so that rendering that depends on the movable.moving flag doesnt flicker every block 
     //printf("############################\n");
-    for (int id = 0; id < MAX_ENTITIES; ++id) {
+    for (int id = 0; id < entity_array_offset; ++id) {
         EntityUpdateEmit(id, tilemap, entity_id_map, emission_map, entities_array);
-        EntityUpdate(id, entities_array, dt);
+    }
+    for (int id = 0; id < entity_array_offset; ++id) {
+        EntityUpdateMover(id, entities_array, dt);
+    }
+    for (int id = 0; id < entity_array_offset; ++id) {
+        EntityUpdateReceiver(id, entities_array);
+    }
+    for (int id = 0; id < entity_array_offset; ++id) {
+        EntityUpdateDoor(id, entities_array, entity_id_map);
     }
     
 
