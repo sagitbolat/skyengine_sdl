@@ -76,9 +76,9 @@ struct EntityComponentReceiver { // NOTE: Laser reciever struct
 struct EntityComponentDoor { // NOTE: A door that can be open or closed
     bool active;
     bool is_open;
-    int connected_reciever_id;
     Sprite open_sprite;
     Sprite closed_sprite;
+    int attached_receiver_id;
 };
 
 
@@ -100,9 +100,10 @@ void EntityComponentReceiverInit(EntityComponentReceiver* component, fColor acce
     component->signal_accepted = false;
     component->signal_color = {0.0f, 0.0f, 0.0f, 0.0f};
 }
-void EntityComponentDoorInit(EntityComponentDoor* component, bool active=true) {
+void EntityComponentDoorInit(EntityComponentDoor* component, int attached_receiver, bool active=true) {
     component->active  = active;
     component->is_open = false;
+    component->attached_receiver_id = attached_receiver;
 }
 
 // SECTION: Entities
@@ -121,6 +122,30 @@ struct Entity {
     EntityComponentReceiver receiver;
     EntityComponentDoor     door;
 }; 
+
+
+void PrintEntity(Entity e) {
+    printf("############################\n");
+    printf("ID:                     %d\n", e.id);
+    printf("Active:                 %d\n", e.active);
+    printf("Position:               {%d, %d}\n", e.position.x, e.position.y);
+    printf("Layer:                  %d\n", e.entity_layer);
+    printf("Player::Active:         %d\n", e.player.active);
+    printf("Mover::Active           %d\n", e.movable.active);
+    printf("Mover::Moving           %d\n", e.movable.moving);
+    printf("Emitter::Active:        %d\n", e.emitter.active);
+    printf("Emitter::Color:         {%f, %f, %f, %f}\n", e.emitter.emission_color.r, e.emitter.emission_color.g, e.emitter.emission_color.b, e.emitter.emission_color.a);
+    printf("Receiver::Active:       %d\n", e.receiver.active);
+    printf("Receiver::Color:        {%f, %f, %f, %f}\n", e.receiver.accepted_color.r, e.receiver.accepted_color.g, e.receiver.accepted_color.b, e.receiver.accepted_color.a);
+    printf("Receiver::SigReceived:  %d\n", e.receiver.signal_received);
+    printf("Receiver::SigAccepted:  %d\n", e.receiver.signal_accepted);
+    printf("Door::Active:           %d\n", e.door.active);
+    printf("Door::Open:             %d\n", e.door.is_open);
+    printf("Door::AttachedReceiver: %d\n", e.door.attached_receiver_id);
+    printf("############################\n");
+
+} 
+
 
 void EntityInit (
     Entity*     entity, 
@@ -149,7 +174,7 @@ void EntityInit (
     EntityComponentMoverInit(&entity->movable, MOVE_SPEED, false);
     EntityComponentEmitterInit(&entity->emitter, {0.0f, 0.0f, 0.0f, 0.0f}, EntityComponentEmitter::DIRECTION_ENUM::DOWN, false);
     EntityComponentReceiverInit(&entity->receiver, {0.0f, 0.0f, 0.0f, 0.0f}, false);
-    EntityComponentDoorInit(&entity->door, false);
+    EntityComponentDoorInit(&entity->door, -1, false);
 }
 
 void PlayerInit(
@@ -225,12 +250,13 @@ void DoorInit(
     Sprite sprite,
     Sprite open_sprite,
     Sprite closed_sprite,
-    Vector2Int init_position
+    Vector2Int init_position,
+    int attached_reciever = -1
 ) {
     //EntityInit(door, id, sprite, init_position, 1.0f, true, false);
 
     EntityInit(door, id, sprite, init_position, 0.0f);
-    EntityComponentDoorInit(&door->door, true);
+    EntityComponentDoorInit(&door->door, attached_reciever, true);
     door->door.open_sprite = open_sprite;
     door->door.closed_sprite = closed_sprite;
 }
@@ -422,7 +448,10 @@ void EntityUpdateMover(int entity_id, Entity* entity_array, float dt) {
 
 void EntityUpdateReceiver(int entity_id, Entity* entity_array) {
     Entity* entity = &entity_array[entity_id];
-    if (entity->receiver.active && entity->receiver.signal_received) {
+
+    if (!entity->active || !entity->receiver.active) return;
+
+    if (entity->receiver.signal_received) {
         if (ComparefColor(entity->receiver.signal_color, entity->receiver.accepted_color)) {
             entity->receiver.signal_accepted = true;
         } 
@@ -433,10 +462,27 @@ void EntityUpdateReceiver(int entity_id, Entity* entity_array) {
 
 }
 
+void EntityUpdateDoor(int entity_id, Entity* entity_array) {
+    Entity* door_entity = &entity_array[entity_id];
+
+    if (!door_entity->active || 
+        !door_entity->door.active || 
+        door_entity->door.attached_receiver_id < 0
+    ) return;
+
+    Entity* receiver_entity = &entity_array[door_entity->door.attached_receiver_id];
+    
+    if (!receiver_entity->active || !receiver_entity->receiver.active) return;
+
+    if (receiver_entity->receiver.signal_accepted) door_entity->door.is_open = true;
+    else door_entity->door.is_open = false;
+
+}
 
 void EntityUpdate(int entity_id, Entity* entity_array, float dt) {
     EntityUpdateMover(entity_id, entity_array, dt);
     EntityUpdateReceiver(entity_id, entity_array);
+    EntityUpdateDoor(entity_id, entity_array);
 }
 
 

@@ -73,13 +73,13 @@ void Awake(GameMemory *gm)
 
 
 
-    Sprite tileset_sprite = LoadSprite("assets/tileset.png", shaders, gpu_buffers);
-    tileset.atlas = tileset_sprite;
+    Sprite tileset_sprite   = LoadSprite("assets/tileset.png", shaders, gpu_buffers);
+    tileset.atlas           = tileset_sprite;
     tileset.width_in_tiles  = 5;
     tileset.height_in_tiles = 4;
 
-    tilemap.width = 15;
-    tilemap.height = 9;
+    tilemap.width   = 15;
+    tilemap.height  = 9;
     int map[tilemap.width * tilemap.height] = {
         10,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,11,
         9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7,
@@ -91,6 +91,7 @@ void Awake(GameMemory *gm)
         9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7,
         5,13,13,13,13,13,13,13,13,13,13,13,13,13, 6
     };
+
     tilemap.map = (int*)calloc(tilemap.width * tilemap.height, sizeof(int));
     memcpy(tilemap.map, map, sizeof(int) * tilemap.height * tilemap.width);
 
@@ -102,37 +103,40 @@ void Awake(GameMemory *gm)
 
 
 
-    player_sprite            = LoadSprite("assets/player.png", shaders, gpu_buffers);
-    player_up_sprite         = LoadSprite("assets/player_up.png", shaders, gpu_buffers);
-    player_down_sprite       = LoadSprite("assets/player_down.png", shaders, gpu_buffers);
-    player_left_sprite       = LoadSprite("assets/player_left.png", shaders, gpu_buffers);
-    player_right_sprite      = LoadSprite("assets/player_right.png", shaders, gpu_buffers);
-    push_block_sprite        = LoadSprite("assets/push_block.png", shaders, gpu_buffers);
-    static_block_sprite      = LoadSprite("assets/static_block.png", shaders, gpu_buffers);
-    emitter_sprite           = LoadSprite("assets/emitter.png", shaders, gpu_buffers);
-    emitter_nozzle_sprite    = LoadSprite("assets/emitter_nozzle.png", shaders, gpu_buffers);
-    emitter_indicator_sprite = LoadSprite("assets/emitter_indicator.png", shaders, gpu_buffers);
-    receiver_sprite          = LoadSprite("assets/receiver.png", shaders, gpu_buffers);
-    receiver_nozzle_sprite   = LoadSprite("assets/receiver_nozzle.png", shaders, gpu_buffers);
-    receiver_indicator_sprite= LoadSprite("assets/receiver_indicator.png", shaders, gpu_buffers);
-    emission_sprite          = LoadSprite("assets/emission.png", shaders, gpu_buffers);
-    open_door_sprite         = LoadSprite("assets/door_open.png", shaders, gpu_buffers);
-    closed_door_sprite       = LoadSprite("assets/door_closed.png", shaders, gpu_buffers);
+    player_sprite               = LoadSprite("assets/player.png", shaders, gpu_buffers);
+    player_up_sprite            = LoadSprite("assets/player_up.png", shaders, gpu_buffers);
+    player_down_sprite          = LoadSprite("assets/player_down.png", shaders, gpu_buffers);
+    player_left_sprite          = LoadSprite("assets/player_left.png", shaders, gpu_buffers);
+    player_right_sprite         = LoadSprite("assets/player_right.png", shaders, gpu_buffers);
+    push_block_sprite           = LoadSprite("assets/push_block.png", shaders, gpu_buffers);
+    static_block_sprite         = LoadSprite("assets/static_block.png", shaders, gpu_buffers);
+    emitter_sprite              = LoadSprite("assets/emitter.png", shaders, gpu_buffers);
+    emitter_nozzle_sprite       = LoadSprite("assets/emitter_nozzle.png", shaders, gpu_buffers);
+    emitter_indicator_sprite    = LoadSprite("assets/emitter_indicator.png", shaders, gpu_buffers);
+    receiver_sprite             = LoadSprite("assets/receiver.png", shaders, gpu_buffers);
+    receiver_nozzle_sprite      = LoadSprite("assets/receiver_nozzle.png", shaders, gpu_buffers);
+    receiver_indicator_sprite   = LoadSprite("assets/receiver_indicator.png", shaders, gpu_buffers);
+    emission_sprite             = LoadSprite("assets/emission.png", shaders, gpu_buffers);
+    open_door_sprite            = LoadSprite("assets/door_open.png", shaders, gpu_buffers);
+    closed_door_sprite          = LoadSprite("assets/door_closed.png", shaders, gpu_buffers);
 
 
 
-    entity_id_map.width = tilemap.width;
-    entity_id_map.height = tilemap.height;
-    entity_id_map.depth = 2;
-    entity_id_map.map = (int*)malloc(sizeof(int) * tilemap.height * tilemap.width * entity_id_map.depth);
+    entity_id_map.width     = tilemap.width;
+    entity_id_map.height    = tilemap.height;
+    entity_id_map.depth     = 2;
+    entity_id_map.map       = (int*)malloc(sizeof(int) * tilemap.height * tilemap.width * entity_id_map.depth);
     for (int i = 0; i < tilemap.height * tilemap.width * entity_id_map.depth; ++i) entity_id_map.map[i] = -1;
 
     entities_array = (Entity*)calloc(sizeof(Entity), MAX_ENTITIES);
 
-    emission_map.width = tilemap.width;
+    emission_map.width  = tilemap.width;
     emission_map.height = tilemap.height;
-    emission_map.map = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
+    emission_map.map    = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
     for (int i = 0; i < emission_map.width * emission_map.height; ++i) emission_map.map[i] = {0};
+
+
+
 
     PlayerInit (
         &entities_array[0], 
@@ -146,8 +150,8 @@ void Awake(GameMemory *gm)
     player = entities_array[0].id;
     entity_id_map.SetID(entities_array[0].position.x, entities_array[0].position.y, entities_array[0].entity_layer, 0);
 
-    main_camera.position.x = float(tilemap.width/2);
-    main_camera.position.y = float(tilemap.height/2);
+    main_camera.position.x  = float(tilemap.width/2);
+    main_camera.position.y  = float(tilemap.height/2);
     main_camera.look_target = {7.0f, 4.0f, 0.0f}; 
 }
 
@@ -157,16 +161,18 @@ void Start(GameState *gs, KeyboardState *ks) {
 }
 
 void DrawTile(Tileset tileset, Vector2 world_position, int atlas_x, int atlas_y) {
-    float uv_width = float(1)/float(tileset.width_in_tiles);
-    float uv_height = float(1)/float(tileset.height_in_tiles);
+    float uv_width    = float(1)/float(tileset.width_in_tiles);
+    float uv_height   = float(1)/float(tileset.height_in_tiles);
     float uv_x_offset = atlas_x * uv_width;
     float uv_y_offset = atlas_y * uv_height;
 
     ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
     ShaderSetVector(shaders, "top_right_uv", Vector2{uv_width, uv_height});
     ShaderSetVector(shaders, "uv_offset", Vector2{uv_x_offset, uv_y_offset});
+    
     tile_default_transform.position = Vector3{world_position.x, world_position.y, tile_default_transform.position.z};
     DrawSprite(tileset.atlas, tile_default_transform, main_camera);
+    
     ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
     ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
     ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
@@ -338,6 +344,57 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     }
 
+
+    static int selected_receiver_id = -1; 
+    // NOTE: When E is first pressed down, select the hovered receiver
+    if (ks->state.E && !ks->prev_state.E) {
+
+
+        int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
+        int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
+
+        int entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1);
+    
+        if (entity_id >= 0) {
+            if (entities_array[entity_id].active && entities_array[entity_id].receiver.active) {
+                selected_receiver_id = entity_id;
+            }
+        }
+    }
+    // NOTE: When E is released, attach selected recevier the hovered door
+    if (!ks->state.E && ks->prev_state.E) {
+
+        int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
+        int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
+
+        int entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
+        if (entity_id >= 0) { 
+            if (entities_array[entity_id].active && entities_array[entity_id].door.active) {
+                if (selected_receiver_id >= 0) {
+        printf("E released \n");
+                    entities_array[entity_id].door.attached_receiver_id = selected_receiver_id;
+                }
+            }
+        }
+        selected_receiver_id = -1;
+    }
+
+    // NOTE: Print debug info of entity
+    if (ks->state.SPACE && !ks->prev_state.SPACE) {
+        int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
+        int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
+
+        int entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
+        if (entity_id >=0) {
+            Entity entity = entities_array[entity_id];
+            PrintEntity(entity);
+        } 
+        entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1);
+        if (entity_id >=0) {
+            Entity entity = entities_array[entity_id];
+            PrintEntity(entity);
+        } 
+    }
     // NOTE: Do toggling movability:
     // TODO:
 
@@ -372,13 +429,6 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     }
 
 
-    if (ks->state.SPACE && !ks->prev_state.SPACE) {
-        printf("############################\n");
-        for (int id = 0; id < MAX_ENTITIES; ++id) {
-            Vector2Int position = entities_array[id].position;
-            printf("Entity %d position: {%d, %d}: Entity Active: %d \n", id, position.x, position.y, entities_array[id].active);
-        }
-    }
     
 
 
