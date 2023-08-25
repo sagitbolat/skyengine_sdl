@@ -6,7 +6,7 @@
 #define MAX_ENTITIES 91 
 #include "tilemap.h"
 #include "entity.h"
-
+#include "level_loader.h"
 
 
 
@@ -42,6 +42,7 @@ Sprite receiver_nozzle_sprite;
 Sprite receiver_indicator_sprite;
 Sprite open_door_sprite;
 Sprite closed_door_sprite;
+Sprite endgoal_sprite;
 
 
 
@@ -119,7 +120,7 @@ void Awake(GameMemory *gm)
     emission_sprite             = LoadSprite("assets/emission.png", shaders, gpu_buffers);
     open_door_sprite            = LoadSprite("assets/door_open.png", shaders, gpu_buffers);
     closed_door_sprite          = LoadSprite("assets/door_closed.png", shaders, gpu_buffers);
-
+    endgoal_sprite              = LoadSprite("assets/endgoal.png", shaders, gpu_buffers);
 
 
     entity_id_map.width     = tilemap.width;
@@ -196,16 +197,26 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     sprintf(fps_str, "FPS: %f", fps);
     DrawSimpleText(fps_str, {0.999f, 0.2f}, UI_Alignment::TOP_RIGHT);
 
-
     static int entity_array_offset = 1;
     static int entity_type_to_spawn = 0;
+
+    if (DrawSimpleButton(
+            "Save Level",
+            {float(108)/float(1280) * 11.0, 0.4},
+            {float(108)/float(1280) * 0.8, 0.3},
+            nullptr
+        )
+    ) {
+        SaveLevelState("untitled", &tilemap, 2, entities_array, entity_array_offset);
+    }
+
 
 
     if ( DrawSimpleImageButton (
             "PushBlockButton", 
             push_block_sprite, 
             {float(108)/float(1280) * 0.2, 0.2}, 
-            {float(108)/float(1280) * 0.6, 0.6f}
+            {float(108)/float(1280) * 0.6, 0.6}
         )
     ) {
         entity_type_to_spawn = 1;
@@ -214,7 +225,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             "StaticBlockButton", 
             static_block_sprite, 
             {float(108)/float(1280) * 1.0, 0.2}, 
-            {float(108)/float(1280) * 0.6, 0.6f}
+            {float(108)/float(1280) * 0.6, 0.6}
         )
     ) {
         entity_type_to_spawn = 2;
@@ -223,7 +234,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             "EmitterBlockButton", 
             emitter_sprite, 
             {float(108)/float(1280) * 1.8, 0.2}, 
-            {float(108)/float(1280) * 0.6, 0.6f}
+            {float(108)/float(1280) * 0.6, 0.6}
         )
     ) {
         entity_type_to_spawn = 3;
@@ -232,7 +243,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             "RecieverButton", 
             receiver_sprite, 
             {float(108)/float(1280) * 2.6, 0.2}, 
-            {float(108)/float(1280) * 0.6, 0.6f}
+            {float(108)/float(1280) * 0.6, 0.6}
         )
     ) {
         entity_type_to_spawn = 4;
@@ -241,11 +252,21 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             "DoorButton", 
             closed_door_sprite, 
             {float(108)/float(1280) * 3.4, 0.2}, 
-            {float(108)/float(1280) * 0.6, 0.6f}
+            {float(108)/float(1280) * 0.6, 0.6}
         )
     ) {
         entity_type_to_spawn = 5;
     } 
+    if ( DrawSimpleImageButton (
+            "EndgoalButton", 
+            endgoal_sprite, 
+            {float(108)/float(1280) * 4.2, 0.2}, 
+            {float(108)/float(1280) * 0.6, 0.6}
+        )
+    ) {
+        entity_type_to_spawn = 6;
+    } 
+     
     
     if (ks->state.MBR && !ks->prev_state.MBR) {
 
@@ -317,7 +338,20 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
-            }
+            } break;
+            case 6: {
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0) >= 0) break;
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1) >= 0) break;
+                if (TestTileCollide(tilemap, {tile_mouse_x, tile_mouse_y})) break;
+
+                int e = entity_array_offset;
+                entity_array_offset++;
+
+                EndgoalInit(&entities_array[e], e, endgoal_sprite, {tile_mouse_x, tile_mouse_y}); 
+                int x = entities_array[e].position.x;
+                int y = entities_array[e].position.y;
+                entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
+            } break;
             default:
                 break;
         }

@@ -83,7 +83,9 @@ struct EntityComponentDoor { // NOTE: A door that can be open or closed
     int connected_receiver_ids[MAX_CONNECTED_RECIEVERS];
     int num_connected_receivers;
 };
-
+struct EntityComponentEndgoal {
+    bool active;
+};
 
 void EntityComponentMoverInit(EntityComponentMover* component, float seconds_per_tile, bool active = true) {
     component->active = active;
@@ -139,6 +141,7 @@ struct Entity {
     EntityComponentEmitter  emitter;
     EntityComponentReceiver receiver;
     EntityComponentDoor     door;
+    EntityComponentEndgoal  endgoal;
 }; 
 
 
@@ -197,6 +200,7 @@ void EntityInit (
 
     // SECTION: Zero The entity components. Should be unnecessary but done just in case
     entity->player.active = false;
+    entity->endgoal.active = false;
     EntityComponentMoverInit(&entity->movable, MOVE_SPEED, false);
     EntityComponentEmitterInit(&entity->emitter, {0.0f, 0.0f, 0.0f, 0.0f}, EntityComponentEmitter::DIRECTION_ENUM::DOWN, false);
     EntityComponentReceiverInit(&entity->receiver, {0.0f, 0.0f, 0.0f, 0.0f}, false);
@@ -288,7 +292,15 @@ void DoorInit(
     door->door.open_sprite = open_sprite;
     door->door.closed_sprite = closed_sprite;
 }
-
+void EndgoalInit(
+    Entity* endgoal,
+    int id,
+    Sprite goal_sprite,
+    Vector2Int init_position
+) {
+    EntityInit(endgoal, id, goal_sprite, init_position, 0.0f);
+    endgoal->endgoal.active = true;
+}
 
 
 
