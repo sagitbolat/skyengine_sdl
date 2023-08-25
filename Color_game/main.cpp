@@ -64,6 +64,10 @@ GPUBufferIDs gpu_buffers = {nullptr};
 Transform tile_default_transform;
 
 
+#ifdef DEBUG_UI
+#define LEVEL_NAME_MAX 24
+char level_name[LEVEL_NAME_MAX] = "";
+#endif
 
 void Awake(GameMemory *gm)
 {
@@ -157,9 +161,10 @@ void Awake(GameMemory *gm)
     main_camera.look_target = {7.0f, 4.0f, 0.0f}; 
 }
 
-
 void Start(GameState *gs, KeyboardState *ks) {
-
+    char level_name_default[] = "untitled";
+    strncpy(level_name, level_name_default, sizeof(level_name) - 1);
+    level_name[sizeof(level_name) - 1] = '\0'; // Null-terminate the string
 }
 
 void DrawTile(Tileset tileset, Vector2 world_position, int atlas_x, int atlas_y) {
@@ -196,19 +201,27 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     double fps = DeltaTimeToFps(dt);
     char fps_str[64];
     sprintf(fps_str, "FPS: %f", fps);
-    DrawSimpleText(fps_str, {0.999f, 0.2f}, UI_Alignment::TOP_RIGHT);
+    DrawSimpleText(fps_str, {0.99f, 0.2f}, UI_Alignment::TOP_RIGHT);
 
     static int entity_array_offset = 1;
     static int entity_type_to_spawn = 0;
 
+
+    DrawSimpleTextbox(
+        "Level Name", 
+        level_name, LEVEL_NAME_MAX, 
+        {float(108)/float(1280) * 10.05, 0.4}, 
+        {108, 0}
+    );
+
     if (DrawSimpleButton(
             "Save Level",
-            {float(108)/float(1280) * 11.0, 0.4},
+            {float(108)/float(1280) * 10.05, 0.7},
             {float(108)/float(1280) * 0.8, 0.2},
             nullptr
         )
     ) {
-        SaveLevelState("untitled", &tilemap, 2, entities_array, entity_array_offset);
+        SaveLevelState(level_name, &tilemap, 2, entities_array, entity_array_offset);
     }
     if (DrawSimpleButton(
             "Load Level",
@@ -235,9 +248,10 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             closed_door_sprite,             //14
             endgoal_sprite                  //15
         };
-        LevelStateInfo level_state_info = ReadLevelState("1", &tilemap, &entities_array, &entity_id_map, sprites);
+        LevelStateInfo level_state_info = ReadLevelState(level_name, &tilemap, &entities_array, &entity_id_map, sprites);
         entity_array_offset = level_state_info.num_entities;
     }
+
 
 
 
@@ -448,22 +462,20 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     // NOTE: Print debug info of entity
     if (ks->state.SPACE && !ks->prev_state.SPACE) {
-    //    int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
-    //    int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
+        int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
+        int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
 
-    //    int entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
-    //    if (entity_id >=0) {
-    //        Entity entity = entities_array[entity_id];
-    //        PrintEntity(entity);
-    //    } 
-    //    entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1);
-    //    if (entity_id >=0) {
-    //        Entity entity = entities_array[entity_id];
-    //        PrintEntity(entity);
-    //    }
-        for (int e = 0; e < entity_array_offset; ++e) {
-            PrintEntity(entities_array[e]);
+        int entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
+        if (entity_id >=0) {
+            Entity entity = entities_array[entity_id];
+            PrintEntity(entity);
         } 
+        entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1);
+        if (entity_id >=0) {
+            Entity entity = entities_array[entity_id];
+            PrintEntity(entity);
+        }
+        
     }
     // NOTE: Do toggling movability:
     // TODO:

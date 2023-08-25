@@ -303,6 +303,39 @@ void DrawSimpleImage(
 
 }
 
+
+// NOTE: Textbox input
+// Returns if the buffer was changed since last time the call was made.
+bool DrawSimpleTextbox(
+    const char* label, 
+    char* buffer, 
+    size_t buffer_size,
+    Vector2 screen_position,
+    Vector2 scale,
+    ImFont* font
+) {
+    int height = ImGui::GetWindowSize().y;
+    int width = ImGui::GetWindowSize().x;
+
+    if(font != nullptr) ImGui::PushFont(font);
+
+    ImFont* defaultFont = ImGui::GetIO().Fonts->Fonts[0]; // Get the default font
+    
+    ImVec2 text_position((int)(screen_position.x * width), (int)(screen_position.y * height));
+
+    ImGui::SetCursorPos(text_position);
+    
+    ImGui::Text(label); // Display the label on the left
+    ImGui::SameLine();
+    ImGui::PushItemWidth(scale.x);
+    bool r =  ImGui::InputText("##InputField", buffer, buffer_size);
+    ImGui::PopItemWidth();
+
+    if (font != nullptr) ImGui::PopFont();
+
+    return r;
+}
+
 // NOTE: Float slider
 void DrawSimpleFloatSlider(const char* label, float* float_val, float min, float max) {
 

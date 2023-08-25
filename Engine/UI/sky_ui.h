@@ -60,7 +60,14 @@ void DrawSimpleImage(
     Vector2 uv0 = {0.0f, 0.0f}, 
     Vector2 uv1 = {1.0f, 1.0f}
 );
-
+bool DrawSimpleTextbox( // FIXME: scaling this component doesnt work for some reason. idk.
+    const char* label, 
+    char* buffer, 
+    size_t buffer_size,
+    Vector2 screen_pos,
+    Vector2 scale,
+    ImFont* font = nullptr
+);
 
 // SECTION: For engine use
 
