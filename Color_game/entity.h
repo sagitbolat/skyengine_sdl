@@ -23,7 +23,7 @@ void EntityMap::SetID(int x, int y, int z, int id) {
 struct EmissionTile {
     bool active;
     enum ORIENTATION_ENUM {HORIZONTAL, VERTICAL, CROSSED} orientation;
-    fColor color;
+    Color color;
 };
 struct EmissionMap {
     EmissionTile* map;
@@ -61,17 +61,17 @@ struct EntityComponentEmitter { // NOTE: Laser emitter struct
     bool active;
     Sprite nozzle_sprite;
     Sprite indicator_sprite;
-    fColor emission_color;
+    Color emission_color;
     enum DIRECTION_ENUM {UP, RIGHT, DOWN, LEFT} direction;
 };
 struct EntityComponentReceiver { // NOTE: Laser reciever struct
     bool active;
     Sprite nozzle_sprite;
     Sprite indicator_sprite;
-    fColor accepted_color;
+    Color accepted_color;
     bool signal_received; // NOTE: turns true if a laser hits the Reciever
     bool signal_accepted; // NOTE: turns true if the laser is of the correct color.
-    fColor signal_color;
+    Color signal_color;
 };
 #define MAX_CONNECTED_RECIEVERS 5
 struct EntityComponentDoor { // NOTE: A door that can be open or closed
@@ -93,17 +93,17 @@ void EntityComponentMoverInit(EntityComponentMover* component, float seconds_per
     component->move_timer = 0.0f;
     component->moving = false;
 }
-void EntityComponentEmitterInit(EntityComponentEmitter* component, fColor emission_color,  EntityComponentEmitter::DIRECTION_ENUM dir, bool active = true) {
+void EntityComponentEmitterInit(EntityComponentEmitter* component, Color emission_color,  EntityComponentEmitter::DIRECTION_ENUM dir, bool active = true) {
     component->active = active;
     component->emission_color = emission_color;
     component->direction = dir;
 }
-void EntityComponentReceiverInit(EntityComponentReceiver* component, fColor accepted_color, bool active=true) {
+void EntityComponentReceiverInit(EntityComponentReceiver* component, Color accepted_color, bool active=true) {
     component->active = active;
     component->accepted_color = accepted_color; // NOTE: The color that the receiver accepts as valid.
     component->signal_received = false;
     component->signal_accepted = false;
-    component->signal_color = {0.0f, 0.0f, 0.0f, 0.0f};
+    component->signal_color = {0, 0, 0, 0};
 }
 void EntityComponentDoorInit(EntityComponentDoor* component, bool require_all_to_unlock = false, int connected_receivers[MAX_CONNECTED_RECIEVERS] = nullptr, int num_connected_receivers = 0, bool active=true) {
     component->active  = active;
@@ -155,10 +155,10 @@ void PrintEntity(Entity e) {
     printf("Mover::Active           %d\n", e.movable.active);
     printf("Mover::Moving           %d\n", e.movable.moving);
     printf("Emitter::Active:        %d\n", e.emitter.active);
-    printf("Emitter::Color:         {%f, %f, %f, %f}\n", e.emitter.emission_color.r, e.emitter.emission_color.g, e.emitter.emission_color.b, e.emitter.emission_color.a);
+    printf("Emitter::Color:         {%d, %d, %d, %d}\n", e.emitter.emission_color.r, e.emitter.emission_color.g, e.emitter.emission_color.b, e.emitter.emission_color.a);
     printf("Receiver::Active:       %d\n", e.receiver.active);
-    printf("Receiver::ColorReceived:{%f, %f, %f, %f}\n", e.receiver.signal_color.r, e.receiver.signal_color.g, e.receiver.signal_color.b, e.receiver.signal_color.a);
-    printf("Receiver::ColorAccepted:{%f, %f, %f, %f}\n", e.receiver.accepted_color.r, e.receiver.accepted_color.g, e.receiver.accepted_color.b, e.receiver.accepted_color.a);
+    printf("Receiver::ColorReceived:{%d, %d, %d, %d}\n", e.receiver.signal_color.r, e.receiver.signal_color.g, e.receiver.signal_color.b, e.receiver.signal_color.a);
+    printf("Receiver::ColorAccepted:{%d, %d, %d, %d}\n", e.receiver.accepted_color.r, e.receiver.accepted_color.g, e.receiver.accepted_color.b, e.receiver.accepted_color.a);
     printf("Receiver::SigReceived:  %d\n", e.receiver.signal_received);
     printf("Receiver::SigAccepted:  %d\n", e.receiver.signal_accepted);
     printf("Door::Active:           %d\n", e.door.active);
@@ -171,6 +171,7 @@ void PrintEntity(Entity e) {
         printf(", %d", e.door.connected_receiver_ids[i]);
     }
     printf("}\n");
+    printf("Endgoal::Active:        %d\n", e.endgoal.active);
     printf("############################\n");
 
 } 
@@ -202,8 +203,8 @@ void EntityInit (
     entity->player.active = false;
     entity->endgoal.active = false;
     EntityComponentMoverInit(&entity->movable, MOVE_SPEED, false);
-    EntityComponentEmitterInit(&entity->emitter, {0.0f, 0.0f, 0.0f, 0.0f}, EntityComponentEmitter::DIRECTION_ENUM::DOWN, false);
-    EntityComponentReceiverInit(&entity->receiver, {0.0f, 0.0f, 0.0f, 0.0f}, false);
+    EntityComponentEmitterInit(&entity->emitter, {0, 0, 0, 0}, EntityComponentEmitter::DIRECTION_ENUM::DOWN, false);
+    EntityComponentReceiverInit(&entity->receiver, {0, 0, 0, 0}, false);
     EntityComponentDoorInit(&entity->door, false, nullptr, 0, false);
 }
 
@@ -248,7 +249,7 @@ void EmitterInit(
     Sprite nozzle_sprite,
     Sprite indicator_sprite,
     Vector2Int init_position,
-    fColor emitter_color,
+    Color emitter_color,
     bool emitter_movable,
     EntityComponentEmitter::DIRECTION_ENUM direction
 ) {
@@ -265,7 +266,7 @@ void ReceiverInit(
     Sprite nozzle_sprite,
     Sprite indicator_sprite,
     Vector2Int init_position,
-    fColor accepted_signal_color,
+    Color accepted_signal_color,
     bool receiver_movable
 ) {
     EntityInit(receiver, id, sprite, init_position, 1.0f);
@@ -492,12 +493,12 @@ void EntityUpdateReceiver(int entity_id, Entity* entity_array) {
     if (!entity->active || !entity->receiver.active) return;
 
     if (entity->receiver.signal_received) {
-        if (ComparefColor(entity->receiver.signal_color, entity->receiver.accepted_color, 0.2f)) {
+        if (CompareColor(entity->receiver.signal_color, entity->receiver.accepted_color)) {
             entity->receiver.signal_accepted = true;
         } 
         entity->receiver.signal_accepted = true;
     } else if (!entity->receiver.signal_received) {
-        entity->receiver.signal_color = {0.0f, 0.0f, 0.0f, 0.0f};
+        entity->receiver.signal_color = {0, 0, 0, 0};
         entity->receiver.signal_accepted = false;
     }
 
@@ -637,7 +638,7 @@ void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shader
             ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
             ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
 
-            tile = {false, EmissionTile::HORIZONTAL, fColor{0.0f, 0.0f, 0.0f, 0.0f}};
+            tile = {false, EmissionTile::HORIZONTAL, Color{0, 0, 0, 0}};
             map.SetEmissionTile(x, y, tile);
 
         }

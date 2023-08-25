@@ -77,7 +77,7 @@ void Awake(GameMemory *gm)
     Sprite tileset_sprite   = LoadSprite("assets/tileset.png", shaders, gpu_buffers);
     tileset.atlas           = tileset_sprite;
     tileset.width_in_tiles  = 5;
-    tileset.height_in_tiles = 4;
+    tileset.height_in_tiles = 3;
 
     tilemap.width   = 15;
     tilemap.height  = 9;
@@ -308,7 +308,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 int e = entity_array_offset;
                 entity_array_offset++;
 
-                EmitterInit(&entities_array[e], e, emitter_sprite, emitter_nozzle_sprite, emitter_indicator_sprite, {tile_mouse_x, tile_mouse_y}, {1.0f, 1.0f, 1.0f, 1.0f}, true, EntityComponentEmitter::DOWN); 
+                EmitterInit(&entities_array[e], e, emitter_sprite, emitter_nozzle_sprite, emitter_indicator_sprite, {tile_mouse_x, tile_mouse_y}, {255, 255, 255, 255}, true, EntityComponentEmitter::DOWN); 
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
@@ -321,7 +321,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 int e = entity_array_offset;
                 entity_array_offset++;
 
-                ReceiverInit(&entities_array[e], e, receiver_sprite, receiver_nozzle_sprite, receiver_indicator_sprite, {tile_mouse_x, tile_mouse_y}, {1.0f, 1.0f, 1.0f, 1.0f}, true);
+                ReceiverInit(&entities_array[e], e, receiver_sprite, receiver_nozzle_sprite, receiver_indicator_sprite, {tile_mouse_x, tile_mouse_y}, {255, 255, 255, 255}, true);
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);

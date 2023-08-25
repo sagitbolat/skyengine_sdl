@@ -60,7 +60,7 @@ struct CircleInt {
 
 
 struct Color {
-    uint8_t alpha, red, green, blue;
+    uint8_t r, g, b, a;
 };
 struct fColor {
     float r, g, b, a;

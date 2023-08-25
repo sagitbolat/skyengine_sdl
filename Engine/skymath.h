@@ -117,10 +117,22 @@ inline Vector2Int operator-(const Vector2Int a, const Vector2Int b) {
 
 // SECTION: COLOR MATH
 
+// NOTE: Vec4 from color always has float values between 0.0 and 1.0
+inline Vector4 Vec4(Color c) {
+	return Vector4{(float)c.r/255.0f, (float)c.g/255.0f, (float)c.b/255.0f, (float)c.a/255.0f};
+}
 inline Vector4 Vec4(fColor c) {
     return Vector4{c.r, c.g, c.b, c.a};
 }
 
+inline Color operator+(const Color a, const Color b) {
+	return Color{
+		(uint8_t)IntClamp(a.r + b.r, 0, 255), 
+		(uint8_t)IntClamp(a.g + b.g, 0, 255),
+		(uint8_t)IntClamp(a.b + b.b, 0, 255),
+		(uint8_t)IntClamp(a.a + b.a, 0, 255)
+	};
+}
 inline fColor operator+(const fColor a, const fColor b) {
 	return fColor{
 		FloatClamp(a.r + b.r, 0.0f, 1.0f), 
@@ -130,6 +142,16 @@ inline fColor operator+(const fColor a, const fColor b) {
 	};
 }
 
+// Returns: true if colors are equal.
+inline bool CompareColor(const Color a, const Color b) {
+	if (
+		a.r != b.r || 
+		a.g != b.g || 
+		a.b != b.b || 
+		a.a != b.a  
+	) {return false;}
+	return true;
+}
 // Returns: true if colors are equal.
 inline bool ComparefColor(const fColor a, const fColor b, float epsilon=0.01f) {
 	if (
