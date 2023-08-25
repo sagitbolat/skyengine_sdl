@@ -141,6 +141,7 @@ void Awake(GameMemory *gm)
 
     PlayerInit (
         &entities_array[0], 
+        0,
         player_sprite, 
         player_up_sprite, 
         player_down_sprite, 
@@ -203,11 +204,39 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     if (DrawSimpleButton(
             "Save Level",
             {float(108)/float(1280) * 11.0, 0.4},
-            {float(108)/float(1280) * 0.8, 0.3},
+            {float(108)/float(1280) * 0.8, 0.2},
             nullptr
         )
     ) {
         SaveLevelState("untitled", &tilemap, 2, entities_array, entity_array_offset);
+    }
+    if (DrawSimpleButton(
+            "Load Level",
+            {float(108)/float(1280) * 11.0, 0.7},
+            {float(108)/float(1280) * 0.8, 0.2},
+            nullptr
+        )
+    ) {
+        Sprite sprites[] = {
+            player_sprite,                  //0 
+            player_up_sprite,               //1
+            player_down_sprite,             //2
+            player_left_sprite,             //3
+            player_right_sprite,            //4
+            push_block_sprite,              //5
+            static_block_sprite,            //6
+            emitter_sprite,                 //7
+            emitter_nozzle_sprite,          //8
+            emitter_indicator_sprite,       //9
+            receiver_sprite,                //10
+            receiver_nozzle_sprite,         //11
+            receiver_indicator_sprite,      //12
+            open_door_sprite,               //13
+            closed_door_sprite,             //14
+            endgoal_sprite                  //15
+        };
+        LevelStateInfo level_state_info = ReadLevelState("1", &tilemap, &entities_array, &entity_id_map, sprites);
+        entity_array_offset = level_state_info.num_entities;
     }
 
 
@@ -419,18 +448,21 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     // NOTE: Print debug info of entity
     if (ks->state.SPACE && !ks->prev_state.SPACE) {
-        int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
-        int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
+    //    int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
+    //    int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
 
-        int entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
-        if (entity_id >=0) {
-            Entity entity = entities_array[entity_id];
-            PrintEntity(entity);
-        } 
-        entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1);
-        if (entity_id >=0) {
-            Entity entity = entities_array[entity_id];
-            PrintEntity(entity);
+    //    int entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
+    //    if (entity_id >=0) {
+    //        Entity entity = entities_array[entity_id];
+    //        PrintEntity(entity);
+    //    } 
+    //    entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1);
+    //    if (entity_id >=0) {
+    //        Entity entity = entities_array[entity_id];
+    //        PrintEntity(entity);
+    //    }
+        for (int e = 0; e < entity_array_offset; ++e) {
+            PrintEntity(entities_array[e]);
         } 
     }
     // NOTE: Do toggling movability:

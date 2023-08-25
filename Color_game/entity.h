@@ -150,6 +150,7 @@ void PrintEntity(Entity e) {
     printf("ID:                     %d\n", e.id);
     printf("Active:                 %d\n", e.active);
     printf("Position:               {%d, %d}\n", e.position.x, e.position.y);
+    printf("TransformPos:           {%f, %f, %f}\n", e.transform.position.x, e.transform.position.y, e.transform.position.z);
     printf("Layer:                  %d\n", e.entity_layer);
     printf("Player::Active:         %d\n", e.player.active);
     printf("Mover::Active           %d\n", e.movable.active);
@@ -210,6 +211,7 @@ void EntityInit (
 
 void PlayerInit(
     Entity* player,
+    int id,
     Sprite sprite,
     Sprite up_sprite,
     Sprite down_sprite,
@@ -217,7 +219,7 @@ void PlayerInit(
     Sprite right_sprite,
     Vector2Int init_position
 ) {
-    EntityInit(player, 0, sprite, init_position, 1.0f);
+    EntityInit(player, id, sprite, init_position, 1.0f);
     EntityComponentMoverInit(&player->movable, MOVE_SPEED, true);
     player->player.active = true;
     player->player.up_sprite    = up_sprite;
