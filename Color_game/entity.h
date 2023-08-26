@@ -544,18 +544,23 @@ void EntityUpdateDoor(int entity_id, Entity* entity_array, EntityMap map) {
     for (int i = 0; i < door_entity->door.num_connected_activators; ++i) {
         int id = door_entity->door.connected_activators_ids[i];
         if (id < 0) continue;
-        Entity* receiver_entity = &entity_array[id];
+        Entity* activator_entity = &entity_array[id];
         
-        if (!receiver_entity->active || !receiver_entity->receiver.active) return;
+        if (!activator_entity->active) continue;
 
-        if (receiver_entity->receiver.signal_accepted) {
+        if (activator_entity->receiver.active && activator_entity->receiver.signal_accepted) {
             if (!door_entity->door.require_all_to_unlock) {
                 door_entity->door.is_open = true;
                 break;
             }
             ++num_receivers_active;
-        }
-        else {
+        } else if (activator_entity->button.active && activator_entity->button.is_pressed) {
+            if (!door_entity->door.require_all_to_unlock) {
+                door_entity->door.is_open = true;
+                break;
+            }
+            ++num_receivers_active;
+        } else {
             int top_entity_id = map.GetID(door_entity->position.x, door_entity->position.y, 1);
             if (!entity_array[top_entity_id].active) door_entity->door.is_open = false; 
         }

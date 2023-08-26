@@ -466,11 +466,15 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
 
         int entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1);
-    
+        int bottom_entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
         if (entity_id >= 0) {
             if (entities_array[entity_id].active && entities_array[entity_id].receiver.active) {
                 selected_receiver_id = entity_id;
-            }
+            } 
+        } else if (bottom_entity_id >= 0) {
+            if (entities_array[entity_id].active && entities_array[entity_id].button.active) {
+                selected_receiver_id = bottom_entity_id;
+            } 
         }
     }
     // NOTE: When E is released, attach selected recevier the hovered door
