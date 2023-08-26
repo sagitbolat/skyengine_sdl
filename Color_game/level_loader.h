@@ -56,9 +56,9 @@ void WriteEntityState(
 
     // NOTE: Door
     WriteUint32(int(entity->door.require_all_to_unlock), file_p);
-    WriteUint32(int(entity->door.num_connected_receivers), file_p);
-    for (int i = 0; i < MAX_CONNECTED_RECIEVERS; ++i) {
-        WriteUint32(int(entity->door.connected_receiver_ids[i]), file_p);
+    WriteUint32(int(entity->door.num_connected_activators), file_p);
+    for (int i = 0; i < MAX_CONNECTED_ACTIVATORS; ++i) {
+        WriteUint32(int(entity->door.connected_activators_ids[i]), file_p);
     }
     
 }
@@ -160,9 +160,9 @@ void ReadEntityState(Entity* entity, EntityMap* entity_map, const Sprite* sprite
     }
 
     // NOTE: Connect Doors
-    entity->door.num_connected_receivers = ReadUint32(file_p);
-    for (int i = 0; i < MAX_CONNECTED_RECIEVERS; ++i) {
-        entity->door.connected_receiver_ids[i] = ReadUint32(file_p);
+    entity->door.num_connected_activators = ReadUint32(file_p);
+    for (int i = 0; i < MAX_CONNECTED_ACTIVATORS; ++i) {
+        entity->door.connected_activators_ids[i] = ReadUint32(file_p);
     }
 
 }

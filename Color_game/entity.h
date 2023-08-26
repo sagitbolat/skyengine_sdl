@@ -73,18 +73,24 @@ struct EntityComponentReceiver { // NOTE: Laser reciever struct
     bool signal_accepted; // NOTE: turns true if the laser is of the correct color.
     Color signal_color;
 };
-#define MAX_CONNECTED_RECIEVERS 5
+#define MAX_CONNECTED_ACTIVATORS 5
 struct EntityComponentDoor { // NOTE: A door that can be open or closed
     bool active;
     bool is_open;
     Sprite open_sprite;
     Sprite closed_sprite;
     bool require_all_to_unlock; // NOTE: If true, all connected receivers need to be activated with a signal for the door to unlock.
-    int connected_receiver_ids[MAX_CONNECTED_RECIEVERS];
-    int num_connected_receivers;
+    int connected_activators_ids[MAX_CONNECTED_ACTIVATORS];
+    int num_connected_activators;
 };
 struct EntityComponentEndgoal {
     bool active;
+};
+struct EntityComponentButton {
+    bool active;
+    Sprite up_sprite;
+    Sprite down_sprite;
+    bool is_pressed;
 };
 
 void EntityComponentMoverInit(EntityComponentMover* component, float seconds_per_tile, bool active = true) {
@@ -105,25 +111,29 @@ void EntityComponentReceiverInit(EntityComponentReceiver* component, Color accep
     component->signal_accepted = false;
     component->signal_color = {0, 0, 0, 0};
 }
-void EntityComponentDoorInit(EntityComponentDoor* component, bool require_all_to_unlock = false, int connected_receivers[MAX_CONNECTED_RECIEVERS] = nullptr, int num_connected_receivers = 0, bool active=true) {
+void EntityComponentDoorInit(EntityComponentDoor* component, bool require_all_to_unlock = false, int connected_receivers[MAX_CONNECTED_ACTIVATORS] = nullptr, int num_connected_activators = 0, bool active=true) {
     component->active  = active;
     component->is_open = false;
     component->require_all_to_unlock = require_all_to_unlock;
-    if (num_connected_receivers == 0 || connected_receivers == nullptr) {
-        for (int i = 0; i < MAX_CONNECTED_RECIEVERS; ++i) {
-            component->connected_receiver_ids[i] = -1; 
+    if (num_connected_activators == 0 || connected_receivers == nullptr) {
+        for (int i = 0; i < MAX_CONNECTED_ACTIVATORS; ++i) {
+            component->connected_activators_ids[i] = -1; 
         }
-        component->num_connected_receivers = 0;
+        component->num_connected_activators = 0;
     } else {
-        for (int i = 0; i < MAX_CONNECTED_RECIEVERS; ++i) {
-            if (i < num_connected_receivers) {
-                component->connected_receiver_ids[i] = connected_receivers[i];
+        for (int i = 0; i < MAX_CONNECTED_ACTIVATORS; ++i) {
+            if (i < num_connected_activators) {
+                component->connected_activators_ids[i] = connected_receivers[i];
             } else {
-                component->connected_receiver_ids[i] = -1;
+                component->connected_activators_ids[i] = -1;
             }
         }
-        component->num_connected_receivers = num_connected_receivers;
+        component->num_connected_activators = num_connected_activators;
     }
+}
+void EntityComponentButtonInit(EntityComponentButton* component, bool is_pressed = false, bool active = true) {
+    component->active = active;
+    component->is_pressed = is_pressed;
 }
 
 // SECTION: Entities
@@ -142,6 +152,7 @@ struct Entity {
     EntityComponentReceiver receiver;
     EntityComponentDoor     door;
     EntityComponentEndgoal  endgoal;
+    EntityComponentButton   button;
 }; 
 
 
@@ -165,14 +176,16 @@ void PrintEntity(Entity e) {
     printf("Door::Active:           %d\n", e.door.active);
     printf("Door::Open:             %d\n", e.door.is_open);
     printf("Door::RequireAllToOpen: %d\n", e.door.require_all_to_unlock);
-    printf("Door::NumAttached       %d\n", e.door.num_connected_receivers);
-    printf("Door::AttachedReceivers:{%d", e.door.connected_receiver_ids[0]);
-    for (int i = 1; i < MAX_CONNECTED_RECIEVERS; ++i) {
+    printf("Door::NumAttached       %d\n", e.door.num_connected_activators);
+    printf("Door::AttachedReceivers:{%d", e.door.connected_activators_ids[0]);
+    for (int i = 1; i < MAX_CONNECTED_ACTIVATORS; ++i) {
         
-        printf(", %d", e.door.connected_receiver_ids[i]);
+        printf(", %d", e.door.connected_activators_ids[i]);
     }
     printf("}\n");
     printf("Endgoal::Active:        %d\n", e.endgoal.active);
+    printf("Button::Active:         %d\n", e.button.active);
+    printf("Button::Pressed:        %d\n", e.button.is_pressed);
     printf("############################\n");
 
 } 
@@ -207,6 +220,7 @@ void EntityInit (
     EntityComponentEmitterInit(&entity->emitter, {0, 0, 0, 0}, EntityComponentEmitter::DIRECTION_ENUM::DOWN, false);
     EntityComponentReceiverInit(&entity->receiver, {0, 0, 0, 0}, false);
     EntityComponentDoorInit(&entity->door, false, nullptr, 0, false);
+    EntityComponentButtonInit(&entity->button, false, false);
 }
 
 void PlayerInit(
@@ -285,13 +299,13 @@ void DoorInit(
     Sprite closed_sprite,
     Vector2Int init_position,
     bool require_all_to_unlock = false,
-    int connected_receivers[MAX_CONNECTED_RECIEVERS] = nullptr,
-    int num_connected_receivers = 0
+    int connected_receivers[MAX_CONNECTED_ACTIVATORS] = nullptr,
+    int num_connected_activators = 0
 ) {
     //EntityInit(door, id, sprite, init_position, 1.0f, true, false);
 
     EntityInit(door, id, sprite, init_position, 0.0f);
-    EntityComponentDoorInit(&door->door, require_all_to_unlock, connected_receivers, num_connected_receivers, true);
+    EntityComponentDoorInit(&door->door, require_all_to_unlock, connected_receivers, num_connected_activators, true);
     door->door.open_sprite = open_sprite;
     door->door.closed_sprite = closed_sprite;
 }
@@ -304,7 +318,18 @@ void EndgoalInit(
     EntityInit(endgoal, id, goal_sprite, init_position, 0.0f);
     endgoal->endgoal.active = true;
 }
-
+void ButtonInit(
+    Entity* button,
+    int id,
+    Sprite up_sprite,
+    Sprite down_sprite,
+    Vector2Int init_position
+) {
+    EntityInit(button, id, up_sprite, init_position, 0.0f, true);
+    EntityComponentButtonInit(&button->button, false, true);
+    button->button.up_sprite = up_sprite;
+    button->button.down_sprite = down_sprite;
+}
 
 
 // SECTION: Entity state change functions. Should be called only when you need to change a state of the entity. NOT EVERY FRAME
@@ -512,12 +537,12 @@ void EntityUpdateDoor(int entity_id, Entity* entity_array, EntityMap map) {
     if (!door_entity->active || 
         !door_entity->door.active 
     ) return;
-    if (door_entity->door.num_connected_receivers == 0) return;
+    if (door_entity->door.num_connected_activators == 0) return;
 
     int num_receivers_active = 0;
 
-    for (int i = 0; i < door_entity->door.num_connected_receivers; ++i) {
-        int id = door_entity->door.connected_receiver_ids[i];
+    for (int i = 0; i < door_entity->door.num_connected_activators; ++i) {
+        int id = door_entity->door.connected_activators_ids[i];
         if (id < 0) continue;
         Entity* receiver_entity = &entity_array[id];
         
@@ -535,13 +560,21 @@ void EntityUpdateDoor(int entity_id, Entity* entity_array, EntityMap map) {
             if (!entity_array[top_entity_id].active) door_entity->door.is_open = false; 
         }
     }
-    if (door_entity->door.require_all_to_unlock && num_receivers_active == door_entity->door.num_connected_receivers) door_entity->door.is_open = true;
+    if (door_entity->door.require_all_to_unlock && num_receivers_active == door_entity->door.num_connected_activators) door_entity->door.is_open = true;
 }
 
-void EntityUpdate(int entity_id, Entity* entity_array, EntityMap map,float dt) {
-    EntityUpdateMover(entity_id, entity_array, dt);
-    EntityUpdateReceiver(entity_id, entity_array);
-    EntityUpdateDoor(entity_id, entity_array, map);
+void EntityUpdateButton(int entity_id, Entity* entity_array, EntityMap map) {
+
+    Entity* entity = &entity_array[entity_id];
+
+    if (!entity->active || !entity->button.active) return;
+
+
+    Vector2Int pos = entity->position;
+    int top_entity_id = map.GetID(pos.x, pos.y, 1);
+
+    if (top_entity_id < 0) entity->button.is_pressed = false;
+    else entity->button.is_pressed = true;
 }
 
 
@@ -577,12 +610,10 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders) {
         }
     }
 
-    DrawSprite(entity->sprite, entity->transform, main_camera);
 
     // SECTION: Rendering door
-    if (entity->door.active) {
+    else if (entity->door.active) {
         Transform transform = entity->transform;
-        transform.position.z += 0.05f;
         if (entity->door.is_open) {
             DrawSprite(entity->door.open_sprite, transform, main_camera);
         } else {
@@ -590,8 +621,19 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders) {
         }
     }
 
+    else if (entity->button.active) {
+        Transform transform = entity->transform;
+        if (entity->button.is_pressed) {
+            DrawSprite(entity->button.down_sprite, transform, main_camera);
+        } else {
+            DrawSprite(entity->button.up_sprite, transform, main_camera);
+        }
+
+    }
+
     // SECTION: Emitter rendering
-    if (entity->emitter.active && !entity->movable.moving) {
+    else if (entity->emitter.active && !entity->movable.moving) {
+        DrawSprite(entity->sprite, entity->transform, main_camera);
         Transform transform = entity->transform;
         transform.position.z += 0.1f;
         ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->emitter.emission_color));
@@ -599,7 +641,8 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders) {
         ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
     }
     // SECTION: Receiver rendering
-    if (entity->receiver.active) {
+    else if (entity->receiver.active) {
+        DrawSprite(entity->sprite, entity->transform, main_camera);
         Transform transform = entity->transform;
         transform.position.z += 0.1f;
         ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->receiver.accepted_color));
@@ -613,6 +656,9 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders) {
         ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
         // NOTE: now that we finished rendering, we can mark receiver non-signaled.
         entity->receiver.signal_received = false;
+    }
+    else {
+        DrawSprite(entity->sprite, entity->transform, main_camera);
     }
 }
 void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shaders) {

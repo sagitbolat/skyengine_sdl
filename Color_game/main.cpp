@@ -16,6 +16,9 @@ void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *cle
 {
     *w = 1280;
     *h = 720;
+    #ifdef DEBUG_UI
+    *h = 720+108; 
+    #endif
     *w_in_world_space = 14.0f;
     *fullscreen = false;
     //*clear_color = {0.8f/2, 0.83f/2, 1.0f/2, 1.0f};
@@ -43,6 +46,8 @@ Sprite receiver_indicator_sprite;
 Sprite open_door_sprite;
 Sprite closed_door_sprite;
 Sprite endgoal_sprite;
+Sprite button_up_sprite;
+Sprite button_down_sprite;
 
 
 
@@ -125,6 +130,8 @@ void Awake(GameMemory *gm)
     open_door_sprite            = LoadSprite("assets/door_open.png", shaders, gpu_buffers);
     closed_door_sprite          = LoadSprite("assets/door_closed.png", shaders, gpu_buffers);
     endgoal_sprite              = LoadSprite("assets/endgoal.png", shaders, gpu_buffers);
+    button_up_sprite            = LoadSprite("assets/button_up.png", shaders, gpu_buffers);
+    button_down_sprite          = LoadSprite("assets/button_down.png", shaders, gpu_buffers);
 
 
     entity_id_map.width     = tilemap.width;
@@ -159,6 +166,10 @@ void Awake(GameMemory *gm)
     main_camera.position.x  = float(tilemap.width/2);
     main_camera.position.y  = float(tilemap.height/2);
     main_camera.look_target = {7.0f, 4.0f, 0.0f}; 
+    #ifdef DEBUG_UI
+    main_camera.position.y  = float(tilemap.height/2) + 0.5f;
+    main_camera.look_target = {7.0f, 4.5f, 0.0f}; 
+    #endif
 }
 
 void Start(GameState *gs, KeyboardState *ks) {
@@ -246,7 +257,9 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             receiver_indicator_sprite,      //12
             open_door_sprite,               //13
             closed_door_sprite,             //14
-            endgoal_sprite                  //15
+            endgoal_sprite,                 //15
+            button_up_sprite,               //16
+            button_down_sprite,             //17
         };
         LevelStateInfo level_state_info = ReadLevelState(level_name, &tilemap, &entities_array, &entity_id_map, sprites);
         entity_array_offset = level_state_info.num_entities;
@@ -308,6 +321,15 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         )
     ) {
         entity_type_to_spawn = 6;
+    } 
+    if ( DrawSimpleImageButton (
+            "ButtonButton", 
+            button_up_sprite, 
+            {float(108)/float(1280) * 5.0, 0.2}, 
+            {float(108)/float(1280) * 0.6, 0.6}
+        )
+    ) {
+        entity_type_to_spawn = 7;
     } 
      
     
@@ -395,6 +417,19 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
             } break;
+            case 7: {
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0) >= 0) break;
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1) >= 0) break;
+                if (TestTileCollide(tilemap, {tile_mouse_x, tile_mouse_y})) break;
+
+                int e = entity_array_offset;
+                entity_array_offset++;
+
+                ButtonInit(&entities_array[e], e, button_up_sprite, button_down_sprite, {tile_mouse_x, tile_mouse_y}); 
+                int x = entities_array[e].position.x;
+                int y = entities_array[e].position.y;
+                entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
+            } break;
             default:
                 break;
         }
@@ -449,10 +484,10 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             if (entities_array[entity_id].active && entities_array[entity_id].door.active) {
                 if (selected_receiver_id >= 0) {
                     Entity* door = &entities_array[entity_id];
-                    if (door->door.num_connected_receivers < MAX_CONNECTED_RECIEVERS) {
+                    if (door->door.num_connected_activators < MAX_CONNECTED_ACTIVATORS) {
                     printf("Released\n");
-                        door->door.connected_receiver_ids[door->door.num_connected_receivers] = selected_receiver_id;
-                        door->door.num_connected_receivers += 1;
+                        door->door.connected_activators_ids[door->door.num_connected_activators] = selected_receiver_id;
+                        door->door.num_connected_activators += 1;
                     }
                 }
             }
@@ -543,6 +578,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     }
     for (int id = 0; id < entity_array_offset; ++id) {
         EntityUpdateReceiver(id, entities_array);
+        EntityUpdateButton(id, entities_array, entity_id_map);
     }
     for (int id = 0; id < entity_array_offset; ++id) {
         EntityUpdateDoor(id, entities_array, entity_id_map);
