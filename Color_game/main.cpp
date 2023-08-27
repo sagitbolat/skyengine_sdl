@@ -43,8 +43,10 @@ Sprite emitter_indicator_sprite;
 Sprite receiver_sprite;          
 Sprite receiver_nozzle_sprite;   
 Sprite receiver_indicator_sprite;
-Sprite open_door_sprite;
-Sprite closed_door_sprite;
+Sprite open_door_vertical_sprite;
+Sprite closed_door_vertical_sprite;
+Sprite open_door_horizontal_sprite;
+Sprite closed_door_horizontal_sprite;
 Sprite endgoal_sprite;
 Sprite button_up_sprite;
 Sprite button_down_sprite;
@@ -127,8 +129,10 @@ void Awake(GameMemory *gm)
     receiver_nozzle_sprite      = LoadSprite("assets/receiver_nozzle.png", shaders, gpu_buffers);
     receiver_indicator_sprite   = LoadSprite("assets/receiver_indicator.png", shaders, gpu_buffers);
     emission_sprite             = LoadSprite("assets/emission.png", shaders, gpu_buffers);
-    open_door_sprite            = LoadSprite("assets/door_open.png", shaders, gpu_buffers);
-    closed_door_sprite          = LoadSprite("assets/door_closed.png", shaders, gpu_buffers);
+    open_door_vertical_sprite   = LoadSprite("assets/door_open.png", shaders, gpu_buffers);
+    closed_door_vertical_sprite = LoadSprite("assets/door_closed.png", shaders, gpu_buffers);
+    open_door_horizontal_sprite = LoadSprite("assets/door_open_horiz.png", shaders, gpu_buffers);
+    closed_door_horizontal_sprite = LoadSprite("assets/door_closed_horiz.png", shaders, gpu_buffers);
     endgoal_sprite              = LoadSprite("assets/endgoal.png", shaders, gpu_buffers);
     button_up_sprite            = LoadSprite("assets/button_up.png", shaders, gpu_buffers);
     button_down_sprite          = LoadSprite("assets/button_down.png", shaders, gpu_buffers);
@@ -255,11 +259,13 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             receiver_sprite,                //10
             receiver_nozzle_sprite,         //11
             receiver_indicator_sprite,      //12
-            open_door_sprite,               //13
-            closed_door_sprite,             //14
-            endgoal_sprite,                 //15
-            button_up_sprite,               //16
-            button_down_sprite,             //17
+            open_door_vertical_sprite,      //13
+            closed_door_vertical_sprite,    //14
+            open_door_horizontal_sprite,    //15
+            closed_door_horizontal_sprite,  //16
+            endgoal_sprite,                 //17
+            button_up_sprite,               //18
+            button_down_sprite,             //19
         };
         LevelStateInfo level_state_info = ReadLevelState(level_name, &tilemap, &entities_array, &entity_id_map, sprites);
         entity_array_offset = level_state_info.num_entities;
@@ -306,7 +312,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     } 
     if ( DrawSimpleImageButton (
             "DoorButton", 
-            closed_door_sprite, 
+            closed_door_vertical_sprite, 
             {float(108)/float(1280) * 3.4, 0.2}, 
             {float(108)/float(1280) * 0.6, 0.6}
         )
@@ -399,7 +405,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 int e = entity_array_offset;
                 entity_array_offset++;
 
-                DoorInit(&entities_array[e], e, open_door_sprite, open_door_sprite, closed_door_sprite, {tile_mouse_x, tile_mouse_y}); 
+                DoorInit(&entities_array[e], e, open_door_vertical_sprite, closed_door_vertical_sprite, open_door_horizontal_sprite, closed_door_horizontal_sprite, {tile_mouse_x, tile_mouse_y}); 
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
@@ -449,7 +455,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
             if (entity_id >= 0) {
                 if (entities_array[entity_id].door.active) {
-                    entities_array[entity_id].door.require_all_to_unlock = !entities_array[entity_id].door.require_all_to_unlock;
+                    entities_array[entity_id].door.open_by_default = !entities_array[entity_id].door.open_by_default;
                 }
             }
         }
@@ -467,13 +473,17 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
         int entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1);
         int bottom_entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
+
+
         if (entity_id >= 0) {
             if (entities_array[entity_id].active && entities_array[entity_id].receiver.active) {
                 selected_receiver_id = entity_id;
+                printf("Selected activator id %d\n", entity_id);
             } 
         } else if (bottom_entity_id >= 0) {
             if (entities_array[entity_id].active && entities_array[entity_id].button.active) {
                 selected_receiver_id = bottom_entity_id;
+                printf("Selected activator id %d\n", bottom_entity_id);
             } 
         }
     }
@@ -489,7 +499,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 if (selected_receiver_id >= 0) {
                     Entity* door = &entities_array[entity_id];
                     if (door->door.num_connected_activators < MAX_CONNECTED_ACTIVATORS) {
-                    printf("Released\n");
+                    printf("Connected id %d to door %d\n", selected_receiver_id, entity_id);
                         door->door.connected_activators_ids[door->door.num_connected_activators] = selected_receiver_id;
                         door->door.num_connected_activators += 1;
                     }

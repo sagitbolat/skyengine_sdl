@@ -77,9 +77,11 @@ struct EntityComponentReceiver { // NOTE: Laser reciever struct
 struct EntityComponentDoor { // NOTE: A door that can be open or closed
     bool active;
     bool is_open;
+    bool open_by_default; // NOTE: If true, the door will be open by default and closed when activated
     Sprite open_sprite;
     Sprite closed_sprite;
-    bool require_all_to_unlock; // NOTE: If true, all connected receivers need to be activated with a signal for the door to unlock.
+    Sprite open_by_default_open_sprite;
+    Sprite open_by_default_closed_sprite;
     int connected_activators_ids[MAX_CONNECTED_ACTIVATORS];
     int num_connected_activators;
 };
@@ -111,10 +113,10 @@ void EntityComponentReceiverInit(EntityComponentReceiver* component, Color accep
     component->signal_accepted = false;
     component->signal_color = {0, 0, 0, 0};
 }
-void EntityComponentDoorInit(EntityComponentDoor* component, bool require_all_to_unlock = false, int connected_receivers[MAX_CONNECTED_ACTIVATORS] = nullptr, int num_connected_activators = 0, bool active=true) {
+void EntityComponentDoorInit(EntityComponentDoor* component, bool open_by_default = false, int connected_receivers[MAX_CONNECTED_ACTIVATORS] = nullptr, int num_connected_activators = 0, bool active=true) {
     component->active  = active;
     component->is_open = false;
-    component->require_all_to_unlock = require_all_to_unlock;
+    component->open_by_default = open_by_default;
     if (num_connected_activators == 0 || connected_receivers == nullptr) {
         for (int i = 0; i < MAX_CONNECTED_ACTIVATORS; ++i) {
             component->connected_activators_ids[i] = -1; 
@@ -175,7 +177,7 @@ void PrintEntity(Entity e) {
     printf("Receiver::SigAccepted:  %d\n", e.receiver.signal_accepted);
     printf("Door::Active:           %d\n", e.door.active);
     printf("Door::Open:             %d\n", e.door.is_open);
-    printf("Door::RequireAllToOpen: %d\n", e.door.require_all_to_unlock);
+    printf("Door::OpenByDefault:    %d\n", e.door.open_by_default);
     printf("Door::NumAttached       %d\n", e.door.num_connected_activators);
     printf("Door::AttachedReceivers:{%d", e.door.connected_activators_ids[0]);
     for (int i = 1; i < MAX_CONNECTED_ACTIVATORS; ++i) {
@@ -294,20 +296,23 @@ void ReceiverInit(
 void DoorInit(
     Entity* door,
     int id,
-    Sprite sprite,
-    Sprite open_sprite,
-    Sprite closed_sprite,
+    Sprite open_vertical_sprite,
+    Sprite closed_vertical_sprite,
+    Sprite open_horizontal_sprite,
+    Sprite closed_horizontal_sprite,
     Vector2Int init_position,
-    bool require_all_to_unlock = false,
+    bool open_by_default = false,
     int connected_receivers[MAX_CONNECTED_ACTIVATORS] = nullptr,
     int num_connected_activators = 0
 ) {
     //EntityInit(door, id, sprite, init_position, 1.0f, true, false);
 
-    EntityInit(door, id, sprite, init_position, 0.0f);
-    EntityComponentDoorInit(&door->door, require_all_to_unlock, connected_receivers, num_connected_activators, true);
-    door->door.open_sprite = open_sprite;
-    door->door.closed_sprite = closed_sprite;
+    EntityInit(door, id, open_vertical_sprite, init_position, 0.0f);
+    EntityComponentDoorInit(&door->door, open_by_default, connected_receivers, num_connected_activators, true);
+    door->door.open_sprite = open_vertical_sprite;
+    door->door.closed_sprite = closed_vertical_sprite;
+    door->door.open_by_default_open_sprite = open_horizontal_sprite;
+    door->door.open_by_default_closed_sprite = closed_horizontal_sprite;
 }
 void EndgoalInit(
     Entity* endgoal,
@@ -537,35 +542,29 @@ void EntityUpdateDoor(int entity_id, Entity* entity_array, EntityMap map) {
     if (!door_entity->active || 
         !door_entity->door.active 
     ) return;
-    if (door_entity->door.num_connected_activators == 0) return;
 
-    int num_receivers_active = 0;
+    bool open_by_default = door_entity->door.open_by_default;
+    door_entity->door.is_open = open_by_default;
 
-    for (int i = 0; i < door_entity->door.num_connected_activators; ++i) {
-        int id = door_entity->door.connected_activators_ids[i];
-        if (id < 0) continue;
-        Entity* activator_entity = &entity_array[id];
-        
-        if (!activator_entity->active) continue;
+    if (door_entity->door.num_connected_activators > 0) { 
+        for (int i = 0; i < door_entity->door.num_connected_activators; ++i) {
+            int id = door_entity->door.connected_activators_ids[i];
+            if (id < 0) continue;
+            Entity* activator_entity = &entity_array[id];
+            
+            if (!activator_entity->active) continue;
 
-        if (activator_entity->receiver.active && activator_entity->receiver.signal_accepted) {
-            if (!door_entity->door.require_all_to_unlock) {
-                door_entity->door.is_open = true;
+            if (activator_entity->receiver.active && activator_entity->receiver.signal_accepted) {
+                door_entity->door.is_open = !open_by_default;
+                break;
+            } else if (activator_entity->button.active && activator_entity->button.is_pressed) {
+                door_entity->door.is_open = !open_by_default;
                 break;
             }
-            ++num_receivers_active;
-        } else if (activator_entity->button.active && activator_entity->button.is_pressed) {
-            if (!door_entity->door.require_all_to_unlock) {
-                door_entity->door.is_open = true;
-                break;
-            }
-            ++num_receivers_active;
-        } else {
-            int top_entity_id = map.GetID(door_entity->position.x, door_entity->position.y, 1);
-            if (!entity_array[top_entity_id].active) door_entity->door.is_open = false; 
         }
     }
-    if (door_entity->door.require_all_to_unlock && num_receivers_active == door_entity->door.num_connected_activators) door_entity->door.is_open = true;
+    int top_entity_id = map.GetID(door_entity->position.x, door_entity->position.y, 1);
+    if (top_entity_id >= 0 && entity_array[top_entity_id].active) door_entity->door.is_open = true;
 }
 
 void EntityUpdateButton(int entity_id, Entity* entity_array, EntityMap map) {
@@ -620,9 +619,17 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders) {
     else if (entity->door.active) {
         Transform transform = entity->transform;
         if (entity->door.is_open) {
-            DrawSprite(entity->door.open_sprite, transform, main_camera);
+            if (entity->door.open_by_default) {
+                DrawSprite(entity->door.open_by_default_open_sprite, transform, main_camera);
+            } else {
+                DrawSprite(entity->door.open_sprite, transform, main_camera);
+            }
         } else {
-            DrawSprite(entity->door.closed_sprite, transform, main_camera);
+            if (entity->door.open_by_default) {
+                DrawSprite(entity->door.open_by_default_closed_sprite, transform, main_camera);
+            } else {
+                DrawSprite(entity->door.closed_sprite, transform, main_camera);
+            }
         }
     }
 

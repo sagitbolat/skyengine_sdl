@@ -40,6 +40,7 @@ void WriteEntityState(
     WriteUint32(entity->receiver.active,    file_p); 
     WriteUint32(entity->door.active,        file_p); 
     WriteUint32(entity->endgoal.active,     file_p); 
+    WriteUint32(entity->button.active,      file_p); 
     
     // NOTE: Emitter
     WriteUint32(int(entity->emitter.direction), file_p);
@@ -55,12 +56,13 @@ void WriteEntityState(
     WriteUint32(int(entity->receiver.accepted_color.a), file_p);
 
     // NOTE: Door
-    WriteUint32(int(entity->door.require_all_to_unlock), file_p);
+    WriteUint32(int(entity->door.open_by_default), file_p);
     WriteUint32(int(entity->door.num_connected_activators), file_p);
     for (int i = 0; i < MAX_CONNECTED_ACTIVATORS; ++i) {
         WriteUint32(int(entity->door.connected_activators_ids[i]), file_p);
     }
-    
+
+
 }
 void ReadEntityState(Entity* entity, EntityMap* entity_map, const Sprite* sprites, FILE* file_p) {
     // NOTE: General attributes
@@ -75,7 +77,8 @@ void ReadEntityState(Entity* entity, EntityMap* entity_map, const Sprite* sprite
     int emitter_active  = ReadUint32(file_p); 
     int receiver_active = ReadUint32(file_p); 
     int door_active     = ReadUint32(file_p); 
-    int endgoal_active  = ReadUint32(file_p); 
+    int endgoal_active  = ReadUint32(file_p);
+    int button_active   = ReadUint32(file_p); 
     
 
 
@@ -96,7 +99,7 @@ void ReadEntityState(Entity* entity, EntityMap* entity_map, const Sprite* sprite
     receiver_accepted_color.a = ReadUint32(file_p);
 
     // NOTE: Door
-    int door_require_all_to_unlock = ReadUint32(file_p);
+    int door_open_by_default = ReadUint32(file_p);
 
     // NOTE: Main inits:
     entity->active = active;
@@ -138,18 +141,22 @@ void ReadEntityState(Entity* entity, EntityMap* entity_map, const Sprite* sprite
         );
         entity_map->SetID(pos_x, pos_y, 1, id);
     } else if (endgoal_active) {    
-        EndgoalInit(entity, id, sprites[15], {pos_x, pos_y});
+        EndgoalInit(entity, id, sprites[17], {pos_x, pos_y});
         entity_map->SetID(pos_x, pos_y, 0, id);
     } else if (door_active) {
         DoorInit(
             entity,
             id,
             sprites[13],
-            sprites[13],
             sprites[14],
+            sprites[15],
+            sprites[16],
             {pos_x, pos_y},
-            (bool)door_require_all_to_unlock
+            (bool)door_open_by_default
         );
+        entity_map->SetID(pos_x, pos_y, 0, id);
+    } else if (button_active) {
+        ButtonInit(entity, id, sprites[18], sprites[19], {pos_x, pos_y});
         entity_map->SetID(pos_x, pos_y, 0, id);
     } else if (movable_active) {
         PushblockInit(entity, id, sprites[5], {pos_x, pos_y});
