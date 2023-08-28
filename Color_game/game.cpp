@@ -29,9 +29,14 @@ Tileset tileset = {0};
 Tilemap tilemap = {0};
 
 
-const int NUM_LEVELS = 3;
+const int NUM_LEVELS = 8;
 int curr_level_index = 0;
 char level_names[][24] = {
+    "0",
+    "eas",
+    "eas2",
+    "eas3",
+    "eas4",
     "1",
     "2",
     "xor"
