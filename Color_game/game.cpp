@@ -1,4 +1,5 @@
 #define INCLUDE_IMGUI
+//#define PROFILING
 #include "../Engine/SDL_sky.cpp"
 #include "../Engine/skymath.h"
 
@@ -7,8 +8,10 @@
 #include "entity.h"
 #include "level_loader.h"
 
-#include <chrono>
 
+#ifdef PROFILING
+#include <chrono>
+#endif
 
 // SECTION: Initialization of stuff...
 void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *clear_color)
@@ -24,6 +27,15 @@ void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *cle
 
 Tileset tileset = {0};
 Tilemap tilemap = {0};
+
+
+const int NUM_LEVELS = 3;
+int curr_level_index = 0;
+char level_names[][24] = {
+    "1",
+    "2",
+    "xor"
+};
 
 
 Sprite player_sprite; 
@@ -125,8 +137,8 @@ void Awake(GameMemory *gm)
     sprites[18] = button_up_sprite;            
     sprites[19] = button_down_sprite;          
    
-    level_state_info = ReadLevelState("1", &tilemap, &entities_array, &entity_id_map, sprites);
-
+    level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites);
+    ++curr_level_index;
 
     emission_map.width  = tilemap.width;
     emission_map.height = tilemap.height;
@@ -144,37 +156,19 @@ void Start(GameState *gs, KeyboardState *ks) {
 
 }
 
-void DrawTile(Tileset tileset, Vector2 world_position, int atlas_x, int atlas_y) {
-    float uv_width    = float(1)/float(tileset.width_in_tiles);
-    float uv_height   = float(1)/float(tileset.height_in_tiles);
-    float uv_x_offset = atlas_x * uv_width;
-    float uv_y_offset = atlas_y * uv_height;
-
-    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
-    ShaderSetVector(shaders, "top_right_uv", Vector2{uv_width, uv_height});
-    ShaderSetVector(shaders, "uv_offset", Vector2{uv_x_offset, uv_y_offset});
-    
-    tile_default_transform.position = Vector3{world_position.x, world_position.y, tile_default_transform.position.z};
-    DrawSprite(tileset.atlas, tile_default_transform, main_camera);
-    
-    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
-    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
-    ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
-}
-void DrawTile(Tileset tileset, Vector2 world_position, uint8_t atlas_index) {
-    int atlas_x = atlas_index % tileset.width_in_tiles;
-    int atlas_y = atlas_index / tileset.width_in_tiles;
-    DrawTile(tileset, world_position, atlas_x, atlas_y);
-}
 
 
+
+bool player_won = false;
 
 void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     const int BLOCK_PUSH_LIMIT = MAX_ENTITIES;
 
+#ifdef PROFILING
     auto start = std::chrono::high_resolution_clock::now();
-    
+#endif
+
     if (!entities_array[0].movable.moving) {
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::NEUTRAL; 
     }
@@ -195,20 +189,64 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         EntityMove(0, {1, 0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::RIGHT; 
     }
-    
-    auto move_end = std::chrono::high_resolution_clock::now();
 
-    
-
-    
-    for(int x = 0; x < tilemap.width; ++x) {
-        for (int y = 0; y < tilemap.height; ++y) {
-            DrawTile(tileset, {float(x), float(y)}, tilemap.map[(8-y)*15 + x]);
+    { // NOTE: if player standing on the endgoal, go to next level.
+        Vector2Int player_pos = entities_array[0].position;
+        int entity_id_at_player_pos = entity_id_map.GetID(player_pos.x, player_pos.y, 0);
+        if (entity_id_at_player_pos >= 0) {
+            Entity entity = entities_array[entity_id_at_player_pos];
+            if (entity.active && entity.endgoal.active && !entities_array[0].movable.moving && curr_level_index < NUM_LEVELS) {
+                // NOTE: Load Next Level
+                level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites);
+                ++curr_level_index;
+            }
         }
     }
 
+    // NOTE: Restarting level
+    if (ks->state.R && !ks->prev_state.R) {
+        level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites);
+    }
+    
 
+
+
+#ifdef PROFILING
+    auto move_end = std::chrono::high_resolution_clock::now();
+#endif
+
+    
+    { // NOTE: Tilemap Rendering Code
+        float uv_width    = float(1)/float(tileset.width_in_tiles);
+        float uv_height   = float(1)/float(tileset.height_in_tiles);
+        ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+        ShaderSetVector(shaders, "top_right_uv", Vector2{uv_width, uv_height});
+        for(int x = 0; x < tilemap.width; ++x) {
+            for (int y = 0; y < tilemap.height; ++y) {
+
+                int atlas_index = tilemap.map[(8 - y) * 15 + x];             
+                
+                if (atlas_index < 0) continue;
+
+                int atlas_x = atlas_index % tileset.width_in_tiles;
+                int atlas_y = atlas_index / tileset.width_in_tiles;
+
+                float uv_x_offset = atlas_x * uv_width;
+                float uv_y_offset = atlas_y * uv_height;
+                ShaderSetVector(shaders, "uv_offset", Vector2{uv_x_offset, uv_y_offset});
+                tile_default_transform.position = Vector3{float(x), float(y), tile_default_transform.position.z};
+                DrawSprite(tileset.atlas, tile_default_transform, main_camera);
+            }
+        }
+        
+        ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+        ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+        ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+    }
+
+#ifdef PROFILING
     auto tile_render_end = std::chrono::high_resolution_clock::now();
+#endif
 
 
     for (int z = 0; z < entity_id_map.depth; z++) {
@@ -222,13 +260,17 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     }
 
 
+#ifdef PROFILING
     auto entity_render_end = std::chrono::high_resolution_clock::now();
+#endif
 
 
     EmissionRender(emission_map, emission_sprite, shaders);
     
 
+#ifdef PROFILING
     auto emission_render_end = std::chrono::high_resolution_clock::now();
+#endif
     
     
     // NOTE: This is done after rendering so that rendering that depends on the movable.moving flag doesnt flicker every block 
@@ -247,6 +289,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         EntityUpdateDoor(id, entities_array, entity_id_map);
     }
     
+#ifdef PROFILING
     auto entity_update_end = std::chrono::high_resolution_clock::now();
 
 
@@ -255,6 +298,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     printf("Entity Rendering Took:      %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(entity_render_end - tile_render_end).count());
     printf("Emission Rendering Took:    %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(emission_render_end - entity_render_end).count());
     printf("Enitty Updating Took:       %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(entity_update_end - emission_render_end).count());
+#endif
 }
 
 void UserFree()
