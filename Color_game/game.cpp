@@ -7,7 +7,7 @@
 #include "entity.h"
 #include "level_loader.h"
 
-
+#include <chrono>
 
 
 // SECTION: Initialization of stuff...
@@ -173,6 +173,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     const int BLOCK_PUSH_LIMIT = MAX_ENTITIES;
 
+    auto start = std::chrono::high_resolution_clock::now();
     
     if (!entities_array[0].movable.moving) {
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::NEUTRAL; 
@@ -194,16 +195,21 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         EntityMove(0, {1, 0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::RIGHT; 
     }
-
+    
+    auto move_end = std::chrono::high_resolution_clock::now();
 
     
 
-
+    
     for(int x = 0; x < tilemap.width; ++x) {
         for (int y = 0; y < tilemap.height; ++y) {
             DrawTile(tileset, {float(x), float(y)}, tilemap.map[(8-y)*15 + x]);
         }
     }
+
+
+    auto tile_render_end = std::chrono::high_resolution_clock::now();
+
 
     for (int z = 0; z < entity_id_map.depth; z++) {
         for (int y = 0; y < entity_id_map.height; y++) {
@@ -215,9 +221,16 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         }
     }
 
+
+    auto entity_render_end = std::chrono::high_resolution_clock::now();
+
+
     EmissionRender(emission_map, emission_sprite, shaders);
     
 
+    auto emission_render_end = std::chrono::high_resolution_clock::now();
+    
+    
     // NOTE: This is done after rendering so that rendering that depends on the movable.moving flag doesnt flicker every block 
     //printf("############################\n");
     for (int id = 0; id < level_state_info.num_entities; ++id) {
@@ -234,7 +247,14 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         EntityUpdateDoor(id, entities_array, entity_id_map);
     }
     
+    auto entity_update_end = std::chrono::high_resolution_clock::now();
 
+
+    printf("Player Move Took:           %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(move_end - start).count());
+    printf("Tile Rendering Took:        %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(tile_render_end - move_end).count());
+    printf("Entity Rendering Took:      %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(entity_render_end - tile_render_end).count());
+    printf("Emission Rendering Took:    %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(emission_render_end - entity_render_end).count());
+    printf("Enitty Updating Took:       %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(entity_update_end - emission_render_end).count());
 }
 
 void UserFree()
