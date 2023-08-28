@@ -73,11 +73,14 @@ Transform tile_default_transform;
 
 #ifdef DEBUG_UI
 #define LEVEL_NAME_MAX 24
-char level_name[LEVEL_NAME_MAX] = "";
+char* level_name;
 #endif
 
 void Awake(GameMemory *gm)
 {
+    #ifdef DEBUG_UI
+    level_name = (char*)malloc(sizeof(char) * LEVEL_NAME_MAX);
+    #endif
     // SECTION: renderer initializations
     shaders = ShaderInit("shader.vs", "shader.fs");
     gpu_buffers = InitGPUBuffers();
@@ -480,7 +483,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 selected_receiver_id = entity_id;
                 printf("Selected activator id %d\n", entity_id);
             } 
-        } else if (bottom_entity_id >= 0) {
+        } 
+        if (bottom_entity_id >= 0) {
             if (entities_array[entity_id].active && entities_array[entity_id].button.active) {
                 selected_receiver_id = bottom_entity_id;
                 printf("Selected activator id %d\n", bottom_entity_id);

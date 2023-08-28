@@ -20,8 +20,9 @@ def get_filenames_recursively(directory, ignore_directories):
             file_path = os.path.join(root, file)
             ignore_this_file = False
             for ignore_dir in ignore_directories:
-                if file_path.startswith(ignore_dir):
+                if ignore_dir in file_path:
                     ignore_this_file = True
+                    break
         
             if file_path.endswith(('.cpp', '.hpp')) or file_path.endswith(('.c', '.h')):
                 if not ignore_this_file:
@@ -41,7 +42,7 @@ if len(args) > 1:
 
 directory = './'  # Replace with the actual directory path
 
-ignore_dirs = ['./Engine/stb', './Engine/UI/nuklear', './Engine/UI/imgui']
+ignore_dirs = ['Engine\\stb', 'Engine\\UI\\nuklear', 'Engine\\UI\\imgui']
 
 
 if arg1 == '-f':
