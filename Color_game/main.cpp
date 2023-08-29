@@ -295,7 +295,11 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             );
             Entity player = entities_array[0];
             entity_id_map.SetID(player.position.x, player.position.y, player.entity_layer, player.id);
-            
+             
+            emission_map.width  = tilemap.width;
+            emission_map.height = tilemap.height;
+            free(emission_map.map);
+            emission_map.map = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
 
         }
     }
@@ -347,6 +351,10 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         };
         LevelStateInfo level_state_info = ReadLevelState(level_name, &tilemap, &entities_array, &entity_id_map, sprites);
         entity_array_offset = level_state_info.num_entities;
+        emission_map.width  = tilemap.width;
+        emission_map.height = tilemap.height;
+        free(emission_map.map);
+        emission_map.map = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
     }
 
 

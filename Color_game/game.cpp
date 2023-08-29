@@ -1,5 +1,6 @@
 #define INCLUDE_IMGUI
-#define PROFILING
+//#define PROFILING
+#define DEBUG_MODE
 #include "../Engine/SDL_sky.cpp"
 #include "../Engine/skymath.h"
 
@@ -29,16 +30,17 @@ Tileset tileset = {0};
 Tilemap tilemap = {0};
 
 
-const int NUM_LEVELS = 7;
+const int NUM_LEVELS = 8;
 int curr_level_index = 0;
 char level_names[][24] = {
     "tutorial-1",
     "tutorial-2",
     "tutorial-3",
     "tutorial-4",
-    "tutorial-5",
-    "hard1",
-    "hard2"
+    "1-1",
+    "1-2",
+    "hard-1",
+    "hard-2"
 };
 
 
@@ -203,10 +205,18 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 // NOTE: Load Next Level
                 level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites);
                 ++curr_level_index;
+
+                emission_map.width  = tilemap.width;
+                emission_map.height = tilemap.height;
+                free(emission_map.map);
+                emission_map.map = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
+                
                 main_camera.position.x  = float(tilemap.width/2);
                 main_camera.position.y  = float(tilemap.height/2);
                 main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
             } else if (curr_level_index >= NUM_LEVELS) {
+
+                // TODO: This is the end of the game. Trigger the ending and roll credits.
                 curr_level_index = 0;
             }
         }
@@ -216,7 +226,42 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     if (ks->state.R && !ks->prev_state.R) {
         level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites);
     }
-    
+
+    // NOTE: Skipping through levels:
+#ifdef DEBUG_MODE
+    if (ks->state.Q && !ks->prev_state.Q) {
+        --curr_level_index;
+        if (curr_level_index <= 0) curr_level_index = NUM_LEVELS;
+        level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites);
+
+        printf("Restarting level: %d\n", curr_level_index-1);
+
+        emission_map.width  = tilemap.width;
+        emission_map.height = tilemap.height;
+        free(emission_map.map);
+        emission_map.map = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
+        
+        main_camera.position.x  = float(tilemap.width/2);
+        main_camera.position.y  = float(tilemap.height/2);
+        main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
+    }
+    if (ks->state.E && !ks->prev_state.E) {
+        ++curr_level_index;
+        if (curr_level_index >= NUM_LEVELS) curr_level_index = 1;
+        level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites);
+        
+        printf("Restarting level: %d\n", curr_level_index-1);
+        
+        emission_map.width  = tilemap.width;
+        emission_map.height = tilemap.height;
+        free(emission_map.map);
+        emission_map.map = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
+        
+        main_camera.position.x  = float(tilemap.width/2);
+        main_camera.position.y  = float(tilemap.height/2);
+        main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
+    }
+#endif
 
 
 
