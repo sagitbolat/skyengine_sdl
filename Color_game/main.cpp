@@ -96,7 +96,7 @@ void Awake(GameMemory *gm)
     tilemap.width   = 15;
     tilemap.height  = 9;
     int map[tilemap.width * tilemap.height] = {
-        10,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,11,
+        5,13,13,13,13,13,13,13,13,13,13,13,13,13, 6,
         9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7,
         9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7,
         9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7,
@@ -104,7 +104,7 @@ void Awake(GameMemory *gm)
         9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7,
         9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7,
         9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7,
-        5,13,13,13,13,13,13,13,13,13,13,13,13,13, 6
+        10,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,11
     };
 
     tilemap.map = (int*)calloc(tilemap.width * tilemap.height, sizeof(int));
@@ -209,7 +209,7 @@ void DrawTile(Tileset tileset, Vector2 world_position, uint8_t atlas_index) {
 }
 
 
-
+// NOTE: For empty level creating
 void Update(GameState *gs, KeyboardState *ks, double dt) {
 
 
@@ -218,12 +218,87 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     double fps = DeltaTimeToFps(dt);
     char fps_str[64];
-    sprintf(fps_str, "FPS: %f", fps);
+    sprintf(fps_str, "FPS: %d", int(fps));
     DrawSimpleText(fps_str, {0.99f, 0.2f}, UI_Alignment::TOP_RIGHT);
 
     static int entity_array_offset = 1;
     static int entity_type_to_spawn = 0;
 
+    { // NOTE: Creating empty level.
+        static Vector2Int tilemap_size = {15, 9};
+        if (ks->state.Z && !ks->prev_state.Z) {
+            if (tilemap_size.x > 3) tilemap_size.x--;
+        } 
+        if (ks->state.X && !ks->prev_state.X) {
+            tilemap_size.x++;
+        } 
+        if (ks->state.C && !ks->prev_state.C) {
+            if (tilemap_size.y > 3) tilemap_size.y--;
+        } 
+        if (ks->state.V && !ks->prev_state.V) {
+            tilemap_size.y++;
+        }
+        char width_str[24];
+        sprintf(width_str, "Width: %d", tilemap_size.x);
+        char height_str[24];
+        sprintf(height_str, "Height: %d", tilemap_size.y);
+        DrawSimpleText(height_str, {float(108)/float(1280) * 9.2f, 0.3f}, UI_Alignment::TOP_LEFT);
+        DrawSimpleText(width_str, {float(108)/float(1280) * 9.2f, 0.5f}, UI_Alignment::TOP_LEFT);
+        if (DrawSimpleButton (
+                "Emtpy Level",
+                {float(108)/float(1280) * 9.1, 0.7},
+                {float(108)/float(1280) * 0.8, 0.2},
+                nullptr
+            )
+        ) {
+            tilemap.width = tilemap_size.x;
+            tilemap.height = tilemap_size.y;
+            tilemap.map = (int*)realloc(tilemap.map, sizeof(int) * tilemap.height * tilemap.width);
+
+            for (int y = 0; y < tilemap.height; ++y) {
+                for (int x = 0; x < tilemap.width; ++x) {
+                    if      (y == 0 && x == 0)                              tilemap.map[y * tilemap.width + x] = 5;
+                    else if (y == 0 && x == tilemap.width-1)                tilemap.map[y * tilemap.width + x] = 6;
+                    else if (x == 0 && y == tilemap.height-1)               tilemap.map[y * tilemap.width + x] = 10;
+                    else if (x == tilemap.width-1 && y == tilemap.height-1) tilemap.map[y * tilemap.width + x] = 11;
+                    
+                    else if (y == 0) tilemap.map[y * tilemap.width + x] = 13;
+                    else if (x == 0) tilemap.map[y * tilemap.width + x] = 9;
+                    else if (y == tilemap.height-1) tilemap.map[y * tilemap.width + x] = 3;
+                    else if (x == tilemap.width-1) tilemap.map[y * tilemap.width + x] = 7;
+                    
+                    else  tilemap.map[y * tilemap.width + x] = 1;
+                }
+            }
+
+            entity_id_map.width = tilemap_size.x;
+            entity_id_map.height = tilemap_size.y;
+            entity_id_map.map = (int*)realloc(entity_id_map.map, sizeof(int) * entity_id_map.width * entity_id_map.height * entity_id_map.depth);
+
+            for (int i = 0; i < entity_id_map.width * entity_id_map.height * entity_id_map.depth; ++i) {
+                entity_id_map.map[i] = -1;
+            }
+
+            free(entities_array);
+            entities_array = (Entity*)calloc(sizeof(Entity), MAX_ENTITIES);
+
+
+            PlayerInit (
+                &entities_array[0], 
+                0,
+                player_sprite, 
+                player_up_sprite, 
+                player_down_sprite, 
+                player_left_sprite, 
+                player_right_sprite, 
+                {tilemap.width/2,tilemap.height/2}
+            );
+            Entity player = entities_array[0];
+            entity_id_map.SetID(player.position.x, player.position.y, player.entity_layer, player.id);
+            
+
+        }
+    }
 
     DrawSimpleTextbox(
         "Level Name", 
@@ -477,15 +552,14 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         int entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1);
         int bottom_entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
 
-
         if (entity_id >= 0) {
             if (entities_array[entity_id].active && entities_array[entity_id].receiver.active) {
                 selected_receiver_id = entity_id;
                 printf("Selected activator id %d\n", entity_id);
             } 
-        } 
+        }
         if (bottom_entity_id >= 0) {
-            if (entities_array[entity_id].active && entities_array[entity_id].button.active) {
+            if (entities_array[bottom_entity_id].active && entities_array[bottom_entity_id].button.active) {
                 selected_receiver_id = bottom_entity_id;
                 printf("Selected activator id %d\n", bottom_entity_id);
             } 
@@ -569,7 +643,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     for(int x = 0; x < tilemap.width; ++x) {
         for (int y = 0; y < tilemap.height; ++y) {
-            DrawTile(tileset, {float(x), float(y)}, tilemap.map[(8-y)*15 + x]);
+            DrawTile(tileset, {float(x), float(y)}, tilemap.map[y*tilemap.width + x]);
         }
     }
 

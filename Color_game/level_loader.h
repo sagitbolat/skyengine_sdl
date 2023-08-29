@@ -280,7 +280,8 @@ LevelStateInfo ReadLevelState(
     if (*entity_array == nullptr) {
         *entity_array = (Entity*)malloc(sizeof(Entity) * MAX_ENTITIES);
     } else {
-        *entity_array = (Entity*)realloc(*entity_array, sizeof(Entity) * MAX_ENTITIES);
+        free(*entity_array);
+        *entity_array = (Entity*)calloc(sizeof(Entity), MAX_ENTITIES);
     }
 
     // NOTE: allocate or reallocate entity_map

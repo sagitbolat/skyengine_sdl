@@ -328,7 +328,7 @@ bool DrawSimpleTextbox(
     ImGui::Text(label); // Display the label on the left
     ImGui::SameLine();
     ImGui::PushItemWidth(scale.x);
-    bool r =  ImGui::InputText("##InputField", buffer, buffer_size);
+    bool r =  ImGui::InputText(label, buffer, buffer_size);
     ImGui::PopItemWidth();
 
     if (font != nullptr) ImGui::PopFont();

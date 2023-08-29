@@ -1,5 +1,5 @@
 #define INCLUDE_IMGUI
-//#define PROFILING
+#define PROFILING
 #include "../Engine/SDL_sky.cpp"
 #include "../Engine/skymath.h"
 
@@ -16,10 +16,10 @@
 // SECTION: Initialization of stuff...
 void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *clear_color)
 {
-    *w = 1280;
-    *h = 720;
+    *w = 1920;
+    *h = 1080;
     *w_in_world_space = 14.0f;
-    *fullscreen = false;
+    *fullscreen = true;
     //*clear_color = {0.8f/2, 0.83f/2, 1.0f/2, 1.0f};
     *clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
 }
@@ -29,17 +29,16 @@ Tileset tileset = {0};
 Tilemap tilemap = {0};
 
 
-const int NUM_LEVELS = 8;
+const int NUM_LEVELS = 7;
 int curr_level_index = 0;
 char level_names[][24] = {
-    "0",
-    "eas",
-    "eas2",
-    "eas3",
-    "eas4",
-    "1",
-    "2",
-    "xor"
+    "tutorial-1",
+    "tutorial-2",
+    "tutorial-3",
+    "tutorial-4",
+    "tutorial-5",
+    "hard1",
+    "hard2"
 };
 
 
@@ -154,7 +153,7 @@ void Awake(GameMemory *gm)
 
     main_camera.position.x  = float(tilemap.width/2);
     main_camera.position.y  = float(tilemap.height/2);
-    main_camera.look_target = {7.0f, 4.0f, 0.0f}; 
+    main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
 }
 
 void Start(GameState *gs, KeyboardState *ks) {
@@ -204,6 +203,11 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 // NOTE: Load Next Level
                 level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites);
                 ++curr_level_index;
+                main_camera.position.x  = float(tilemap.width/2);
+                main_camera.position.y  = float(tilemap.height/2);
+                main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
+            } else if (curr_level_index >= NUM_LEVELS) {
+                curr_level_index = 0;
             }
         }
     }
@@ -229,7 +233,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         for(int x = 0; x < tilemap.width; ++x) {
             for (int y = 0; y < tilemap.height; ++y) {
 
-                int atlas_index = tilemap.map[(8 - y) * 15 + x];             
+                int atlas_index = tilemap.map[y * tilemap.width + x];             
                 
                 if (atlas_index < 0) continue;
 
@@ -297,12 +301,13 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 #ifdef PROFILING
     auto entity_update_end = std::chrono::high_resolution_clock::now();
 
-
+    if(std::chrono::duration_cast<std::chrono::microseconds>(entity_update_end - start).count() > 7000) {
     printf("Player Move Took:           %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(move_end - start).count());
     printf("Tile Rendering Took:        %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(tile_render_end - move_end).count());
     printf("Entity Rendering Took:      %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(entity_render_end - tile_render_end).count());
     printf("Emission Rendering Took:    %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(emission_render_end - entity_render_end).count());
     printf("Enitty Updating Took:       %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(entity_update_end - emission_render_end).count());
+    }
 #endif
 }
 

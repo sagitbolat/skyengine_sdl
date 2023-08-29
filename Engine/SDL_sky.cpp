@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
     // NOTE: Init OpenGL for graphics
     // TODO: pass LAUNCH_FULLSCREEN as an argument to the initializer
     WindowContext* window = InitWindowContext(SCREEN_WIDTH, SCREEN_HEIGHT, window_name, CLEAR_COLOR, LAUNCH_FULLSCREEN);
-
+    SDL_GL_SetSwapInterval(1); 
 
     main_camera.position = {0.0f, 0.0f, 3.0f};
     main_camera.up_direction = {0.0f, 0.1f, 0.0f};
