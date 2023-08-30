@@ -30,7 +30,7 @@ Tileset tileset = {0};
 Tilemap tilemap = {0};
 
 
-const int NUM_LEVELS = 14;
+const int NUM_LEVELS = 16;
 int curr_level_index = 0;
 char level_names[][24] = {
     "tutorial-1",
@@ -44,6 +44,8 @@ char level_names[][24] = {
     "tutorial-5",
     "2-1",
     "2-2",
+    "2-3",
+    "2-4",
     "tutorial-6",
     "hard-1",
     "hard-2"
