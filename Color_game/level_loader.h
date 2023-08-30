@@ -240,13 +240,13 @@ LevelStateInfo ReadLevelState(
     // NOTE: construct level filepath from name:
     char filepath[256] = {0};
     snprintf(filepath, sizeof(filepath), "%s/%s.%s", level_directory, level_name, level_filetype_extension);
-    printf("LOG::ReadLevelState: Reading level from file: %s\n", filepath);
+    //printf("LOG::ReadLevelState: Reading level from file: %s\n", filepath);
 
     // NOTE: open file
     FILE* file_p = fopen(filepath, "rb");
 
     if (file_p == nullptr) {
-        printf("LOG::ReadLevelState: Cannot open file %s\n", filepath);
+        //printf("LOG::ReadLevelState: Cannot open file %s\n", filepath);
         return {-1, -1};
     }
 
@@ -306,8 +306,8 @@ LevelStateInfo ReadLevelState(
     }
 
     fclose(file_p);
-    printf("LOG::ReadLevelState: Finished reading level from file: %s\n", filepath);
-    printf("                     Num Entities Loaded: %d\n", num_entities);
+    //printf("LOG::ReadLevelState: Finished reading level from file: %s\n", filepath);
+    //printf("                     Num Entities Loaded: %d\n", num_entities);
 
     return LevelStateInfo{num_floor, num_entities};
 }

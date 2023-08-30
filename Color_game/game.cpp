@@ -30,7 +30,7 @@ Tileset tileset = {0};
 Tilemap tilemap = {0};
 
 
-const int NUM_LEVELS = 8;
+const int NUM_LEVELS = 9;
 int curr_level_index = 0;
 char level_names[][24] = {
     "tutorial-1",
@@ -39,6 +39,7 @@ char level_names[][24] = {
     "tutorial-4",
     "1-1",
     "1-2",
+    "1-3",
     "hard-1",
     "hard-2"
 };
@@ -179,7 +180,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::NEUTRAL; 
     }
     
-    if (ks->state.W && !entities_array[0].movable.moving) { 
+    if (ks->state.W && !entities_array[0].movable.moving) {
         EntityMove(0, {0, 1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::UP; 
     }
@@ -214,7 +215,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 main_camera.position.x  = float(tilemap.width/2);
                 main_camera.position.y  = float(tilemap.height/2);
                 main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
-            } else if (curr_level_index >= NUM_LEVELS) {
+            } else if (entity.active && entity.endgoal.active && !entities_array[0].movable.moving && curr_level_index >= NUM_LEVELS) {
 
                 // TODO: This is the end of the game. Trigger the ending and roll credits.
                 curr_level_index = 0;
@@ -224,6 +225,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     // NOTE: Restarting level
     if (ks->state.R && !ks->prev_state.R) {
+        printf("Reloading level %s (index %d)\n", level_names[curr_level_index-1], curr_level_index-1);
         level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites);
     }
 
@@ -247,7 +249,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     }
     if (ks->state.E && !ks->prev_state.E) {
         ++curr_level_index;
-        if (curr_level_index >= NUM_LEVELS) curr_level_index = 1;
+        if (curr_level_index > NUM_LEVELS) curr_level_index = 1;
         level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites);
         
         printf("Restarting level: %d\n", curr_level_index-1);
