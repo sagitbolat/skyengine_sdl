@@ -30,7 +30,7 @@ Tileset tileset = {0};
 Tilemap tilemap = {0};
 
 
-const int NUM_LEVELS = 10;
+const int NUM_LEVELS = 14;
 int curr_level_index = 0;
 char level_names[][24] = {
     "tutorial-1",
@@ -40,11 +40,17 @@ char level_names[][24] = {
     "1-1",
     "1-2",
     "1-3",
+    "1-4",
+    "tutorial-5",
     "2-1",
+    "2-2",
+    "tutorial-6",
     "hard-1",
     "hard-2"
 };
 
+Sprite WASD_controls_sprite;
+Sprite reload_controls_sprite;
 
 Sprite player_sprite; 
 Sprite player_up_sprite; 
@@ -99,6 +105,9 @@ void Awake(GameMemory *gm)
     tile_default_transform.rotation = {0.0f, 0.0f, 0.0f};
     tile_default_transform.scale    = {1.0f, 1.0f, 1.0f};
 
+
+    WASD_controls_sprite    = LoadSprite("assets/WASD.png", shaders, gpu_buffers);
+    reload_controls_sprite  = LoadSprite("assets/restart_control.png", shaders, gpu_buffers);
 
 
     player_sprite               = LoadSprite("assets/player.png", shaders, gpu_buffers);
@@ -272,6 +281,25 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     auto move_end = std::chrono::high_resolution_clock::now();
 #endif
 
+
+    if (curr_level_index-1 == 0) {
+        Transform t = {0}; 
+        t.position.x = float(tilemap.width/2);
+        t.position.y = main_camera.position.y + 2.0f;
+        t.scale.x = 5.0f;
+        t.scale.y = 2.0f;
+        t.scale.z = 1.0f;
+        DrawSprite(WASD_controls_sprite, t, main_camera);
+    } else if (curr_level_index-1 == 1) {
+        Transform t = {0}; 
+        t.position.x = float(tilemap.width/2);
+        t.position.y = main_camera.position.y + 2.5;
+        t.scale.x = 4.0f;
+        t.scale.y = 1.0f;
+        t.scale.z = 1.0f;
+        DrawSprite(reload_controls_sprite, t, main_camera);
+
+    }
     
     { // NOTE: Tilemap Rendering Code
         float uv_width    = float(1)/float(tileset.width_in_tiles);
