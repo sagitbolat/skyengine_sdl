@@ -30,7 +30,7 @@ Tileset tileset = {0};
 Tilemap tilemap = {0};
 
 
-const int NUM_LEVELS = 18;
+const int NUM_LEVELS = 19;
 int curr_level_index = 0;
 char level_names[][64] = {
     "tutorial-1",
@@ -45,12 +45,13 @@ char level_names[][64] = {
     "2-1",
     "2-2",
     "tutorial-push-through-door",
-    "2-3",
-    "2-4",
-    "2-5",
-    "2-6",
-    "2-7",
-    "2-8"
+    "3-1",
+    "3-2",
+    "3-3",
+    "3-4",
+    "3-5",
+    "3-6",
+    "3-7"
 };
 
 Sprite WASD_controls_sprite;
