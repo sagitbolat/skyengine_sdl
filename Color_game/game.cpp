@@ -1,6 +1,7 @@
 #define INCLUDE_IMGUI
 //#define PROFILING
 #define DEBUG_MODE
+#define NO_SPLASH_SCREEN
 #include "../Engine/SDL_sky.cpp"
 #include "../Engine/skymath.h"
 
@@ -30,7 +31,7 @@ Tileset tileset = {0};
 Tilemap tilemap = {0};
 
 
-const int NUM_LEVELS = 19;
+const int NUM_LEVELS = 20;
 int curr_level_index = 0;
 char level_names[][64] = {
     "tutorial-1",
@@ -39,6 +40,7 @@ char level_names[][64] = {
     "tutorial-4",
     "1-1",
     "1-2",
+    "tutorial-inverse-door",
     "1-3",
     "1-4",
     "tutorial-emitter",
@@ -53,6 +55,9 @@ char level_names[][64] = {
     "3-6",
     "3-7"
 };
+
+
+
 
 Sprite WASD_controls_sprite;
 Sprite reload_controls_sprite;
@@ -181,9 +186,61 @@ void Start(GameState *gs, KeyboardState *ks) {
 
 
 
-bool player_won = false;
+bool level_transitioning = false;
+bool fast_reload = false;
 
 void Update(GameState *gs, KeyboardState *ks, double dt) {
+
+    if (level_transitioning) {
+    
+        static const float TRANSITION_DURATION = 0.5f * 1000.0f;
+        static const float TRANSITION_ZOOM = 3.0f;
+        static bool fading_in = true;
+        static float transition_time = 0.0f;
+        
+        transition_time += dt;
+
+        if (fading_in) {
+            if (transition_time < TRANSITION_DURATION) {
+                main_camera.width = 14.0f + (transition_time / (TRANSITION_DURATION)) * TRANSITION_ZOOM;
+                main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
+                float complement = 1.0f - (transition_time / (TRANSITION_DURATION/2));
+                ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{complement, complement, complement, complement}));
+            }
+            else {
+                level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites);
+                ++curr_level_index;
+
+                emission_map.width  = tilemap.width;
+                emission_map.height = tilemap.height;
+                free(emission_map.map);
+                emission_map.map = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
+                
+                ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{1.0f, 1.0f, 1.0f, 1.0f}));
+                main_camera.width = 14.0f;
+                main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
+                main_camera.position.x  = float(tilemap.width/2);
+                main_camera.position.y  = float(tilemap.height/2);
+                main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
+                transition_time = 0.0f;
+                fading_in = false;
+                return;
+            }
+        }
+        else {
+            if (transition_time < TRANSITION_DURATION) {
+                float float_val = (transition_time / (TRANSITION_DURATION));
+                main_camera.width = (14.0f + TRANSITION_ZOOM) - (float_val * TRANSITION_ZOOM);
+                main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
+                ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{float_val, float_val, float_val, float_val}));
+            } else {
+                
+                fading_in = true;
+                level_transitioning = false;
+                transition_time = 0.0f;
+            }
+        }
+    }
 
     const int BLOCK_PUSH_LIMIT = MAX_ENTITIES;
 
@@ -212,27 +269,19 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::RIGHT; 
     }
 
-    { // NOTE: if player standing on the endgoal, go to next level.
+    { // NOTE: if player standing on the endgoal, begine transition 
         Vector2Int player_pos = entities_array[0].position;
         int entity_id_at_player_pos = entity_id_map.GetID(player_pos.x, player_pos.y, 0);
         if (entity_id_at_player_pos >= 0) {
             Entity entity = entities_array[entity_id_at_player_pos];
             if (entity.active && entity.endgoal.active && !entities_array[0].movable.moving && curr_level_index < NUM_LEVELS) {
                 // NOTE: Load Next Level
-                level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites);
-                ++curr_level_index;
-
-                emission_map.width  = tilemap.width;
-                emission_map.height = tilemap.height;
-                free(emission_map.map);
-                emission_map.map = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
+                level_transitioning = true;
                 
-                main_camera.position.x  = float(tilemap.width/2);
-                main_camera.position.y  = float(tilemap.height/2);
-                main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
             } else if (entity.active && entity.endgoal.active && !entities_array[0].movable.moving && curr_level_index >= NUM_LEVELS) {
 
                 // TODO: This is the end of the game. Trigger the ending and roll credits.
+                level_transitioning = true;
                 curr_level_index = 0;
             }
         }
@@ -240,8 +289,15 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     // NOTE: Restarting level
     if (ks->state.R && !ks->prev_state.R) {
-        printf("Reloading level %s (index %d)\n", level_names[curr_level_index-1], curr_level_index-1);
-        level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites);
+        if (fast_reload) {
+            printf("Reloading level %s (index %d)\n", level_names[curr_level_index-1], curr_level_index-1);
+            level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites);
+        } else {
+            level_transitioning = true;
+            curr_level_index--;
+            printf("Reloading level %s (index %d)\n", level_names[curr_level_index], curr_level_index);
+            return;
+        }
     }
 
     // NOTE: Skipping through levels:
@@ -286,26 +342,26 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     auto move_end = std::chrono::high_resolution_clock::now();
 #endif
 
+    if (!level_transitioning) {
+        if (curr_level_index-1 == 0) {
+            Transform t = {0}; 
+            t.position.x = float(tilemap.width/2);
+            t.position.y = main_camera.position.y + 2.0f;
+            t.scale.x = 5.0f;
+            t.scale.y = 2.0f;
+            t.scale.z = 1.0f;
+            DrawSprite(WASD_controls_sprite, t, main_camera);
+        } else if (curr_level_index-1 == 1) {
+            Transform t = {0}; 
+            t.position.x = float(tilemap.width/2);
+            t.position.y = main_camera.position.y + 2.5;
+            t.scale.x = 4.0f;
+            t.scale.y = 1.0f;
+            t.scale.z = 1.0f;
+            DrawSprite(reload_controls_sprite, t, main_camera);
 
-    if (curr_level_index-1 == 0) {
-        Transform t = {0}; 
-        t.position.x = float(tilemap.width/2);
-        t.position.y = main_camera.position.y + 2.0f;
-        t.scale.x = 5.0f;
-        t.scale.y = 2.0f;
-        t.scale.z = 1.0f;
-        DrawSprite(WASD_controls_sprite, t, main_camera);
-    } else if (curr_level_index-1 == 1) {
-        Transform t = {0}; 
-        t.position.x = float(tilemap.width/2);
-        t.position.y = main_camera.position.y + 2.5;
-        t.scale.x = 4.0f;
-        t.scale.y = 1.0f;
-        t.scale.z = 1.0f;
-        DrawSprite(reload_controls_sprite, t, main_camera);
-
-    }
-    
+        }
+    }    
     { // NOTE: Tilemap Rendering Code
         float uv_width    = float(1)/float(tileset.width_in_tiles);
         float uv_height   = float(1)/float(tileset.height_in_tiles);
@@ -344,7 +400,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             for (int x = 0; x < entity_id_map.width; x++) {
                 int id = entity_id_map.GetID(x, y, z);
                 if (id < 0) continue;
-                EntityRender(id, entities_array, shaders);
+                EntityRender(id, entities_array, shaders, level_transitioning);
             }
         }
     }
@@ -355,7 +411,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 #endif
 
 
-    EmissionRender(emission_map, emission_sprite, shaders);
+    EmissionRender(emission_map, emission_sprite, shaders, level_transitioning);
     
 
 #ifdef PROFILING

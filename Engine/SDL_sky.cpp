@@ -96,13 +96,13 @@ int main(int argc, char* argv[]) {
         Transform startup_transform = {0};
         startup_transform.position = {0.0f, 0.0f, 0.0f};
         startup_transform.rotation = {0.0f, 0.0f, 0.0f};
-        startup_transform.scale = {main_camera.width/3, main_camera.height/3, 1.0f};
+        startup_transform.scale = {main_camera.width*0.5f, main_camera.height*0.5f, 1.0f};
         DrawSprite(starup_sprite, startup_transform, main_camera);
         SDL_GL_SwapWindow(window->window);
         
 
         // NOTE: Waits for 1 second, so the logo is visible even if load times are fast 
-        clock_t end_time = clock() + 1 * CLOCKS_PER_SEC;
+        clock_t end_time = clock() + 3.0f * CLOCKS_PER_SEC;
     
         while (clock() < end_time) {
             // Do nothing, just wait

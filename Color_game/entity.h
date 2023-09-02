@@ -584,7 +584,7 @@ void EntityUpdateButton(int entity_id, Entity* entity_array, EntityMap map) {
 
 
 // SECTION: Render methods. Should be called after update methods when you actually do the rendering.
-void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders) {
+void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool level_transitioning = false) {
     Entity* entity = &entity_array[entity_id];
 
     if (!entity->active) return;
@@ -648,24 +648,24 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders) {
         DrawSprite(entity->sprite, entity->transform, main_camera);
         Transform transform = entity->transform;
         transform.position.z += 0.1f;
-        ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->emitter.emission_color));
+        if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->emitter.emission_color));
         DrawSprite(entity->emitter.nozzle_sprite, transform, main_camera);
-        ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
+        if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
     }
     // SECTION: Receiver rendering
     else if (entity->receiver.active) {
         DrawSprite(entity->sprite, entity->transform, main_camera);
         Transform transform = entity->transform;
         transform.position.z += 0.1f;
-        ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->receiver.accepted_color));
+        if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->receiver.accepted_color));
         DrawSprite(entity->receiver.indicator_sprite, transform, main_camera);
-        ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
+        if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
         transform.position.z += 0.1f;
         if (entity->receiver.signal_received) {
-            ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->receiver.signal_color));
+            if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->receiver.signal_color));
             DrawSprite(entity->receiver.nozzle_sprite, transform, main_camera);
         }
-        ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
+        if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
         // NOTE: now that we finished rendering, we can mark receiver non-signaled.
         entity->receiver.signal_received = false;
     }
@@ -673,7 +673,7 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders) {
         DrawSprite(entity->sprite, entity->transform, main_camera);
     }
 }
-void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shaders) {
+void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shaders, bool level_transitioning = false) {
     
     for (int y = 0; y < map.height; ++y) {
         for (int x = 0; x < map.width; ++x) {
@@ -687,7 +687,7 @@ void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shader
             ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
             ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f/3.0f, 1.0f});
             ShaderSetVector(shaders, "uv_offset", Vector2{uv_x_offset, 0.0f});
-            ShaderSetVector(shaders, "i_color_multiplier", Vec4(map.GetEmissionTile(x,y).color));
+            if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(map.GetEmissionTile(x,y).color));
             Transform transform = {0.0f};
             transform.position = Vector3{float(x), float(y), 2.0f};
             transform.rotation = Vector3{0.0f, 0.0f, 0.0f};
@@ -696,7 +696,7 @@ void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shader
             ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
             ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
             ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
-            ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
+            if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
 
             tile = {false, EmissionTile::HORIZONTAL, Color{0, 0, 0, 0}};
             map.SetEmissionTile(x, y, tile);
