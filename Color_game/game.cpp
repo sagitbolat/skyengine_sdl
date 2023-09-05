@@ -31,7 +31,7 @@ Tileset tileset = {0};
 Tilemap tilemap = {0};
 
 
-const int NUM_LEVELS = 24;
+const int NUM_LEVELS = 27;
 int curr_level_index = 0;
 char level_names[][64] = { // NOTE: To calculate array length subtract the line number of the last string from the line number of this line
     "tutorial-1",
@@ -47,8 +47,10 @@ char level_names[][64] = { // NOTE: To calculate array length subtract the line 
     "1-3",         
     "1-4",          
     "tutorial-emitter", 
+    "test",
+    "testc",
     "2-1",          
-    "2-2",          
+    "tutorial-emitter-move",          
     "tutorial-push-through-d",
     "3-1", 
     "3-2",
@@ -57,6 +59,7 @@ char level_names[][64] = { // NOTE: To calculate array length subtract the line 
     "3-5",
     "3-6", 
     "3-7", 
+    "testcccc", 
     "3-8"
 };
 float level_zoom[] = {
