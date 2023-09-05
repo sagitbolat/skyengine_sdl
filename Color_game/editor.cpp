@@ -251,6 +251,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 nullptr
             )
         ) {
+            entity_array_offset = 1;
             tilemap.width = tilemap_size.x;
             tilemap.height = tilemap_size.y;
             tilemap.map = (int*)realloc(tilemap.map, sizeof(int) * tilemap.height * tilemap.width);

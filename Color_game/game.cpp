@@ -18,10 +18,10 @@
 // SECTION: Initialization of stuff...
 void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *clear_color)
 {
-    *w = 1920;
-    *h = 1080;
+    *w = 1280;
+    *h = 720;
     *w_in_world_space = 14.0f;
-    *fullscreen = true;
+    *fullscreen = false;
     //*clear_color = {0.8f/2, 0.83f/2, 1.0f/2, 1.0f};
     *clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
 }
@@ -37,26 +37,26 @@ char level_names[][64] = { // NOTE: To calculate array length subtract the line 
     "tutorial-1",
     "tutorial-2",
     "tutorial-3",
-    "tutorial-4",
-    "block-1",
-    "block-2",
+    "tutorial-4",   
+    "block-1",      
+    "block-2",      
     "block-3",
-    "1-1",
-    "1-2",
+    "1-1",          
+    "1-2",          
     "tutorial-inverse-door",
-    "1-3",
-    "1-4",
-    "tutorial-emitter",
-    "2-1",
-    "2-2",
-    "tutorial-push-through-door",
-    "3-1",
+    "1-3",         
+    "1-4",          
+    "tutorial-emitter", 
+    "2-1",          
+    "2-2",          
+    "tutorial-push-through-d",
+    "3-1", 
     "3-2",
-    "3-3",
-    "3-4",
+    "3-3", 
+    "3-4", 
     "3-5",
-    "3-6",
-    "3-7",
+    "3-6", 
+    "3-7", 
     "3-8"
 };
 float level_zoom[] = {
@@ -358,6 +358,13 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         main_camera.position.x  = float(tilemap.width/2);
         main_camera.position.y  = float(tilemap.height/2);
         main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
+    }
+    if (ks->state.SPACE && !ks->prev_state.SPACE) {
+        int num_entities = level_state_info.num_entities;
+        for (int i = 0; i < num_entities; ++i) {
+            printf("%d ", entities_array[i].id); 
+        }
+        printf("\n");
     }
 #endif
 
