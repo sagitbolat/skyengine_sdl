@@ -21,6 +21,7 @@ WindowContext* InitWindowContext(int width, int height, const char* window_name,
 void FreeWindowContext(WindowContext* window_context);
 // NOTE: Returns a handler to the gpu buffers (VBO, VAO, EBO). If called with no arguments, will init to default buffers.
 GPUBufferIDs InitGPUBuffers(float* vertices = nullptr, size_t vertices_size = 0, unsigned int* indices = nullptr, size_t indices_size = 0);
+GPUBufferIDs InitGPUBuffersInstanced(Vector3* translations, int max_num_instances = 100, float* vertices = nullptr, size_t vertices_size = 0, unsigned int* indices = nullptr, size_t indices_size = 0);
 void FreeGPUBuffers(GPUBufferIDs);
 void ClearScreen();
 
@@ -32,6 +33,7 @@ Sprite LoadSprite(
 );
 void FreeSprite(Sprite);
 void DrawSprite(Sprite sprite, Transform transform, Camera camera);
+void DrawSpriteInstanced(Sprite sprite, GPUBufferIDs gpu_ids, Camera camera, int num_intances);
 
 
 // NOTE: For engine use
