@@ -33,7 +33,7 @@ Sprite LoadSprite(
 );
 void FreeSprite(Sprite);
 void DrawSprite(Sprite sprite, Transform transform, Camera camera);
-void DrawSpriteInstanced(Sprite sprite, GPUBufferIDs gpu_ids, Camera camera, int num_intances);
+void DrawSpriteInstanced(Sprite sprite, GL_ID* shader, GPUBufferIDs gpu_ids, Camera camera, int num_intances);
 
 
 // NOTE: For engine use

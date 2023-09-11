@@ -23,11 +23,42 @@ struct GL_ID {
     GLuint id;
 };
 
+void CheckGLError()
+{
+    GLenum err;
+    while((err = glGetError()) != GL_NO_ERROR)
+    {
+        const char* error;
+
+        switch(err)
+        {
+            case GL_INVALID_OPERATION:
+                error = "INVALID_OPERATION";
+                break;
+            case GL_INVALID_ENUM:
+                error = "INVALID_ENUM";
+                break;
+            case GL_INVALID_VALUE:
+                error = "INVALID_VALUE";
+                break;
+            case GL_OUT_OF_MEMORY:
+                error = "OUT_OF_MEMORY";
+                break;
+            case GL_INVALID_FRAMEBUFFER_OPERATION:
+                error = "INVALID_FRAMEBUFFER_OPERATION";
+                break;
+            default:
+                error = "Unknown Error";
+                break;
+        }
+
+        printf("GL Error: %s\n", error);
+    }
+}
 
 const char *default_vertex_shader_source = "#version 330 core\n"
     "layout (location = 0) in vec3 a_pos;\n"
     "layout (location = 1) in vec2 a_texture_coord;\n"
-    "layout (location = 2) in vec3 a_offset;\n"
     "out vec2 tex_coord;\n"
     "out vec4 color_multiplier;\n"
     "uniform mat4 transform;\n"
@@ -35,7 +66,7 @@ const char *default_vertex_shader_source = "#version 330 core\n"
     "uniform vec4 i_color_multiplier;\n"
     "void main()\n"
     "{\n"
-    "   gl_Position = transform * vec4(a_pos.x + a_offset.x, a_pos.y + a_offset.y, a_pos.z + a_offset.z, 1.0);\n"
+    "   gl_Position = transform * vec4(a_pos.x, a_pos.y , a_pos.z, 1.0);\n"
     "   tex_coord = a_texture_coord;\n"
     "   color_multiplier = i_color_multiplier;\n"
     "}\0";
@@ -329,11 +360,12 @@ GPUBufferIDs InitGPUBuffers(
 }
 
 GPUBufferIDs InitGPUBuffersInstanced(
-    Vector3* translations, // Position translation array for the instances
+    Vector3* positions, // Position translation array for the instances
     int max_num_instances,
     float* vertices, size_t vertices_size, 
     unsigned int* indices, size_t indices_size
 ) {
+
     float vertices_arr[] = {
         // positions          // texture coords
         0.5f,  0.5f, 0.0f,    1.0f, 1.0f,   // top right
@@ -341,53 +373,59 @@ GPUBufferIDs InitGPUBuffersInstanced(
         -0.5f, -0.5f, 0.0f,   0.0f, 0.0f,   // bottom left
         -0.5f,  0.5f, 0.0f,   0.0f, 1.0f    // top left 
     };
-    
-    unsigned int indices_arr[] = { 
-        0, 1, 2,   // first triangle
-        0, 2, 3    // second triangle
-    };
 
+    GLuint VAO, VBO;
 
-    GLuint VBO, VAO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
 
     glBindVertexArray(VAO);
+
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    if (vertices == nullptr || vertices_size == 0)
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_arr), vertices_arr, GL_STATIC_DRAW);
-    else 
-        glBufferData(GL_ARRAY_BUFFER, vertices_size, vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_arr), vertices_arr, GL_STATIC_DRAW);
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * max_num_instances, &translations[0], GL_STATIC_DRAW);
-
-    
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    if (indices == nullptr || indices_size == 0)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices_arr), (GLuint*)indices_arr, GL_STATIC_DRAW);
-    else 
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, (GLuint*)indices, GL_STATIC_DRAW);
-
-
-
+    // Position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0); 
-    // Load the texture coordinates to the VAO
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3*sizeof(float)));
+    glEnableVertexAttribArray(0);
+    
+    // Texture coordinate attribute
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+
+    GLuint instanceVBO;
+    glGenBuffers(1, &instanceVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+    glBufferData(GL_ARRAY_BUFFER, max_num_instances * sizeof(Vector3), &(positions)[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+
+    // Set up instance data
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(2);
+    glVertexAttribDivisor(2, 1);  // Tell OpenGL this is an instanced vertex attribute.
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
 
     GL_ID* vbo_id = (GL_ID*)malloc(sizeof(GL_ID)); 
     vbo_id->id = VBO;
     GL_ID* vao_id = (GL_ID*)malloc(sizeof(GL_ID)); 
     vao_id->id = VAO;
-    GL_ID* ebo_id = (GL_ID*)malloc(sizeof(GL_ID)); 
-    ebo_id->id = EBO;
+    GL_ID* ebo_id = nullptr; 
     
     GPUBufferIDs buffer_info = {0};
     buffer_info.vbo = vbo_id;
     buffer_info.vao = vao_id;
     buffer_info.ebo = ebo_id;
+
 
     return buffer_info;
 }
@@ -480,11 +518,12 @@ void DrawTextureInstanced(GL_ID* shader_id, GL_ID* texture, GPUBufferIDs gpu_ids
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     ShaderUse(shader_id);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture->id);
     glBindVertexArray(gpu_ids.vao->id);
 
-    
-    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, num_transforms);
+    glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, num_transforms); 
+    //glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, num_transforms);
 }
 
 void ClearScreen() {
@@ -568,15 +607,15 @@ void DrawSprite(Sprite sprite, Transform transform, Camera camera) {
     DrawTexture(sprite.shader_id, sprite.texture_id, sprite.buffers.vao);
 }
 
-void DrawSpriteInstanced(Sprite sprite, GPUBufferIDs gpu_ids, Camera camera, int num_intances) {
+void DrawSpriteInstanced(Sprite sprite, GL_ID* shader, GPUBufferIDs gpu_ids, Camera camera, int num_intances) {
 
     Transform transform = {0};
-    transform.position = {1.0f, 1.0f, 1.0f};
+    transform.position = {0.0f, 0.0f, 0.0f};
     transform.scale = {1.0f, 1.0f, 1.0f};
 
     ShaderSetTransform(sprite.shader_id, "transform", CameraToMatrix(camera) * TransformToMatrix(transform));
     
-    DrawTextureInstanced(sprite.shader_id, sprite.texture_id, gpu_ids, num_intances);
+    DrawTextureInstanced(shader, sprite.texture_id, gpu_ids, num_intances);
 }
 
 unsigned int SkyGetGLID(GL_ID* id) {
