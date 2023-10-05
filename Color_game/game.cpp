@@ -1,5 +1,4 @@
 #define INCLUDE_IMGUI
-//#define PROFILING
 #define DEBUG_MODE
 #define NO_SPLASH_SCREEN
 #include "../Engine/SDL_sky.cpp"
@@ -18,12 +17,12 @@
 // SECTION: Initialization of stuff...
 void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *clear_color)
 {
-    *w = 1280;
-    *h = 720;
+    *w = 1920;
+    *h = 1080;
     *w_in_world_space = 14.0f;
-    *fullscreen = false;
+    *fullscreen = true;
     //*clear_color = {0.8f/2, 0.83f/2, 1.0f/2, 1.0f};
-    *clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
+    *clear_color = {43.0f/255, 43.0f/255, 39.0f/255, 1.0f};
 }
 
 
@@ -233,7 +232,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 main_camera.width = 14.0f + (transition_time / (TRANSITION_DURATION)) * TRANSITION_ZOOM;
                 main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
                 float complement = 1.0f - (transition_time / (TRANSITION_DURATION/2));
-                ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{complement, complement, complement, complement}));
+                ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{1.0f, 1.0f, 1.0f, complement}));
             }
             else {
                 level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites);
@@ -260,7 +259,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 float float_val = (transition_time / (TRANSITION_DURATION));
                 main_camera.width = (14.0f + TRANSITION_ZOOM) - (float_val * TRANSITION_ZOOM);
                 main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
-                ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{float_val, float_val, float_val, float_val}));
+                ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{1.0f, 1.0f, 1.0f, float_val}));
             } else {
                 
                 fading_in = true;
@@ -473,13 +472,14 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 #ifdef PROFILING
     auto entity_update_end = std::chrono::high_resolution_clock::now();
 
-    if(std::chrono::duration_cast<std::chrono::microseconds>(entity_update_end - start).count() > 7000) {
-    printf("Player Move Took:           %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(move_end - start).count());
-    printf("Tile Rendering Took:        %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(tile_render_end - move_end).count());
-    printf("Entity Rendering Took:      %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(entity_render_end - tile_render_end).count());
-    printf("Emission Rendering Took:    %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(emission_render_end - entity_render_end).count());
-    printf("Enitty Updating Took:       %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(entity_update_end - emission_render_end).count());
-    }
+    printf("%lld\n", std::chrono::duration_cast<std::chrono::microseconds>(tile_render_end - move_end).count());
+    //if(std::chrono::duration_cast<std::chrono::microseconds>(entity_update_end - start).count() > 7000) {
+    //printf("Player Move Took:           %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(move_end - start).count());
+    //printf("Tile Rendering Took:        %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(tile_render_end - move_end).count());
+    //printf("Entity Rendering Took:      %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(entity_render_end - tile_render_end).count());
+    //printf("Emission Rendering Took:    %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(emission_render_end - entity_render_end).count());
+    //printf("Enitty Updating Took:       %lld microseconds\n", std::chrono::duration_cast<std::chrono::microseconds>(entity_update_end - emission_render_end).count());
+    //}
 #endif
 }
 
