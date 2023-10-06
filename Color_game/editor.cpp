@@ -22,7 +22,7 @@ void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *cle
     *w_in_world_space = 14.0f;
     *fullscreen = false;
     //*clear_color = {0.8f/2, 0.83f/2, 1.0f/2, 1.0f};
-    *clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
+    *clear_color = {43.0f/255, 43.0f/255, 39.0f/255, 1.0f};
 }
 
 
@@ -72,7 +72,7 @@ Transform tile_default_transform;
 
 
 #ifdef DEBUG_UI
-#define LEVEL_NAME_MAX 24
+#define LEVEL_NAME_MAX 128
 char* level_name;
 #endif
 

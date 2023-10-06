@@ -17,10 +17,10 @@
 // SECTION: Initialization of stuff...
 void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *clear_color)
 {
-    *w = 1920;
-    *h = 1080;
+    *w = 1280;
+    *h = 720;
     *w_in_world_space = 14.0f;
-    *fullscreen = true;
+    *fullscreen = false;
     //*clear_color = {0.8f/2, 0.83f/2, 1.0f/2, 1.0f};
     *clear_color = {43.0f/255, 43.0f/255, 39.0f/255, 1.0f};
 }
@@ -30,36 +30,37 @@ Tileset tileset = {0};
 Tilemap tilemap = {0};
 
 
-const int NUM_LEVELS = 27;
+const int NUM_LEVELS = 28;
 int curr_level_index = 0;
 char level_names[][64] = { // NOTE: To calculate array length subtract the line number of the last string from the line number of this line
-    "tutorial-1",
-    "tutorial-2",
-    "tutorial-3",
-    "tutorial-4",   
-    "block-1",      
-    "block-2",      
-    "block-3",
-    "1-1",          
-    "1-2",          
-    "tutorial-inverse-door",
-    "1-3",         
-    "1-4",          
-    "tutorial-emitter", 
-    "test",
-    "testc",
-    "2-1",          
-    "tutorial-emitter-move",          
-    "tutorial-push-through-d",
-    "3-1", 
-    "3-2",
-    "3-3", 
-    "3-4", 
-    "3-5",
-    "3-6", 
-    "3-7", 
-    "testcccc", 
-    "3-8"
+    "0",
+    "1",
+    "2",
+    "3",   
+    "4",      
+    "5",
+    "6",         
+    "7",   
+    "7.5",   
+    "8",
+    "9",
+    "10",         
+    "11",          
+    "12", 
+    "13",
+    "14",
+    "15",          
+    "16",
+    "17",          
+    "18", 
+    "19",
+    "20", 
+    "21", 
+    "22",
+    "23", 
+    "24", 
+    "25", 
+    "26"
 };
 float level_zoom[] = {
     14.0f,
