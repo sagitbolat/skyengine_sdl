@@ -30,7 +30,7 @@ Tileset tileset = {0};
 Tilemap tilemap = {0};
 
 
-const int NUM_LEVELS = 28;
+const int NUM_LEVELS = 29;
 int curr_level_index = 0;
 char level_names[][64] = { // NOTE: To calculate array length subtract the line number of the last string from the line number of this line
     "0",
@@ -41,7 +41,6 @@ char level_names[][64] = { // NOTE: To calculate array length subtract the line 
     "5",
     "6",         
     "7",   
-    "7.5",   
     "8",
     "9",
     "10",         
@@ -60,7 +59,9 @@ char level_names[][64] = { // NOTE: To calculate array length subtract the line 
     "23", 
     "24", 
     "25", 
-    "26"
+    "26",
+    "27",
+    "28"
 };
 float level_zoom[] = {
     14.0f,
