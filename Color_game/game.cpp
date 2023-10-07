@@ -90,6 +90,7 @@ float level_zoom[] = {
 
 Sprite WASD_controls_sprite;
 Sprite reload_controls_sprite;
+Sprite wire_view_controls_sprite;
 
 Sprite player_sprite; 
 Sprite player_up_sprite; 
@@ -145,9 +146,9 @@ void Awake(GameMemory *gm)
     tile_default_transform.scale    = {1.0f, 1.0f, 1.0f};
 
 
-    WASD_controls_sprite    = LoadSprite("assets/WASD.png", shaders, gpu_buffers);
-    reload_controls_sprite  = LoadSprite("assets/restart_control.png", shaders, gpu_buffers);
-
+    WASD_controls_sprite        = LoadSprite("assets/WASD.png", shaders, gpu_buffers);
+    reload_controls_sprite      = LoadSprite("assets/restart_control.png", shaders, gpu_buffers);
+    wire_view_controls_sprite   = LoadSprite("assets/wire_view_control.png", shaders, gpu_buffers);
 
     player_sprite               = LoadSprite("assets/player.png", shaders, gpu_buffers);
     player_up_sprite            = LoadSprite("assets/player_up.png", shaders, gpu_buffers);
@@ -398,7 +399,14 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             t.scale.y = 1.0f;
             t.scale.z = 1.0f;
             DrawSprite(reload_controls_sprite, t, main_camera);
-
+        } else if (curr_level_index-1 == 3) {
+            Transform t = {0}; 
+            t.position.x = float(tilemap.width/2);
+            t.position.y = main_camera.position.y + 2.5;
+            t.scale.x = 7.0f;
+            t.scale.y = 1.0f;
+            t.scale.z = 1.0f;
+            DrawSprite(wire_view_controls_sprite, t, main_camera);
         }
     }   
 
