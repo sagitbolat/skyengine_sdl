@@ -91,7 +91,7 @@ void Awake(GameMemory *gm)
     Sprite tileset_sprite   = LoadSprite("assets/tileset.png", shaders, gpu_buffers);
     tileset.atlas           = tileset_sprite;
     tileset.width_in_tiles  = 5;
-    tileset.height_in_tiles = 3;
+    tileset.height_in_tiles = 6;
 
     tilemap.width   = 15;
     tilemap.height  = 9;
@@ -426,7 +426,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     } 
      
     
-    if (ks->state.MBR && !ks->prev_state.MBR) {
+    if (ks->state.MBL && !ks->prev_state.MBL) {
 
         int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
         int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
@@ -549,6 +549,19 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     }
 
+
+    // NOTE: When rightclicking, place down wire tiles.
+    if (ks->state.MBR) {
+        int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
+        int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
+        tilemap.map[(tile_mouse_y * tilemap.width) + tile_mouse_x] = 15;
+    }
+    if (ks->state.Q && !ks->prev_state.Q) {
+        int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
+        int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f);
+        if (tilemap.map[(tile_mouse_y * tilemap.width) + tile_mouse_x] < (tileset.height_in_tiles * tileset.width_in_tiles) - 1);
+        tilemap.map[(tile_mouse_y * tilemap.width) + tile_mouse_x] += 1;
+    } 
 
     static int selected_receiver_id = -1; 
     // NOTE: When E is first pressed down, select the hovered receiver

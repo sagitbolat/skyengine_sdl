@@ -136,7 +136,7 @@ void Awake(GameMemory *gm)
     Sprite tileset_sprite   = LoadSprite("assets/tileset.png", shaders, gpu_buffers);
     tileset.atlas           = tileset_sprite;
     tileset.width_in_tiles  = 5;
-    tileset.height_in_tiles = 3;
+    tileset.height_in_tiles = 6;
 
 
 
@@ -193,6 +193,9 @@ void Awake(GameMemory *gm)
     sprites[18] = button_up_sprite;            
     sprites[19] = button_down_sprite;          
    
+
+    // TODO: Load the saved level
+
     level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites);
     ++curr_level_index;
 
@@ -397,7 +400,14 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             DrawSprite(reload_controls_sprite, t, main_camera);
 
         }
-    }    
+    }   
+
+    static bool showing_wires = true;
+    if (ks->state.F && !ks->prev_state.F) {
+        showing_wires = !showing_wires;
+    }
+
+
     { // NOTE: Tilemap Rendering Code
         float uv_width    = float(1)/float(tileset.width_in_tiles);
         float uv_height   = float(1)/float(tileset.height_in_tiles);
@@ -408,6 +418,10 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
                 int atlas_index = tilemap.map[y * tilemap.width + x];             
                 
+                if (!showing_wires && atlas_index > 14) {
+                    atlas_index = 1;
+                }
+
                 if (atlas_index < 0) continue;
 
                 int atlas_x = atlas_index % tileset.width_in_tiles;
