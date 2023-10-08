@@ -30,7 +30,7 @@ Tileset tileset = {0};
 Tilemap tilemap = {0};
 
 
-const int NUM_LEVELS = 29;
+const int NUM_LEVELS = 30;
 int curr_level_index = 0;
 char level_names[][64] = { // NOTE: To calculate array length subtract the line number of the last string from the line number of this line
     "0",
@@ -41,8 +41,7 @@ char level_names[][64] = { // NOTE: To calculate array length subtract the line 
     "5_w",
     "6_w",         
     "7_w",   
-    "8_w",
-    "9_w",
+    "29",
     "10_w",         
     "11_w",          
     "12_w", 
@@ -50,18 +49,20 @@ char level_names[][64] = { // NOTE: To calculate array length subtract the line 
     "14_w",
     "15_w",          
     "16_w",
-    "17_w",          
-    "18_w", 
-    "19_w",
-    "20_w", 
-    "21_w", 
-    "22_w2222",
-    "23_w", 
     "24_w", 
     "25_w", 
     "26_w",
+    "17_w",          
+    "18_w", 
+    "20_w", 
     "27_w",
-    "28_w"
+    "9_w",
+    "19_w",
+    "23_w", 
+    "21_w", 
+    "8_w",
+    "28_w",
+    "22_w2222"
 };
 float level_zoom[] = {
     14.0f, // 0
@@ -86,13 +87,14 @@ float level_zoom[] = {
     14.0f,
     14.0f, //20
     14.0f,
-    17.6f,
-    17.6f,
-    14.0f,
-    14.0f, //25
     14.0f,
     14.0f,
-    14.0f
+    14.0f,
+    18.0f, //25
+    14.0f,
+    14.0f,
+    14.0f,
+    18.0f
 };
 
 
@@ -232,8 +234,9 @@ void Start(GameState *gs, KeyboardState *ks) {
 
 bool level_transitioning = false;
 bool fast_reload = false;
-
+bool restarting_level = false; // NOTE: Only used to differentiating between transitions from one level to another and actual restarting.
 void Update(GameState *gs, KeyboardState *ks, double dt) {
+
 
     if (level_transitioning) {
     
@@ -246,7 +249,10 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
         if (fading_in) {
             if (transition_time < TRANSITION_DURATION) {
-                main_camera.width = level_zoom[curr_level_index] + (transition_time / (TRANSITION_DURATION)) * TRANSITION_ZOOM;
+                main_camera.width = level_zoom[curr_level_index-1] + (transition_time / (TRANSITION_DURATION)) * TRANSITION_ZOOM;
+                if (restarting_level) {
+                    main_camera.width = level_zoom[curr_level_index] + (transition_time / (TRANSITION_DURATION)) * TRANSITION_ZOOM;
+                }
                 main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
                 float complement = 1.0f - (transition_time / (TRANSITION_DURATION/2));
                 ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{1.0f, 1.0f, 1.0f, complement}));
@@ -254,7 +260,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             else {
                 level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites);
                 ++curr_level_index;
-
+                restarting_level = false; 
+                
                 emission_map.width  = tilemap.width;
                 emission_map.height = tilemap.height;
                 free(emission_map.map);
@@ -278,7 +285,6 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
                 ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{1.0f, 1.0f, 1.0f, float_val}));
             } else {
-                
                 fading_in = true;
                 level_transitioning = false;
                 transition_time = 0.0f;
@@ -349,6 +355,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             showing_wires = false;
             level_transitioning = true;
             curr_level_index--;
+            restarting_level = true;
             printf("Reloading level %s (index %d)\n", level_names[curr_level_index], curr_level_index);
             return;
         }
