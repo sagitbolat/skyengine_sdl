@@ -141,6 +141,7 @@ void EntityComponentButtonInit(EntityComponentButton* component, bool is_pressed
 // SECTION: Entities
 
 struct Entity {
+    enum ENTITY_TYPE_ENUM {PLAYER, PUSH_BLOCK, STATIC_BLOCK, EMITTER, RECEIVER, DOOR, BUTTON, ENDGOAL} entity_type;
     int         id;
     bool        active; // NOTE: This is equivalent of a null state if this is false.
     Sprite      sprite;
@@ -242,6 +243,7 @@ void PlayerInit(
     player->player.down_sprite  = down_sprite;
     player->player.left_sprite  = left_sprite;
     player->player.right_sprite = right_sprite;
+    player->entity_type = Entity::ENTITY_TYPE_ENUM::PLAYER;
 }
 void PushblockInit(
     Entity* pushblock,
@@ -251,6 +253,7 @@ void PushblockInit(
 ) {
     EntityInit(pushblock, id, sprite, init_position, 1.0f);
     EntityComponentMoverInit(&pushblock->movable, MOVE_SPEED, true);
+    pushblock->entity_type = Entity::ENTITY_TYPE_ENUM::PUSH_BLOCK;
 }
 void StaticBlockInit(
     Entity* static_block,
@@ -259,6 +262,7 @@ void StaticBlockInit(
     Vector2Int init_position
 ) {
     EntityInit(static_block, id, sprite, init_position, 1.0f);
+    static_block->entity_type = Entity::ENTITY_TYPE_ENUM::STATIC_BLOCK;
 }
 void EmitterInit(
     Entity* emitter,
@@ -276,6 +280,7 @@ void EmitterInit(
     EntityComponentMoverInit(&emitter->movable, MOVE_SPEED, emitter_movable);
     emitter->emitter.nozzle_sprite = nozzle_sprite;
     emitter->emitter.indicator_sprite = indicator_sprite;
+    emitter->entity_type = Entity::ENTITY_TYPE_ENUM::EMITTER;
 }
 void ReceiverInit(
     Entity* receiver,
@@ -292,6 +297,7 @@ void ReceiverInit(
     EntityComponentMoverInit(&receiver->movable, MOVE_SPEED, receiver_movable);
     receiver->receiver.nozzle_sprite = nozzle_sprite;
     receiver->receiver.indicator_sprite = indicator_sprite;
+    receiver->entity_type = Entity::ENTITY_TYPE_ENUM::RECEIVER;
 }
 void DoorInit(
     Entity* door,
@@ -313,6 +319,7 @@ void DoorInit(
     door->door.closed_sprite = closed_vertical_sprite;
     door->door.open_by_default_open_sprite = open_horizontal_sprite;
     door->door.open_by_default_closed_sprite = closed_horizontal_sprite;
+    door->entity_type = Entity::ENTITY_TYPE_ENUM::DOOR;
 }
 void EndgoalInit(
     Entity* endgoal,
@@ -322,6 +329,7 @@ void EndgoalInit(
 ) {
     EntityInit(endgoal, id, goal_sprite, init_position, 0.0f);
     endgoal->endgoal.active = true;
+    endgoal->entity_type = Entity::ENTITY_TYPE_ENUM::ENDGOAL;
 }
 void ButtonInit(
     Entity* button,
@@ -334,6 +342,7 @@ void ButtonInit(
     EntityComponentButtonInit(&button->button, false, true);
     button->button.up_sprite = up_sprite;
     button->button.down_sprite = down_sprite;
+    button->entity_type = Entity::ENTITY_TYPE_ENUM::BUTTON;
 }
 
 

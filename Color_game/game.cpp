@@ -38,49 +38,58 @@ char level_names[][64] = { // NOTE: To calculate array length subtract the line 
     "2",
     "3",   
     "4",      
-    "5",
-    "6",         
-    "7",   
-    "8",
-    "9",
-    "10",         
-    "11",          
-    "12", 
-    "13",
-    "14",
-    "15",          
-    "16",
-    "17",          
-    "18", 
-    "19",
-    "20", 
-    "21", 
-    "22",
-    "23", 
-    "24", 
-    "25", 
-    "26",
-    "27",
-    "28"
+    "5_w",
+    "6_w",         
+    "7_w",   
+    "8_w",
+    "9_w",
+    "10_w",         
+    "11_w",          
+    "12_w", 
+    "13_w",
+    "14_w",
+    "15_w",          
+    "16_w",
+    "17_w",          
+    "18_w", 
+    "19_w",
+    "20_w", 
+    "21_w", 
+    "22_w2222",
+    "23_w", 
+    "24_w", 
+    "25_w", 
+    "26_w",
+    "27_w",
+    "28_w"
 };
 float level_zoom[] = {
+    14.0f, // 0
     14.0f,
     14.0f,
     14.0f,
     14.0f,
+    14.0f, // 5
     14.0f,
     14.0f,
     14.0f,
     14.0f,
+    14.0f, //10
     14.0f,
     14.0f,
     14.0f,
     14.0f,
+    14.0f, //15
     14.0f,
     14.0f,
     14.0f,
     14.0f,
+    14.0f, //20
     14.0f,
+    17.6f,
+    17.6f,
+    14.0f,
+    14.0f, //25
     14.0f,
     14.0f,
     14.0f
@@ -98,7 +107,8 @@ Sprite player_down_sprite;
 Sprite player_left_sprite; 
 Sprite player_right_sprite; 
 Sprite push_block_sprite;        
-Sprite static_block_sprite;      
+Sprite static_block_sprite;  
+Sprite static_block_transparent;    
 Sprite emitter_sprite;     
 Sprite emitter_nozzle_sprite;    
 Sprite emitter_indicator_sprite; 
@@ -137,7 +147,7 @@ void Awake(GameMemory *gm)
     Sprite tileset_sprite   = LoadSprite("assets/tileset.png", shaders, gpu_buffers);
     tileset.atlas           = tileset_sprite;
     tileset.width_in_tiles  = 5;
-    tileset.height_in_tiles = 6;
+    tileset.height_in_tiles = 8;
 
 
 
@@ -157,6 +167,7 @@ void Awake(GameMemory *gm)
     player_right_sprite         = LoadSprite("assets/player_right.png", shaders, gpu_buffers);
     push_block_sprite           = LoadSprite("assets/push_block.png", shaders, gpu_buffers);
     static_block_sprite         = LoadSprite("assets/static_block.png", shaders, gpu_buffers);
+    static_block_transparent    = LoadSprite("assets/static_block_transparent.png", shaders, gpu_buffers);
     emitter_sprite              = LoadSprite("assets/emitter.png", shaders, gpu_buffers);
     emitter_nozzle_sprite       = LoadSprite("assets/emitter_nozzle.png", shaders, gpu_buffers);
     emitter_indicator_sprite    = LoadSprite("assets/emitter_indicator.png", shaders, gpu_buffers);
@@ -235,7 +246,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
         if (fading_in) {
             if (transition_time < TRANSITION_DURATION) {
-                main_camera.width = 14.0f + (transition_time / (TRANSITION_DURATION)) * TRANSITION_ZOOM;
+                main_camera.width = level_zoom[curr_level_index] + (transition_time / (TRANSITION_DURATION)) * TRANSITION_ZOOM;
                 main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
                 float complement = 1.0f - (transition_time / (TRANSITION_DURATION/2));
                 ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{1.0f, 1.0f, 1.0f, complement}));
@@ -250,7 +261,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 emission_map.map = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
                 
                 ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{1.0f, 1.0f, 1.0f, 1.0f}));
-                main_camera.width = 14.0f;
+                main_camera.width = level_zoom[curr_level_index-1];
                 main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
                 main_camera.position.x  = float(tilemap.width/2);
                 main_camera.position.y  = float(tilemap.height/2);
@@ -263,7 +274,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         else {
             if (transition_time < TRANSITION_DURATION) {
                 float float_val = (transition_time / (TRANSITION_DURATION));
-                main_camera.width = (14.0f + TRANSITION_ZOOM) - (float_val * TRANSITION_ZOOM);
+                main_camera.width = (level_zoom[curr_level_index-1] + TRANSITION_ZOOM) - (float_val * TRANSITION_ZOOM);
                 main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
                 ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{1.0f, 1.0f, 1.0f, float_val}));
             } else {
@@ -285,22 +296,29 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::NEUTRAL; 
     }
     
-    if (ks->state.W && !entities_array[0].movable.moving) {
+    if ((ks->state.W || ks->state.ARROWUP) && !entities_array[0].movable.moving) {
         EntityMove(0, {0, 1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::UP; 
     }
-    if (ks->state.S && !entities_array[0].movable.moving) {
+    if ((ks->state.S || ks->state.ARROWDOWN) && !entities_array[0].movable.moving) {
         EntityMove(0, {0,-1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::DOWN; 
     }
-    if (ks->state.A && !entities_array[0].movable.moving) {
+    if ((ks->state.A || ks->state.ARROWLEFT) && !entities_array[0].movable.moving) {
         EntityMove(0, {-1,0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::LEFT; 
     }
-    if (ks->state.D && !entities_array[0].movable.moving) {
+    if ((ks->state.D || ks->state.ARROWRIGHT) && !entities_array[0].movable.moving) {
         EntityMove(0, {1, 0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::RIGHT; 
     }
+    
+    
+    static bool showing_wires = false;
+    if (ks->state.F && !ks->prev_state.F) {
+        showing_wires = !showing_wires;
+    }
+
 
     { // NOTE: if player standing on the endgoal, begine transition 
         Vector2Int player_pos = entities_array[0].position;
@@ -309,11 +327,13 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             Entity entity = entities_array[entity_id_at_player_pos];
             if (entity.active && entity.endgoal.active && !entities_array[0].movable.moving && curr_level_index < NUM_LEVELS) {
                 // NOTE: Load Next Level
+                showing_wires = false;
                 level_transitioning = true;
                 
             } else if (entity.active && entity.endgoal.active && !entities_array[0].movable.moving && curr_level_index >= NUM_LEVELS) {
 
                 // TODO: This is the end of the game. Trigger the ending and roll credits.
+                showing_wires = false;
                 level_transitioning = true;
                 curr_level_index = 0;
             }
@@ -321,11 +341,12 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     }
 
     // NOTE: Restarting level
-    if (ks->state.R && !ks->prev_state.R) {
+    if (ks->state.R && !ks->prev_state.R && !level_transitioning) {
         if (fast_reload) {
             printf("Reloading level %s (index %d)\n", level_names[curr_level_index-1], curr_level_index-1);
             level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites);
         } else {
+            showing_wires = false;
             level_transitioning = true;
             curr_level_index--;
             printf("Reloading level %s (index %d)\n", level_names[curr_level_index], curr_level_index);
@@ -349,6 +370,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         
         main_camera.position.x  = float(tilemap.width/2);
         main_camera.position.y  = float(tilemap.height/2);
+        main_camera.width = level_zoom[curr_level_index-1];
+        main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
         main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
     }
     if (ks->state.E && !ks->prev_state.E) {
@@ -365,6 +388,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         
         main_camera.position.x  = float(tilemap.width/2);
         main_camera.position.y  = float(tilemap.height/2);
+        main_camera.width = level_zoom[curr_level_index-1];
+        main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
         main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
     }
     if (ks->state.SPACE && !ks->prev_state.SPACE) {
@@ -387,7 +412,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             Transform t = {0}; 
             t.position.x = float(tilemap.width/2);
             t.position.y = main_camera.position.y + 2.0f;
-            t.scale.x = 5.0f;
+            t.scale.x = 8.0f;
             t.scale.y = 2.0f;
             t.scale.z = 1.0f;
             DrawSprite(WASD_controls_sprite, t, main_camera);
@@ -410,10 +435,6 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         }
     }   
 
-    static bool showing_wires = true;
-    if (ks->state.F && !ks->prev_state.F) {
-        showing_wires = !showing_wires;
-    }
 
 
     { // NOTE: Tilemap Rendering Code
@@ -458,6 +479,22 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             for (int x = 0; x < entity_id_map.width; x++) {
                 int id = entity_id_map.GetID(x, y, z);
                 if (id < 0) continue;
+                if (showing_wires) {
+                    Entity* entity = &entities_array[id];
+                    //if (entity->entity_type == Entity::ENTITY_TYPE_ENUM::STATIC_BLOCK) {
+                    //    DrawSprite(static_block_transparent, entity->transform, main_camera);
+                    //    continue;
+                    //}
+
+                    if (
+                        entity->entity_type == Entity::ENTITY_TYPE_ENUM::PUSH_BLOCK ||
+                        entity->entity_type == Entity::ENTITY_TYPE_ENUM::STATIC_BLOCK || 
+                        entity->entity_type == Entity::ENTITY_TYPE_ENUM::ENDGOAL ||
+                        entity->entity_type == Entity::ENTITY_TYPE_ENUM::EMITTER 
+                    ) {
+                        continue;
+                    }
+                }
                 EntityRender(id, entities_array, shaders, level_transitioning);
             }
         }

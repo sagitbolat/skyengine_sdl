@@ -91,7 +91,7 @@ void Awake(GameMemory *gm)
     Sprite tileset_sprite   = LoadSprite("assets/tileset.png", shaders, gpu_buffers);
     tileset.atlas           = tileset_sprite;
     tileset.width_in_tiles  = 5;
-    tileset.height_in_tiles = 6;
+    tileset.height_in_tiles = 8;
 
     tilemap.width   = 15;
     tilemap.height  = 9;
@@ -254,6 +254,12 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             entity_array_offset = 1;
             tilemap.width = tilemap_size.x;
             tilemap.height = tilemap_size.y;
+
+            if (tilemap.width > 14.0f || tilemap.height > 9) {
+                main_camera.width   = 24.0f;
+                main_camera.height  = (10.0f/16.0f) * 24.0f;
+            }
+
             tilemap.map = (int*)realloc(tilemap.map, sizeof(int) * tilemap.height * tilemap.width);
 
             for (int y = 0; y < tilemap.height; ++y) {
