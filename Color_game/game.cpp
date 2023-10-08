@@ -101,6 +101,7 @@ float level_zoom[] = {
 
 Sprite WASD_controls_sprite;
 Sprite reload_controls_sprite;
+Sprite undo_controls_sprite;
 Sprite wire_view_controls_sprite;
 
 Sprite player_sprite; 
@@ -128,6 +129,7 @@ Sprite sprites [20];
 
 EntityMap entity_id_map; // NOTE: acts as a lookup table from tilemap coordinate to an entity. a negative value indicates no entity at coordinate.
 Entity* entities_array; // Array of entities in the game. Player is always first element.
+Entity* prev_entities_array;
 EmissionMap emission_map;
 Sprite emission_sprite;
 
@@ -160,6 +162,7 @@ void Awake(GameMemory *gm)
 
     WASD_controls_sprite        = LoadSprite("assets/WASD.png", shaders, gpu_buffers);
     reload_controls_sprite      = LoadSprite("assets/restart_control.png", shaders, gpu_buffers);
+    undo_controls_sprite        = LoadSprite("assets/undo_control.png", shaders, gpu_buffers);
     wire_view_controls_sprite   = LoadSprite("assets/wire_view_control.png", shaders, gpu_buffers);
 
     player_sprite               = LoadSprite("assets/player.png", shaders, gpu_buffers);
@@ -208,9 +211,14 @@ void Awake(GameMemory *gm)
     sprites[19] = button_down_sprite;          
    
 
-    // TODO: Load the saved level
+    // TODO: Load the saved data
 
     level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites);
+    prev_entities_array = (Entity*)calloc(level_state_info.num_entities, sizeof(Entity));
+    for (int i = 0; i < level_state_info.num_entities; ++i) {
+        prev_entities_array[i] = entities_array[i];
+    }
+
     ++curr_level_index;
 
     emission_map.width  = tilemap.width;
@@ -259,6 +267,11 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             }
             else {
                 level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites);
+                free(prev_entities_array); 
+                prev_entities_array = (Entity*)calloc(level_state_info.num_entities, sizeof(Entity));
+                for (int i = 0; i < level_state_info.num_entities; ++i) {
+                    prev_entities_array[i] = entities_array[i];
+                }
                 ++curr_level_index;
                 restarting_level = false; 
                 
@@ -303,18 +316,22 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     }
     
     if ((ks->state.W || ks->state.ARROWUP) && !entities_array[0].movable.moving) {
+        memcpy(prev_entities_array, entities_array, level_state_info.num_entities * sizeof(entities_array[0]));
         EntityMove(0, {0, 1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::UP; 
     }
     if ((ks->state.S || ks->state.ARROWDOWN) && !entities_array[0].movable.moving) {
+        memcpy(prev_entities_array, entities_array, level_state_info.num_entities * sizeof(entities_array[0]));
         EntityMove(0, {0,-1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::DOWN; 
     }
     if ((ks->state.A || ks->state.ARROWLEFT) && !entities_array[0].movable.moving) {
+        memcpy(prev_entities_array, entities_array, level_state_info.num_entities * sizeof(entities_array[0]));
         EntityMove(0, {-1,0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::LEFT; 
     }
     if ((ks->state.D || ks->state.ARROWRIGHT) && !entities_array[0].movable.moving) {
+        memcpy(prev_entities_array, entities_array, level_state_info.num_entities * sizeof(entities_array[0]));
         EntityMove(0, {1, 0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::RIGHT; 
     }
@@ -343,6 +360,18 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 level_transitioning = true;
                 curr_level_index = 0;
             }
+        }
+    }
+
+
+    // NOTE: undo last move
+    if (ks->state.U && !ks->prev_state.U && !level_transitioning) {
+        memcpy(entities_array, prev_entities_array, level_state_info.num_entities * sizeof(entities_array[0]));
+        entity_id_map.map       = (int*)realloc(entity_id_map.map, sizeof(int) * entity_id_map.height * entity_id_map.width * entity_id_map.depth);
+        for (int i = 0; i < entity_id_map.height * entity_id_map.width * entity_id_map.depth; ++i) entity_id_map.map[i] = -1;
+        for (int i = 0; i < level_state_info.num_entities; ++i) {
+            Entity entity = entities_array[i];
+            entity_id_map.SetID(entity.position.x, entity.position.y, entity.entity_layer, entity.id);
         }
     }
 
@@ -431,6 +460,14 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             t.scale.y = 1.0f;
             t.scale.z = 1.0f;
             DrawSprite(reload_controls_sprite, t, main_camera);
+        } else if (curr_level_index-1 == 2) {
+            Transform t = {0}; 
+            t.position.x = float(tilemap.width/2);
+            t.position.y = main_camera.position.y + 2.5;
+            t.scale.x = 5.0f;
+            t.scale.y = 1.0f;
+            t.scale.z = 1.0f;
+            DrawSprite(undo_controls_sprite, t, main_camera);
         } else if (curr_level_index-1 == 3) {
             Transform t = {0}; 
             t.position.x = float(tilemap.width/2);
