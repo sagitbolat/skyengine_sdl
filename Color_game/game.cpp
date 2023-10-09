@@ -17,10 +17,10 @@
 // SECTION: Initialization of stuff...
 void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *clear_color)
 {
-    *w = 1280;
-    *h = 720;
+    *w = 1920;
+    *h = 1080;
     *w_in_world_space = 14.0f;
-    *fullscreen = false;
+    *fullscreen = true;
     //*clear_color = {0.8f/2, 0.83f/2, 1.0f/2, 1.0f};
     *clear_color = {43.0f/255, 43.0f/255, 39.0f/255, 1.0f};
 }
@@ -396,7 +396,11 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         --curr_level_index;
         if (curr_level_index <= 0) curr_level_index = NUM_LEVELS;
         level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites);
-
+        free(prev_entities_array); 
+        prev_entities_array = (Entity*)calloc(level_state_info.num_entities, sizeof(Entity));
+        for (int i = 0; i < level_state_info.num_entities; ++i) {
+            prev_entities_array[i] = entities_array[i];
+        }
         printf("Restarting level: %d\n", curr_level_index-1);
 
         emission_map.width  = tilemap.width;
@@ -414,7 +418,11 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         ++curr_level_index;
         if (curr_level_index > NUM_LEVELS) curr_level_index = 1;
         level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites);
-        
+        free(prev_entities_array); 
+        prev_entities_array = (Entity*)calloc(level_state_info.num_entities, sizeof(Entity));
+        for (int i = 0; i < level_state_info.num_entities; ++i) {
+            prev_entities_array[i] = entities_array[i];
+        }
         printf("Restarting level: %d\n", curr_level_index-1);
         
         emission_map.width  = tilemap.width;
