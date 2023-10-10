@@ -554,6 +554,44 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         }
 
     }
+    Color emission_colors[] = {
+        Color{255, 255, 255, 255},  // pure white
+        Color{255, 254, 230, 255},  // stylized white
+        Color{255, 105, 98, 255},   // stylized red
+        Color{95, 167, 119, 255},   // stylized green
+        Color{133, 161, 242, 255},  // stylized blue
+        Color{43, 43, 29, 255},     // stylized black
+        Color{0, 0, 0, 255}         // pure black
+    };
+    if (ks->state.T && !ks->prev_state.T) {
+        int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
+        int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
+
+        int entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1);
+        int color_index = 0;
+
+        if (ks->state.NUM1) {
+            color_index = 1;
+        } else if (ks->state.NUM2) {
+            color_index = 2;
+        } else if (ks->state.NUM3) {
+            color_index = 3;
+        } else if (ks->state.NUM4) {
+            color_index = 4;
+        } else if (ks->state.NUM5) {
+            color_index = 5;
+        } else if (ks->state.NUM6) {
+            color_index = 6;
+        }
+
+        if (entity_id >= 0) {
+            if (entities_array[entity_id].emitter.active) {
+                entities_array[entity_id].emitter.emission_color = emission_colors[color_index];
+            } else if (entities_array[entity_id].receiver.active) {
+                entities_array[entity_id].receiver.accepted_color = emission_colors[color_index];
+            }
+        }
+    }
 
 
     // NOTE: When rightclicking, place down wire tiles.
@@ -565,8 +603,17 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     if (ks->state.Q && !ks->prev_state.Q) {
         int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
         int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f);
-        if (tilemap.map[(tile_mouse_y * tilemap.width) + tile_mouse_x] < (tileset.height_in_tiles * tileset.width_in_tiles) - 1);
-        tilemap.map[(tile_mouse_y * tilemap.width) + tile_mouse_x] += 1;
+        
+        if (ks->state.LEFTSHIFT) {
+            if (tilemap.map[(tile_mouse_y * tilemap.width) + tile_mouse_x] > 0) {
+                tilemap.map[(tile_mouse_y * tilemap.width) + tile_mouse_x] -= 1;
+            }
+        }
+        else { 
+            if (tilemap.map[(tile_mouse_y * tilemap.width) + tile_mouse_x] < (tileset.height_in_tiles * tileset.width_in_tiles) - 1) {
+                tilemap.map[(tile_mouse_y * tilemap.width) + tile_mouse_x] += 1;
+            }
+        }
     } 
 
     static int selected_receiver_id = -1; 
@@ -680,6 +727,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             for (int x = 0; x < entity_id_map.width; x++) {
                 int id = entity_id_map.GetID(x, y, z);
                 if (id < 0) continue;
+                if (ks->state.F) continue;
                 EntityRender(id, entities_array, shaders);
             }
         }

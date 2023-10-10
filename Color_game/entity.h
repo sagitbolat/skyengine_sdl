@@ -535,9 +535,12 @@ void EntityUpdateReceiver(int entity_id, Entity* entity_array) {
 
     if (entity->receiver.signal_received) {
         if (CompareColor(entity->receiver.signal_color, entity->receiver.accepted_color)) {
+            //printf("Signal Accepted: {%d, %d, %d} , {%d, %d, %d}: %d", entity->receiver.si)
             entity->receiver.signal_accepted = true;
-        } 
-        entity->receiver.signal_accepted = true;
+        } else {
+            entity->receiver.signal_accepted = false;
+        }
+        //entity->receiver.signal_accepted = true;
     } else if (!entity->receiver.signal_received) {
         entity->receiver.signal_color = {0, 0, 0, 0};
         entity->receiver.signal_accepted = false;

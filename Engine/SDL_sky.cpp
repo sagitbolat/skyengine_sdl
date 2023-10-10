@@ -199,10 +199,21 @@ int main(int argc, char* argv[]) {
                     if (e.button.button == SDL_BUTTON_MIDDLE) keyboard_state.state.MBM = 0;
                 } break;
                 case SDL_KEYDOWN: {
+                    if (SDL_keyboard_state[SDL_SCANCODE_0]) keyboard_state.state.NUM0 = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_1]) keyboard_state.state.NUM1 = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_2]) keyboard_state.state.NUM2 = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_3]) keyboard_state.state.NUM3 = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_4]) keyboard_state.state.NUM4 = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_5]) keyboard_state.state.NUM5 = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_6]) keyboard_state.state.NUM6 = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_7]) keyboard_state.state.NUM7 = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_8]) keyboard_state.state.NUM8 = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_9]) keyboard_state.state.NUM9 = 1;    
                     if (SDL_keyboard_state[SDL_SCANCODE_Q]) keyboard_state.state.Q = 1;    
                     if (SDL_keyboard_state[SDL_SCANCODE_W]) keyboard_state.state.W = 1;    
                     if (SDL_keyboard_state[SDL_SCANCODE_E]) keyboard_state.state.E = 1;    
                     if (SDL_keyboard_state[SDL_SCANCODE_R]) keyboard_state.state.R = 1;  
+                    if (SDL_keyboard_state[SDL_SCANCODE_T]) keyboard_state.state.T = 1;  
                     if (SDL_keyboard_state[SDL_SCANCODE_U]) keyboard_state.state.U = 1;  
                     if (SDL_keyboard_state[SDL_SCANCODE_I]) keyboard_state.state.I = 1;    
                     if (SDL_keyboard_state[SDL_SCANCODE_A]) keyboard_state.state.A = 1;    
@@ -220,16 +231,28 @@ int main(int argc, char* argv[]) {
                     if (SDL_keyboard_state[SDL_SCANCODE_SPACE]) keyboard_state.state.SPACE = 1;    
                     if (SDL_keyboard_state[SDL_SCANCODE_RETURN]) keyboard_state.state.ENTER = 1;    
                     if (SDL_keyboard_state[SDL_SCANCODE_ESCAPE]) keyboard_state.state.ESC = 1;    
+                    if (SDL_keyboard_state[SDL_SCANCODE_LSHIFT]) keyboard_state.state.LEFTSHIFT = 1;    
                     if (SDL_keyboard_state[SDL_SCANCODE_UP]) keyboard_state.state.ARROWUP = 1;    
                     if (SDL_keyboard_state[SDL_SCANCODE_DOWN]) keyboard_state.state.ARROWDOWN = 1;    
                     if (SDL_keyboard_state[SDL_SCANCODE_LEFT]) keyboard_state.state.ARROWLEFT = 1;    
                     if (SDL_keyboard_state[SDL_SCANCODE_RIGHT]) keyboard_state.state.ARROWRIGHT = 1;    
                 } break;
                 case SDL_KEYUP: {
+                    if (!SDL_keyboard_state[SDL_SCANCODE_0]) keyboard_state.state.NUM0 = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_1]) keyboard_state.state.NUM1 = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_2]) keyboard_state.state.NUM2 = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_3]) keyboard_state.state.NUM3 = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_4]) keyboard_state.state.NUM4 = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_5]) keyboard_state.state.NUM5 = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_6]) keyboard_state.state.NUM6 = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_7]) keyboard_state.state.NUM7 = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_8]) keyboard_state.state.NUM8 = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_9]) keyboard_state.state.NUM9 = 0;    
                     if (!SDL_keyboard_state[SDL_SCANCODE_Q]) keyboard_state.state.Q = 0;    
                     if (!SDL_keyboard_state[SDL_SCANCODE_W]) keyboard_state.state.W = 0;    
                     if (!SDL_keyboard_state[SDL_SCANCODE_E]) keyboard_state.state.E = 0;    
                     if (!SDL_keyboard_state[SDL_SCANCODE_R]) keyboard_state.state.R = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_T]) keyboard_state.state.T = 0;    
                     if (!SDL_keyboard_state[SDL_SCANCODE_U]) keyboard_state.state.U = 0;    
                     if (!SDL_keyboard_state[SDL_SCANCODE_I]) keyboard_state.state.I = 0;    
                     if (!SDL_keyboard_state[SDL_SCANCODE_A]) keyboard_state.state.A = 0;    
@@ -247,6 +270,7 @@ int main(int argc, char* argv[]) {
                     if (!SDL_keyboard_state[SDL_SCANCODE_SPACE]) keyboard_state.state.SPACE = 0;    
                     if (!SDL_keyboard_state[SDL_SCANCODE_RETURN]) keyboard_state.state.ENTER = 0;    
                     if (!SDL_keyboard_state[SDL_SCANCODE_ESCAPE]) keyboard_state.state.ESC = 0;    
+                    if (!SDL_keyboard_state[SDL_SCANCODE_LSHIFT]) keyboard_state.state.LEFTSHIFT = 0;    
                     if (!SDL_keyboard_state[SDL_SCANCODE_UP]) keyboard_state.state.ARROWUP = 0;    
                     if (!SDL_keyboard_state[SDL_SCANCODE_DOWN]) keyboard_state.state.ARROWDOWN = 0;    
                     if (!SDL_keyboard_state[SDL_SCANCODE_LEFT]) keyboard_state.state.ARROWLEFT = 0;    

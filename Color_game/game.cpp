@@ -17,10 +17,10 @@
 // SECTION: Initialization of stuff...
 void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *clear_color)
 {
-    *w = 1920;
-    *h = 1080;
+    *w = 1280;
+    *h = 720;
     *w_in_world_space = 14.0f;
-    *fullscreen = true;
+    *fullscreen = false;
     //*clear_color = {0.8f/2, 0.83f/2, 1.0f/2, 1.0f};
     *clear_color = {43.0f/255, 43.0f/255, 39.0f/255, 1.0f};
 }
@@ -398,9 +398,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites);
         free(prev_entities_array); 
         prev_entities_array = (Entity*)calloc(level_state_info.num_entities, sizeof(Entity));
-        for (int i = 0; i < level_state_info.num_entities; ++i) {
-            prev_entities_array[i] = entities_array[i];
-        }
+        memcpy(prev_entities_array, entities_array, level_state_info.num_entities * sizeof(entities_array[0]));
         printf("Restarting level: %d\n", curr_level_index-1);
 
         emission_map.width  = tilemap.width;
@@ -420,9 +418,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites);
         free(prev_entities_array); 
         prev_entities_array = (Entity*)calloc(level_state_info.num_entities, sizeof(Entity));
-        for (int i = 0; i < level_state_info.num_entities; ++i) {
-            prev_entities_array[i] = entities_array[i];
-        }
+        memcpy(prev_entities_array, entities_array, level_state_info.num_entities * sizeof(entities_array[0]));
         printf("Restarting level: %d\n", curr_level_index-1);
         
         emission_map.width  = tilemap.width;
@@ -557,8 +553,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     auto entity_render_end = std::chrono::high_resolution_clock::now();
 #endif
 
-
-    EmissionRender(emission_map, emission_sprite, shaders, level_transitioning);
+    if (!showing_wires)
+        EmissionRender(emission_map, emission_sprite, shaders, level_transitioning);
     
 
 #ifdef PROFILING

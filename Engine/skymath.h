@@ -145,12 +145,12 @@ inline fColor operator+(const fColor a, const fColor b) {
 // Returns: true if colors are equal.
 inline bool CompareColor(const Color a, const Color b) {
 	if (
-		a.r != b.r || 
-		a.g != b.g || 
-		a.b != b.b || 
-		a.a != b.a  
-	) {return false;}
-	return true;
+		a.r == b.r && 
+		a.g == b.g && 
+		a.b == b.b && 
+		a.a == b.a  
+	) return true;
+	else return false;
 }
 // Returns: true if colors are equal.
 inline bool ComparefColor(const fColor a, const fColor b, float epsilon=0.01f) {
