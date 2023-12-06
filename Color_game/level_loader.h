@@ -28,11 +28,12 @@ void WriteEntityState(
     FILE* file_p
 ) {
     // NOTE: General attributes
-    WriteUint32(entity->id,         file_p); 
-    WriteUint32(entity->active,     file_p); 
-    WriteUint32(entity->position.x, file_p); 
-    WriteUint32(entity->position.y, file_p); 
-    
+    WriteUint32(entity->id,                 file_p); 
+    WriteUint32(entity->active,             file_p); 
+    WriteUint32(entity->position.x,         file_p); 
+    WriteUint32(entity->position.y,         file_p); 
+    WriteUint32(int(entity->entity_type),   file_p);
+
     // NOTE: Component flags
     WriteUint32(entity->player.active,      file_p); 
     WriteUint32(entity->movable.active,     file_p); 
@@ -43,7 +44,7 @@ void WriteEntityState(
     WriteUint32(entity->button.active,      file_p); 
     
     // NOTE: Emitter
-    WriteUint32(int(entity->emitter.direction), file_p);
+    WriteUint32(int(entity->emitter.direction),        file_p);
     WriteUint32(int(entity->emitter.emission_color.r), file_p);
     WriteUint32(int(entity->emitter.emission_color.g), file_p);
     WriteUint32(int(entity->emitter.emission_color.b), file_p);

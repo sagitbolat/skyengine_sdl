@@ -94,6 +94,10 @@ struct EntityComponentButton {
     Sprite down_sprite;
     bool is_pressed;
 };
+struct EntityComponentColorChanger {
+    bool active;
+    Color color;
+};
 
 void EntityComponentMoverInit(EntityComponentMover* component, float seconds_per_tile, bool active = true) {
     component->active = active;
@@ -137,11 +141,15 @@ void EntityComponentButtonInit(EntityComponentButton* component, bool is_pressed
     component->active = active;
     component->is_pressed = is_pressed;
 }
+void EntityComponentColorChangerInit(EntityComponentColorChanger* component, Color color = {0, 0, 0, 0}, bool active = true) {
+    component->active = active;
+    component->color = color;
+}
 
 // SECTION: Entities
 
 struct Entity {
-    enum ENTITY_TYPE_ENUM {PLAYER, PUSH_BLOCK, STATIC_BLOCK, EMITTER, RECEIVER, DOOR, BUTTON, ENDGOAL} entity_type;
+    enum ENTITY_TYPE_ENUM {PLAYER, PUSH_BLOCK, STATIC_BLOCK, EMITTER, RECEIVER, DOOR, BUTTON, ENDGOAL, COLOR_BLOCK} entity_type;
     int         id;
     bool        active; // NOTE: This is equivalent of a null state if this is false.
     Sprite      sprite;
@@ -149,13 +157,14 @@ struct Entity {
     Vector2Int  prev_position;
     Vector2Int  position;
     int         entity_layer; // NOTE: Layer 0: floor buttons and other features. Layer 1: Pushblocks, emitters, player etc. 
-    EntityComponentPlayer   player;
-    EntityComponentMover    movable;
-    EntityComponentEmitter  emitter;
-    EntityComponentReceiver receiver;
-    EntityComponentDoor     door;
-    EntityComponentEndgoal  endgoal;
-    EntityComponentButton   button;
+    EntityComponentPlayer       player;
+    EntityComponentMover        movable;
+    EntityComponentEmitter      emitter;
+    EntityComponentReceiver     receiver;
+    EntityComponentDoor         door;
+    EntityComponentEndgoal      endgoal;
+    EntityComponentButton       button;
+    EntityComponentColorChanger color_changer;
 }; 
 
 
@@ -189,6 +198,8 @@ void PrintEntity(Entity e) {
     printf("Endgoal::Active:        %d\n", e.endgoal.active);
     printf("Button::Active:         %d\n", e.button.active);
     printf("Button::Pressed:        %d\n", e.button.is_pressed);
+    printf("ColorChanger::Active:   %d\n", e.color_changer.active);
+    printf("ColorChanger::Color:    {%d, %d, %d, %d}\n", e.color_changer.color.r, e.color_changer.color.g, e.color_changer.color.b, e.color_changer.color.a);
     printf("############################\n");
 
 } 
@@ -224,6 +235,7 @@ void EntityInit (
     EntityComponentReceiverInit(&entity->receiver, {0, 0, 0, 0}, false);
     EntityComponentDoorInit(&entity->door, false, nullptr, 0, false);
     EntityComponentButtonInit(&entity->button, false, false);
+    EntityComponentColorChangerInit(&entity->color_changer);
 }
 
 void PlayerInit(
@@ -343,6 +355,18 @@ void ButtonInit(
     button->button.up_sprite = up_sprite;
     button->button.down_sprite = down_sprite;
     button->entity_type = Entity::ENTITY_TYPE_ENUM::BUTTON;
+}
+void ColorBlockInit(
+    Entity* colorblock,
+    int id,
+    Sprite sprite,
+    Vector2Int init_position,
+    Color color
+) {
+    EntityInit(colorblock, id, sprite, init_position, 1.0f);
+    EntityComponentMoverInit(&colorblock->movable, MOVE_SPEED, true);
+    EntityComponentColorChangerInit(&colorblock->color_changer, color, true);
+    pushblock->entity_type = Entity::ENTITY_TYPE_ENUM::COLOR_BLOCK;
 }
 
 
