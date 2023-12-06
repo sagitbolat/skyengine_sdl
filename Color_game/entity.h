@@ -202,6 +202,7 @@ void PrintEntity(Entity e) {
     printf("Button::Active:         %d\n", e.button.active);
     printf("Button::Pressed:        %d\n", e.button.is_pressed);
     printf("Teleporter::Active:     %d\n", e.teleporter.active);
+    printf("Teleporter::Connected:  %d\n", e.teleporter.connected_teleporter_id);
     printf("############################\n");
 
 } 
@@ -386,6 +387,9 @@ bool EntityMove(int entity_id, Vector2Int direction, Tilemap map, EntityMap enti
 
     Vector2Int new_position = entity->position + direction;
 
+    
+
+
     if (TestTileCollide(map, new_position)) return false;
 
     // NOTE: Check for closed door:
@@ -398,6 +402,16 @@ bool EntityMove(int entity_id, Vector2Int direction, Tilemap map, EntityMap enti
             !floor_entity.door.is_open
         ) {
             return false;
+        } 
+
+        // NOTE: Check teleporter
+        if (floor_entity_id >= 0 &&
+            floor_entity.active &&
+            floor_entity.teleporter.active &&
+            floor_entity.teleporter.connected_teleporter_id > -1
+        ) {
+            int teleporter_connected_id = floor_entity.teleporter.connected_teleporter_id;
+            new_position = entity_array[teleporter_connected_id].position + direction;
         }
     }
 
@@ -415,11 +429,11 @@ bool EntityMove(int entity_id, Vector2Int direction, Tilemap map, EntityMap enti
 
     if (could_move_new_entity) {
         entity->movable.moving = true;
-        entity->position = entity->position + direction;
+        entity->position = new_position;
 
         entity_id_map.SetID(entity->position.x, entity->position.y, entity->entity_layer, entity->id);
         entity_id_map.SetID(entity->prev_position.x, entity->prev_position.y, entity->entity_layer, -1);
-        
+        entity->prev_position = new_position - direction;
         return true;
     }
     return false;

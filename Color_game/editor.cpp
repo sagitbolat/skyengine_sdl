@@ -734,7 +734,10 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             if (entities_array[bottom_entity_id].active && entities_array[bottom_entity_id].button.active) {
                 selected_receiver_id = bottom_entity_id;
                 printf("Selected activator id %d\n", bottom_entity_id);
-            } 
+            } else if (entities_array[bottom_entity_id].active && entities_array[bottom_entity_id].teleporter.active) {
+                selected_receiver_id = bottom_entity_id;
+                printf("Selected activator id %d\n", bottom_entity_id);
+            }
         }
     }
     // NOTE: When E is released, attach selected recevier the hovered door
@@ -745,13 +748,16 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
         int entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
         if (entity_id >= 0) { 
-            if (entities_array[entity_id].active && entities_array[entity_id].door.active) {
+            if (entities_array[entity_id].active && (entities_array[entity_id].door.active || entities_array[entity_id].teleporter.active)) {
                 if (selected_receiver_id >= 0) {
                     Entity* door = &entities_array[entity_id];
-                    if (door->door.num_connected_activators < MAX_CONNECTED_ACTIVATORS) {
-                    printf("Connected id %d to door %d\n", selected_receiver_id, entity_id);
+                    if (door->door.num_connected_activators < MAX_CONNECTED_ACTIVATORS && (entities_array[selected_receiver_id].button.active || entities_array[selected_receiver_id].receiver.active)) {
+                        printf("Connected id %d to door %d\n", selected_receiver_id, entity_id);
                         door->door.connected_activators_ids[door->door.num_connected_activators] = selected_receiver_id;
                         door->door.num_connected_activators += 1;
+                    } else if (door->teleporter.active && entities_array[selected_receiver_id].teleporter.active) {
+                        door->teleporter.connected_teleporter_id = selected_receiver_id;
+                        (&entities_array[selected_receiver_id])->teleporter.connected_teleporter_id = entity_id;
                     }
                 }
             }
