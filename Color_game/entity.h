@@ -368,7 +368,7 @@ void TeleporterInit(
     Vector2Int init_position
 ) {
     EntityInit(teleporter, id, teleporter_sprite, init_position, 0.0f, true);
-    EntityComponentTeleporterInit(&teleporter->teleporter, -1, color, true);
+    EntityComponentTeleporterInit(&teleporter->teleporter, connected_teleporter_id, color, true);
     teleporter->entity_type = Entity::ENTITY_TYPE_ENUM::TELEPORTER;
 }
 
