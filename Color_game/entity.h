@@ -94,9 +94,10 @@ struct EntityComponentButton {
     Sprite down_sprite;
     bool is_pressed;
 };
-struct EntityComponentColorChanger {
+struct EntityComponentTeleporter {
     bool active;
     Color color;
+    int connected_teleporter_id;
 };
 
 void EntityComponentMoverInit(EntityComponentMover* component, float seconds_per_tile, bool active = true) {
@@ -141,15 +142,16 @@ void EntityComponentButtonInit(EntityComponentButton* component, bool is_pressed
     component->active = active;
     component->is_pressed = is_pressed;
 }
-void EntityComponentColorChangerInit(EntityComponentColorChanger* component, Color color = {0, 0, 0, 0}, bool active = true) {
+void EntityComponentTeleporterInit(EntityComponentTeleporter* component, int connected_teleporter_id = -1, Color color = {0, 0, 0, 0}, bool active = true) {
     component->active = active;
+    component->connected_teleporter_id = connected_teleporter_id;
     component->color = color;
 }
 
 // SECTION: Entities
 
 struct Entity {
-    enum ENTITY_TYPE_ENUM {PLAYER, PUSH_BLOCK, STATIC_BLOCK, EMITTER, RECEIVER, DOOR, BUTTON, ENDGOAL, COLOR_BLOCK} entity_type;
+    enum ENTITY_TYPE_ENUM {PLAYER, PUSH_BLOCK, STATIC_BLOCK, EMITTER, RECEIVER, DOOR, BUTTON, ENDGOAL, TELEPORTER, COLOR_BLOCK} entity_type;
     int         id;
     bool        active; // NOTE: This is equivalent of a null state if this is false.
     Sprite      sprite;
@@ -164,12 +166,13 @@ struct Entity {
     EntityComponentDoor         door;
     EntityComponentEndgoal      endgoal;
     EntityComponentButton       button;
-    EntityComponentColorChanger color_changer;
+    EntityComponentTeleporter   teleporter;
 }; 
 
 
 void PrintEntity(Entity e) {
     printf("############################\n");
+    printf("Type:                   %d\n", e.entity_type);
     printf("ID:                     %d\n", e.id);
     printf("Active:                 %d\n", e.active);
     printf("Position:               {%d, %d}\n", e.position.x, e.position.y);
@@ -198,8 +201,7 @@ void PrintEntity(Entity e) {
     printf("Endgoal::Active:        %d\n", e.endgoal.active);
     printf("Button::Active:         %d\n", e.button.active);
     printf("Button::Pressed:        %d\n", e.button.is_pressed);
-    printf("ColorChanger::Active:   %d\n", e.color_changer.active);
-    printf("ColorChanger::Color:    {%d, %d, %d, %d}\n", e.color_changer.color.r, e.color_changer.color.g, e.color_changer.color.b, e.color_changer.color.a);
+    printf("Teleporter::Active:     %d\n", e.teleporter.active);
     printf("############################\n");
 
 } 
@@ -235,7 +237,7 @@ void EntityInit (
     EntityComponentReceiverInit(&entity->receiver, {0, 0, 0, 0}, false);
     EntityComponentDoorInit(&entity->door, false, nullptr, 0, false);
     EntityComponentButtonInit(&entity->button, false, false);
-    EntityComponentColorChangerInit(&entity->color_changer);
+    EntityComponentTeleporterInit(&entity->teleporter, -1, {0, 0, 0, 0}, false);
 }
 
 void PlayerInit(
@@ -356,18 +358,19 @@ void ButtonInit(
     button->button.down_sprite = down_sprite;
     button->entity_type = Entity::ENTITY_TYPE_ENUM::BUTTON;
 }
-void ColorBlockInit(
-    Entity* colorblock,
+void TeleporterInit(
+    Entity* teleporter,
     int id,
-    Sprite sprite,
-    Vector2Int init_position,
-    Color color
+    Sprite teleporter_sprite,
+    Color color,
+    int connected_teleporter_id,
+    Vector2Int init_position
 ) {
-    EntityInit(colorblock, id, sprite, init_position, 1.0f);
-    EntityComponentMoverInit(&colorblock->movable, MOVE_SPEED, true);
-    EntityComponentColorChangerInit(&colorblock->color_changer, color, true);
-    pushblock->entity_type = Entity::ENTITY_TYPE_ENUM::COLOR_BLOCK;
+    EntityInit(teleporter, id, teleporter_sprite, init_position, 0.0f, true);
+    EntityComponentTeleporterInit(&teleporter->teleporter, -1, color, true);
+    teleporter->entity_type = Entity::ENTITY_TYPE_ENUM::TELEPORTER;
 }
+
 
 
 // SECTION: Entity state change functions. Should be called only when you need to change a state of the entity. NOT EVERY FRAME
@@ -706,7 +709,11 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool leve
         entity->receiver.signal_received = false;
     }
     else {
+        if (entity->teleporter.active) {
+            ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->teleporter.color));
+        }
         DrawSprite(entity->sprite, entity->transform, main_camera);
+        ShaderSetVector(shaders, "i_color_multiplier", Vector4({1.0f, 1.0f, 1.0f, 1.0f}));
     }
 }
 void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shaders, bool level_transitioning = false) {

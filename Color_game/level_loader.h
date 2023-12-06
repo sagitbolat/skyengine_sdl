@@ -63,7 +63,14 @@ void WriteEntityState(
         WriteUint32(int(entity->door.connected_activators_ids[i]), file_p);
     }
 
-
+    // NOTE: Teleporter
+    WriteUint32(int(entity->teleporter.active), file_p);
+    WriteUint32(int(entity->teleporter.color.r), file_p);
+    WriteUint32(int(entity->teleporter.color.g), file_p);
+    WriteUint32(int(entity->teleporter.color.b), file_p);
+    WriteUint32(int(entity->teleporter.color.a), file_p);
+    WriteUint32(int(entity->teleporter.connected_teleporter_id), file_p);
+    
 }
 void ReadEntityState(Entity* entity, EntityMap* entity_map, const Sprite* sprites, FILE* file_p) {
     // NOTE: General attributes
@@ -71,6 +78,7 @@ void ReadEntityState(Entity* entity, EntityMap* entity_map, const Sprite* sprite
     int active     = ReadUint32(file_p); 
     int pos_x      = ReadUint32(file_p); 
     int pos_y      = ReadUint32(file_p); 
+    int entity_type = ReadUint32(file_p); 
     
     // NOTE: Component flags
     int player_active   = ReadUint32(file_p); 
@@ -101,6 +109,20 @@ void ReadEntityState(Entity* entity, EntityMap* entity_map, const Sprite* sprite
 
     // NOTE: Door
     int door_open_by_default = ReadUint32(file_p);
+    int door_connected_activators = ReadUint32(file_p);
+    int connected_activator_ids[MAX_CONNECTED_ACTIVATORS];
+    for (int i = 0; i < MAX_CONNECTED_ACTIVATORS; ++i) {
+        connected_activator_ids[i] = ReadUint32(file_p);
+    }
+    // NOTE: Teleporter
+    int teleporter_active = ReadUint32(file_p);
+    Color teleporter_color = {0};
+    teleporter_color.r = ReadUint32(file_p);
+    teleporter_color.g = ReadUint32(file_p);
+    teleporter_color.b = ReadUint32(file_p);
+    teleporter_color.a = ReadUint32(file_p);
+    int teleporter_connected_id = ReadUint32(file_p);
+
 
     // NOTE: Main inits:
     entity->active = active;
@@ -159,18 +181,21 @@ void ReadEntityState(Entity* entity, EntityMap* entity_map, const Sprite* sprite
     } else if (button_active) {
         ButtonInit(entity, id, sprites[18], sprites[19], {pos_x, pos_y});
         entity_map->SetID(pos_x, pos_y, 0, id);
-    } else if (movable_active) {
+    } else if (entity_type == Entity::ENTITY_TYPE_ENUM::TELEPORTER) {
+        TeleporterInit(entity, id, sprites[20], teleporter_color, teleporter_connected_id, {pos_x, pos_y});
+        entity_map->SetID(pos_x, pos_y, 0, id);
+    } else if (entity_type == Entity::ENTITY_TYPE_ENUM::PUSH_BLOCK) {
         PushblockInit(entity, id, sprites[5], {pos_x, pos_y});
         entity_map->SetID(pos_x, pos_y, 1, id);
-    } else if (!movable_active) {
+    } else if (entity_type == Entity::ENTITY_TYPE_ENUM::STATIC_BLOCK) {
         StaticBlockInit(entity, id, sprites[6], {pos_x, pos_y});
         entity_map->SetID(pos_x, pos_y, 1, id);
     }
 
     // NOTE: Connect Doors
-    entity->door.num_connected_activators = ReadUint32(file_p);
+    entity->door.num_connected_activators = door_connected_activators;
     for (int i = 0; i < MAX_CONNECTED_ACTIVATORS; ++i) {
-        entity->door.connected_activators_ids[i] = ReadUint32(file_p);
+        entity->door.connected_activators_ids[i] = connected_activator_ids[i]; 
     }
 
 }

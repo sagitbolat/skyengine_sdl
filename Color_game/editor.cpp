@@ -10,6 +10,39 @@
 
 
 
+const int NUM_LEVELS = 30;
+char level_names[][64] = { // NOTE: To calculate array length subtract the line number of the last string from the line number of this line
+    "0",
+    "1",
+    "2",
+    "3",   
+    "4",      
+    "5_w",
+    "6_w",         
+    "7_w",   
+    "29",
+    "10_w",         
+    "11_w",          
+    "12_w", 
+    "13_w",
+    "14_w",
+    "15_w",          
+    "16_w",
+    "24_w", 
+    "25_w", 
+    "26_w",
+    "17_w",          
+    "18_w", 
+    "20_w", 
+    "27_w",
+    "9_w",
+    "19_w",
+    "23_w", 
+    "21_w", 
+    "8_w",
+    "28_w",
+    "22_w2222"
+};
 
 // SECTION: Initialization of stuff...
 void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *clear_color)
@@ -50,6 +83,7 @@ Sprite closed_door_horizontal_sprite;
 Sprite endgoal_sprite;
 Sprite button_up_sprite;
 Sprite button_down_sprite;
+Sprite teleporter_sprite;
 
 
 
@@ -139,7 +173,7 @@ void Awake(GameMemory *gm)
     endgoal_sprite              = LoadSprite("assets/endgoal.png", shaders, gpu_buffers);
     button_up_sprite            = LoadSprite("assets/button_up.png", shaders, gpu_buffers);
     button_down_sprite          = LoadSprite("assets/button_down.png", shaders, gpu_buffers);
-
+    teleporter_sprite           = LoadSprite("assets/teleporter.png", shaders, gpu_buffers);
 
     entity_id_map.width     = tilemap.width;
     entity_id_map.height    = tilemap.height;
@@ -355,6 +389,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             endgoal_sprite,                 //17
             button_up_sprite,               //18
             button_down_sprite,             //19
+            teleporter_sprite               //20
         };
         LevelStateInfo level_state_info = ReadLevelState(level_name, &tilemap, &entities_array, &entity_id_map, sprites);
         entity_array_offset = level_state_info.num_entities;
@@ -429,6 +464,15 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         )
     ) {
         entity_type_to_spawn = 7;
+    } 
+    if ( DrawSimpleImageButton (
+            "TeleporterButton", 
+            teleporter_sprite, 
+            {float(108)/float(1280) * 5.8, 0.2}, 
+            {float(108)/float(1280) * 0.6, 0.6}
+        )
+    ) {
+        entity_type_to_spawn = 8;
     } 
      
     
@@ -529,6 +573,19 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
             } break;
+            case 8: {
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0) >= 0) break;
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1) >= 0) break;
+                if (TestTileCollide(tilemap, {tile_mouse_x, tile_mouse_y})) break;
+
+                int e = entity_array_offset;
+                entity_array_offset++;
+
+                TeleporterInit(&entities_array[e], e, teleporter_sprite, {255, 250, 230, 255}, -1, {tile_mouse_x, tile_mouse_y}); 
+                int x = entities_array[e].position.x;
+                int y = entities_array[e].position.y;
+                entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
+            } break;
             default:
                 break;
         }
@@ -554,6 +611,40 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         }
 
     }
+    if (ks->state.S && ks->state.R && !ks->prev_state.R) {
+        for (int i = 0; i < NUM_LEVELS; ++i) {
+            Sprite sprites[] = {
+                player_sprite,                  //0 
+                player_up_sprite,               //1
+                player_down_sprite,             //2
+                player_left_sprite,             //3
+                player_right_sprite,            //4
+                push_block_sprite,              //5
+                static_block_sprite,            //6
+                emitter_sprite,                 //7
+                emitter_nozzle_sprite,          //8
+                emitter_indicator_sprite,       //9
+                receiver_sprite,                //10
+                receiver_nozzle_sprite,         //11
+                receiver_indicator_sprite,      //12
+                open_door_vertical_sprite,      //13
+                closed_door_vertical_sprite,    //14
+                open_door_horizontal_sprite,    //15
+                closed_door_horizontal_sprite,  //16
+                endgoal_sprite,                 //17
+                button_up_sprite,               //18
+                button_down_sprite,             //19
+                teleporter_sprite,
+            };
+            LevelStateInfo level_state_info = ReadLevelState(level_names[i], &tilemap, &entities_array, &entity_id_map, sprites);
+            entity_array_offset = level_state_info.num_entities;
+            emission_map.width  = tilemap.width;
+            emission_map.height = tilemap.height;
+            free(emission_map.map);
+            emission_map.map = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
+            SaveLevelState(level_names[i], &tilemap, 2, entities_array, entity_array_offset);
+        }
+    }
     Color emission_colors[] = {
         Color{255, 255, 255, 255},  // pure white
         Color{255, 254, 230, 255},  // stylized white
@@ -568,6 +659,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
 
         int entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1);
+        int entity_id_floor = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
         int color_index = 0;
 
         if (ks->state.NUM1) {
@@ -589,6 +681,11 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 entities_array[entity_id].emitter.emission_color = emission_colors[color_index];
             } else if (entities_array[entity_id].receiver.active) {
                 entities_array[entity_id].receiver.accepted_color = emission_colors[color_index];
+            } 
+        }
+        if (entity_id_floor >= 0) {
+            if (entities_array[entity_id_floor].teleporter.active) {
+                entities_array[entity_id_floor].teleporter.color = emission_colors[color_index];
             }
         }
     }
