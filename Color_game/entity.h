@@ -392,18 +392,10 @@ bool EntityMove(int entity_id, Vector2Int direction, Tilemap map, EntityMap enti
 
     if (TestTileCollide(map, new_position)) return false;
 
-    // NOTE: Check for closed door:
     {
+
         int floor_entity_id = entity_id_map.GetID(new_position.x, new_position.y, 0);
         Entity floor_entity = entity_array[floor_entity_id];
-        if (floor_entity_id >= 0 && 
-            floor_entity.active && 
-            floor_entity.door.active && 
-            !floor_entity.door.is_open
-        ) {
-            return false;
-        } 
-
         // NOTE: Check teleporter
         if (floor_entity_id >= 0 &&
             floor_entity.active &&
@@ -412,7 +404,19 @@ bool EntityMove(int entity_id, Vector2Int direction, Tilemap map, EntityMap enti
         ) {
             int teleporter_connected_id = floor_entity.teleporter.connected_teleporter_id;
             new_position = entity_array[teleporter_connected_id].position + direction;
+            if (TestTileCollide(map, new_position)) return false;
         }
+        
+        // NOTE: Check for closed door:
+        floor_entity_id = entity_id_map.GetID(new_position.x, new_position.y, 0);
+        floor_entity = entity_array[floor_entity_id];
+        if (floor_entity_id >= 0 && 
+            floor_entity.active && 
+            floor_entity.door.active && 
+            !floor_entity.door.is_open
+        ) {
+            return false;
+        } 
     }
 
     int new_entity_id = entity_id_map.GetID(new_position.x, new_position.y, entity->entity_layer);
@@ -433,7 +437,9 @@ bool EntityMove(int entity_id, Vector2Int direction, Tilemap map, EntityMap enti
 
         entity_id_map.SetID(entity->position.x, entity->position.y, entity->entity_layer, entity->id);
         entity_id_map.SetID(entity->prev_position.x, entity->prev_position.y, entity->entity_layer, -1);
+        
         entity->prev_position = new_position - direction;
+        
         return true;
     }
     return false;
