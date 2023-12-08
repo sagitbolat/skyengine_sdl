@@ -727,13 +727,13 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool leve
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
         // NOTE: now that we finished rendering, we can mark receiver non-signaled.
         entity->receiver.signal_received = false;
+    } else if (entity->teleporter.active) {
+        if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->teleporter.color));
+        DrawSprite(entity->sprite, entity->transform, main_camera);
+        if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
     }
     else {
-        if (entity->teleporter.active) {
-            ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->teleporter.color));
-        }
         DrawSprite(entity->sprite, entity->transform, main_camera);
-        ShaderSetVector(shaders, "i_color_multiplier", Vector4({1.0f, 1.0f, 1.0f, 1.0f}));
     }
 }
 void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shaders, bool level_transitioning = false) {

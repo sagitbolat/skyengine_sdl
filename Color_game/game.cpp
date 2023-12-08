@@ -30,7 +30,7 @@ Tileset tileset = {0};
 Tilemap tilemap = {0};
 
 
-const int NUM_LEVELS = 30;
+const int NUM_LEVELS = 32;
 int curr_level_index = 0;
 char level_names[][64] = { // NOTE: To calculate array length subtract the line number of the last string from the line number of this line
     "0",
@@ -62,7 +62,9 @@ char level_names[][64] = { // NOTE: To calculate array length subtract the line 
     "21_w", 
     "8_w",
     "28_w",
-    "22_w2222"
+    "22_w2222",
+    "31_wh",
+    "nd2"
 };
 float level_zoom[] = {
     14.0f, // 0
@@ -94,7 +96,9 @@ float level_zoom[] = {
     14.0f,
     14.0f,
     14.0f,
-    18.0f
+    18.0f,
+    18.0f, //30
+    25.0f
 };
 
 
@@ -125,7 +129,8 @@ Sprite closed_door_horizontal_sprite;
 Sprite endgoal_sprite;
 Sprite button_up_sprite;
 Sprite button_down_sprite;
-Sprite sprites [20];
+Sprite teleporter_sprite;
+Sprite sprites [21];
 
 EntityMap entity_id_map; // NOTE: acts as a lookup table from tilemap coordinate to an entity. a negative value indicates no entity at coordinate.
 Entity* entities_array; // Array of entities in the game. Player is always first element.
@@ -187,7 +192,7 @@ void Awake(GameMemory *gm)
     endgoal_sprite              = LoadSprite("assets/endgoal.png", shaders, gpu_buffers);
     button_up_sprite            = LoadSprite("assets/button_up.png", shaders, gpu_buffers);
     button_down_sprite          = LoadSprite("assets/button_down.png", shaders, gpu_buffers);
-
+    teleporter_sprite           = LoadSprite("assets/teleporter.png", shaders, gpu_buffers);
 
     sprites[0]  = player_sprite;               
     sprites[1]  = player_up_sprite;           
@@ -209,7 +214,7 @@ void Awake(GameMemory *gm)
     sprites[17] = endgoal_sprite;              
     sprites[18] = button_up_sprite;            
     sprites[19] = button_down_sprite;          
-   
+    sprites[20] = teleporter_sprite;
 
     // TODO: Load the saved data
 

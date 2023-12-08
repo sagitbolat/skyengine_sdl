@@ -8,7 +8,8 @@
 #include "entity.h"
 #include "level_loader.h"
 
-
+#include <chrono>
+#include <thread>
 
 const int NUM_LEVELS = 30;
 char level_names[][64] = { // NOTE: To calculate array length subtract the line number of the last string from the line number of this line
@@ -652,8 +653,13 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         Color{95, 167, 119, 255},   // stylized green
         Color{133, 161, 242, 255},  // stylized blue
         Color{43, 43, 29, 255},     // stylized black
-        Color{0, 0, 0, 255}         // pure black
+        Color{0, 0, 0, 255},        // pure black
+        Color{175, 136, 109, 255},  // blended red-green
+        Color{194, 133, 170, 255},  // blended red-blue
+        Color{114, 164, 181, 255},  // blended green-blue
+        Color{161, 144, 153, 255}   // blended red-green-blue
     };
+
     if (ks->state.T && !ks->prev_state.T) {
         int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
         int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
@@ -661,6 +667,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         int entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1);
         int entity_id_floor = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
         int color_index = 0;
+
 
         if (ks->state.NUM1) {
             color_index = 1;
@@ -674,6 +681,15 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             color_index = 5;
         } else if (ks->state.NUM6) {
             color_index = 6;
+        }
+        if (ks->state.NUM2 && ks->state.NUM3) {
+            color_index = 7;
+        } 
+        else if (ks->state.NUM2 && ks->state.NUM4) {
+            color_index = 8;
+        } 
+        else if (ks->state.NUM3 && ks->state.NUM4) {
+            color_index = 9;
         }
 
         if (entity_id >= 0) {
@@ -765,6 +781,21 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         selected_receiver_id = -1;
     }
 
+    if (ks->state.B && !ks->prev_state.B) {
+        main_camera.width -= 1.0f; 
+        main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
+        main_camera.position.x  = float(tilemap.width/2);
+        main_camera.position.y  = float(tilemap.height/2);
+        main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
+    } 
+    if (ks->state.N && !ks->prev_state.N) {
+        main_camera.width += 1.0f; 
+        main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
+        main_camera.position.x  = float(tilemap.width/2);
+        main_camera.position.y  = float(tilemap.height/2);
+        main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
+    } 
+
     // NOTE: Print debug info of entity
     if (ks->state.SPACE && !ks->prev_state.SPACE) {
         int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
@@ -855,6 +886,11 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         EntityUpdateDoor(id, entities_array, entity_id_map);
     }
     
+    if (ks->state.U) {
+        using namespace std::chrono;
+        milliseconds oneSecond(1000);
+        std::this_thread::sleep_for(oneSecond);
+    }
 
 }
 
