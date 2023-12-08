@@ -23,7 +23,7 @@ void EntityMap::SetID(int x, int y, int z, int id) {
 struct EmissionTile {
     bool active;
     enum ORIENTATION_ENUM {HORIZONTAL, VERTICAL, CROSSED} orientation;
-    enum DIRECTION_ENUM {UP, DOWN, LEFT, RIGHT} direction;
+    enum DIRECTION_ENUM {UP, RIGHT, DOWN, LEFT, } direction;
 
     Color color;
 };
@@ -452,57 +452,47 @@ Color BlendColor(Color a, Color b) {
 }
 
 
-Vector2Int UpdateEmit() {
-
-}
-
-// NOTE: EntityComponentEmitter state change. Sets layer 2 to laser tiles.
-// Returns the position of the object hit by the laser. Returns {-1,-1} if no emission can be performed
-Vector2Int EntityUpdateEmit(int entity_id, Tilemap map, EntityMap entity_id_map, EmissionMap emission_map, Entity* entity_array) {
-    if (entity_id < 0) return {-1, -1};
-
-    Entity* entity = &entity_array[entity_id];
-
-    if(!entity->active) return {-1, -1};
-    if(!entity->emitter.active) return {-1, -1};     
-    if(entity->movable.active && entity->movable.moving) return {-1, -1}; // NOTE: do not emit if the emitter is moving
-
+Vector2Int UpdateEmit(
+    EntityComponentEmitter::DIRECTION_ENUM direction, 
+    Vector2Int position, 
+    Color color, 
+    Tilemap map, 
+    EntityMap entity_id_map, 
+    EmissionMap emission_map, 
+    Entity* entity_array
+) {
     Vector2Int _direction = {0,0};
     EmissionTile::ORIENTATION_ENUM orient = EmissionTile::VERTICAL;
     EmissionTile::DIRECTION_ENUM emission_direction = EmissionTile::UP;
-    if (entity->emitter.direction == EntityComponentEmitter::UP) {
+    if (direction == EntityComponentEmitter::UP) {
         _direction.x = 0;
         _direction.y = 1;
         emission_direction = EmissionTile::UP;
-        entity->transform.rotation.z = 0.0f;
     }
-    else if (entity->emitter.direction == EntityComponentEmitter::DOWN ) {
+    else if (direction == EntityComponentEmitter::DOWN ) {
         _direction.x = 0;
         _direction.y = -1;
         emission_direction = EmissionTile::DOWN;
-        entity->transform.rotation.z = 180.0f;
     }
-    else if (entity->emitter.direction == EntityComponentEmitter::LEFT ) {
+    else if (direction == EntityComponentEmitter::LEFT ) {
         _direction.x = -1;
         _direction.y = 0;
         orient = EmissionTile::HORIZONTAL;
         emission_direction = EmissionTile::LEFT;
-        entity->transform.rotation.z = 90.0f;
     }
-    else if (entity->emitter.direction == EntityComponentEmitter::RIGHT) {
+    else if (direction == EntityComponentEmitter::RIGHT) {
         _direction.x = 1;
         _direction.y = 0;
         orient = EmissionTile::HORIZONTAL;
         emission_direction = EmissionTile::RIGHT;
-        entity->transform.rotation.z = 270.0f;
     }
 
 
     Vector2Int curr_direction = {0,0};
-    Color curr_emission_color = entity->emitter.emission_color;
+    Color curr_emission_color = color;
     while (true) {
         curr_direction = curr_direction + _direction;
-        Vector2Int new_position = entity->position + curr_direction;
+        Vector2Int new_position = position + curr_direction;
         
         // NOTE: Layer 1 entities collision
         int new_entity_id = entity_id_map.GetID(new_position.x, new_position.y, 1);
@@ -547,11 +537,14 @@ Vector2Int EntityUpdateEmit(int entity_id, Tilemap map, EntityMap entity_id_map,
         EmissionTile tile = emission_map.GetEmissionTile(new_position.x, new_position.y);
 
         if (tile.active) {
-            if (tile.orientation == orient) tile.color = BlendColor(tile.color, curr_emission_color);
-            else {
+            if (tile.orientation == orient) {
+                if (tile.direction == emission_direction) tile.color = color;
+                tile.color = BlendColor(tile.color, curr_emission_color);
+            } else {
                 tile.orientation = EmissionTile::CROSSED;
                 tile.color = BlendColor(tile.color, curr_emission_color);
                 // NOTE: Iterate in the direction of the tile and blend all tiles in that direction too.
+                UpdateEmit(EntityComponentEmitter::DIRECTION_ENUM(tile.direction), new_position, tile.color, map, entity_id_map, emission_map, entity_array); // NOTE: Or curr_emission_color?
             }
             curr_emission_color = tile.color;
         } else {
@@ -565,7 +558,29 @@ Vector2Int EntityUpdateEmit(int entity_id, Tilemap map, EntityMap entity_id_map,
 
 
     }
+}
 
+// NOTE: EntityComponentEmitter state change. Sets layer 2 to laser tiles.
+// Returns the position of the object hit by the laser. Returns {-1,-1} if no emission can be performed
+Vector2Int EntityUpdateEmit(int entity_id, Tilemap map, EntityMap entity_id_map, EmissionMap emission_map, Entity* entity_array) {
+    if (entity_id < 0) return {-1, -1};
+
+    Entity* entity = &entity_array[entity_id];
+
+    if(!entity->active) return {-1, -1};
+    if(!entity->emitter.active) return {-1, -1};     
+    if(entity->movable.active && entity->movable.moving) return {-1, -1}; // NOTE: do not emit if the emitter is moving
+
+    if (entity->emitter.direction == EntityComponentEmitter::DIRECTION_ENUM::UP) {
+        entity->transform.rotation.z = 0.0f;
+    } else if (entity->emitter.direction == EntityComponentEmitter::DIRECTION_ENUM::LEFT) {
+        entity->transform.rotation.z = 90.0f;
+    } else if (entity->emitter.direction == EntityComponentEmitter::DIRECTION_ENUM::DOWN) {
+        entity->transform.rotation.z = 180.0f;
+    } else if (entity->emitter.direction == EntityComponentEmitter::DIRECTION_ENUM::RIGHT) {
+        entity->transform.rotation.z = 270.0f;
+    }
+    return UpdateEmit(entity->emitter.direction, entity->position, entity->emitter.emission_color, map, entity_id_map, emission_map, entity_array);
 }
 
 
