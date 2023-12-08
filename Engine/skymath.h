@@ -152,6 +152,19 @@ inline bool CompareColor(const Color a, const Color b) {
 	) return true;
 	else return false;
 }
+inline bool CompareColorWithTolerance(const Color a, const Color b, int tolerance) {
+    if (
+        abs(a.r - b.r) <= tolerance &&
+        abs(a.g - b.g) <= tolerance &&
+        abs(a.b - b.b) <= tolerance &&
+        abs(a.a - b.a) <= tolerance
+    ) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 // Returns: true if colors are equal.
 inline bool ComparefColor(const fColor a, const fColor b, float epsilon=0.01f) {
 	if (
