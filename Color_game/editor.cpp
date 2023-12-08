@@ -648,17 +648,25 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     }
     Color emission_colors[] = {
         Color{255, 255, 255, 255},  // pure white
-        Color{255, 254, 230, 255},  // stylized white
-        Color{255, 105, 98, 255},   // stylized red
-        Color{95, 167, 119, 255},   // stylized green
-        Color{133, 161, 242, 255},  // stylized blue
-        Color{43, 43, 29, 255},     // stylized black
-        Color{0, 0, 0, 255},        // pure black
-        Color{175, 136, 109, 255},  // blended red-green
-        Color{194, 133, 170, 255},  // blended red-blue
-        Color{114, 164, 181, 255},  // blended green-blue
-        Color{161, 144, 153, 255}   // blended red-green-blue
+        Color{0, 0, 0, 255},        // black
+        Color{255, 0, 0, 255},      // red
+        Color{0, 255, 0, 255},   // green
+        Color{0, 0, 255, 255},  // blue
+        Color{255, 255, 0, 255},  // blended red-green
+        Color{255, 0, 255, 255},  // blended red-blue
+        Color{0, 255, 255, 255}  // blended green-blue
     };
+    //Color emission_colors[] = {
+    //    Color{255, 254, 230, 255},  // stylized white
+    //    Color{43, 43, 29, 255},     // stylized black
+    //    Color{255, 105, 98, 255},   // stylized red
+    //    Color{95, 167, 119, 255},   // stylized green
+    //    Color{133, 161, 242, 255},  // stylized blue
+    //    Color{175, 136, 109, 255},  // blended red-green
+    //    Color{194, 133, 170, 255},  // blended red-blue
+    //    Color{114, 164, 181, 255}  // blended green-blue
+    //};
+
 
     if (ks->state.T && !ks->prev_state.T) {
         int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
@@ -668,8 +676,9 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         int entity_id_floor = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
         int color_index = 0;
 
-
-        if (ks->state.NUM1) {
+        if (ks->state.NUM0) {
+            color_index = 0;
+        } else if (ks->state.NUM1) {
             color_index = 1;
         } else if (ks->state.NUM2) {
             color_index = 2;
@@ -681,16 +690,10 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             color_index = 5;
         } else if (ks->state.NUM6) {
             color_index = 6;
-        }
-        if (ks->state.NUM2 && ks->state.NUM3) {
+        } else if (ks->state.NUM7) {
             color_index = 7;
         } 
-        else if (ks->state.NUM2 && ks->state.NUM4) {
-            color_index = 8;
-        } 
-        else if (ks->state.NUM3 && ks->state.NUM4) {
-            color_index = 9;
-        }
+        
 
         if (entity_id >= 0) {
             if (entities_array[entity_id].emitter.active) {

@@ -502,8 +502,13 @@ Vector2Int UpdateEmit(
             //SECTION: Activate the receiver if its hit
             Entity* new_entity = &entity_array[new_entity_id];
             if (new_entity->receiver.active) {
-                new_entity->receiver.signal_color = curr_emission_color;
-                new_entity->receiver.signal_received = true;
+                // NOTE: If already recieved a signal before, blend the two colors
+                if (new_entity->receiver.signal_received) new_entity->receiver.signal_color = BlendColor(curr_emission_color, new_entity->receiver.signal_color);
+                // Otherwise, just set the signal color to the one recieved and set the flag to true.
+                else {
+                    new_entity->receiver.signal_color = curr_emission_color;
+                    new_entity->receiver.signal_received = true;
+                }
             }
 
 
@@ -537,16 +542,21 @@ Vector2Int UpdateEmit(
         EmissionTile tile = emission_map.GetEmissionTile(new_position.x, new_position.y);
 
         if (tile.active) {
+            // TODO: Also add a case for 3way and 4way collisions.
             if (tile.orientation == orient) {
                 if (tile.direction == emission_direction) tile.color = color;
-                tile.color = BlendColor(tile.color, curr_emission_color);
+                else {
+
+                    // When lasers point at eachother, the color becomes additive instead of blended 
+                    tile.color = tile.color + curr_emission_color;
+                }
             } else {
                 tile.orientation = EmissionTile::CROSSED;
                 tile.color = BlendColor(tile.color, curr_emission_color);
                 // NOTE: Iterate in the direction of the tile and blend all tiles in that direction too.
                 UpdateEmit(EntityComponentEmitter::DIRECTION_ENUM(tile.direction), new_position, tile.color, map, entity_id_map, emission_map, entity_array); // NOTE: Or curr_emission_color?
+                curr_emission_color = tile.color;
             }
-            curr_emission_color = tile.color;
         } else {
             tile.active = true;
             tile.color = curr_emission_color;
