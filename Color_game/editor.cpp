@@ -875,8 +875,35 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     // NOTE: This is done after rendering so that rendering that depends on the movable.moving flag doesnt flicker every block 
     //printf("############################\n");
-    for (int id = 0; id < entity_array_offset; ++id) {
-        EntityUpdateEmit(id, tilemap, entity_id_map, emission_map, entities_array);
+    { // NOTE: REWORK THIS BLOCK OF CODE.
+        for (int id = 0; id < entity_array_offset; ++id) {
+            Entity e = entities_array[id];
+            if (!e.active) continue;
+            if (!e.emitter.active) continue;
+            if (e.emitter.direction != EntityComponentEmitter::UP) continue;
+            EntityUpdateEmit(id, tilemap, entity_id_map, emission_map, entities_array);
+        }
+        for (int id = 0; id < entity_array_offset; ++id) {
+            Entity e = entities_array[id];
+            if (!e.active) continue;
+            if (!e.emitter.active) continue;
+            if (e.emitter.direction != EntityComponentEmitter::DOWN) continue;
+            EntityUpdateEmit(id, tilemap, entity_id_map, emission_map, entities_array);
+        }
+        for (int id = 0; id < entity_array_offset; ++id) {
+            Entity e = entities_array[id];
+            if (!e.active) continue;
+            if (!e.emitter.active) continue;
+            if (e.emitter.direction != EntityComponentEmitter::LEFT) continue;
+            EntityUpdateEmit(id, tilemap, entity_id_map, emission_map, entities_array);
+        }
+        for (int id = 0; id < entity_array_offset; ++id) {
+            Entity e = entities_array[id];
+            if (!e.active) continue;
+            if (!e.emitter.active) continue;
+            if (e.emitter.direction != EntityComponentEmitter::RIGHT) continue;
+            EntityUpdateEmit(id, tilemap, entity_id_map, emission_map, entities_array);
+        }
     }
     for (int id = 0; id < entity_array_offset; ++id) {
         EntityUpdateMover(id, entities_array, dt);
