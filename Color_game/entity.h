@@ -25,6 +25,8 @@ struct EmissionTile {
     enum ORIENTATION_ENUM {HORIZONTAL, VERTICAL, CROSSED} orientation;
     bool directions[4]; // NOTE: In order UP RIGHT DOWN LEFT
     Color color;
+    Vector4Int color_total;
+    int num_colors;
 };
 struct EmissionMap {
     EmissionTile* map;
@@ -446,10 +448,12 @@ bool EntityMove(int entity_id, Vector2Int direction, Tilemap map, EntityMap enti
     return false;
 }
 
+Color BlendColor(Vector4Int c, int i) {
+    return Color{uint8_t(c.x / i), uint8_t(c.y / i), uint8_t(c.z / i), uint8_t(c.w / i)};
+}
 Color BlendColor(Color a, Color b) {
     return Color{uint8_t((a.r + b.r) / 2), uint8_t((a.g + b.g) / 2), uint8_t((a.b + b.b) / 2), uint8_t((a.a + b.a) / 2)};
 }
-
 
 void UpdateEmit(
     int emitter_id,
@@ -522,33 +526,43 @@ void UpdateEmit(
     if (tile.active) {
         if (tile.orientation != orientation) { 
             tile.orientation = EmissionTile::CROSSED;
-            tile.color = BlendColor(color, tile.color);
+            tile.color_total = tile.color_total + Vec4Int(color);
+            tile.num_colors += 1;
+            tile.color = BlendColor(tile.color_total, tile.num_colors);
         } else {
             // TODO: Check if the direction of tile and direction variable are different
-            // if they are, blend the colors
             // else, keep tile.colo = color
             if (tile.directions[0] && direction.x == 0 && direction.y==-1) {
                 // NOTE: up and down
-                tile.color = BlendColor(color, tile.color);
+                tile.color_total = tile.color_total + Vec4Int(color);
+                tile.num_colors += 1;
+                tile.color = BlendColor(tile.color_total, tile.num_colors);
             } else if (tile.directions[1] && direction.x == -1 && direction.y == 0) {
                 // NOTE: Right and left
-                tile.color = BlendColor(color, tile.color);
+                tile.color_total = tile.color_total + Vec4Int(color);
+                tile.num_colors += 1;
+                tile.color = BlendColor(tile.color_total, tile.num_colors);
             } else if (tile.directions[2] && direction.x == 0 && direction.y == 1) {
                 // NOTE: Down and up
-                tile.color = BlendColor(color, tile.color);
+                tile.color_total = tile.color_total + Vec4Int(color);
+                tile.num_colors += 1;
+                tile.color = BlendColor(tile.color_total, tile.num_colors);
             } else if (tile.directions[3] && direction.x == 1 && direction.y == 0) {
                 // NOTE: left and right
-                tile.color = BlendColor(color, tile.color);
+                tile.color_total = tile.color_total + Vec4Int(color);
+                tile.num_colors += 1;
+                tile.color = BlendColor(tile.color_total, tile.num_colors);
             } else {
                 tile.color = color;
             }
         }
+
         if (direction.x > 0)        tile.directions[1] = true;
         else if (direction.x < 0)   tile.directions[3] = true;
         if (direction.y > 0)        tile.directions[0] = true;
         else if (direction.y < 0)   tile.directions[2] = true;
-
     
+        emission_map.SetEmissionTile(new_position.x, new_position.y, tile);
         for (int i = 0; i < 4; ++i) {
             if (tile.directions[i]) {
                 UpdateEmit(emitter_id,directions[i], new_position, tile.color, map, entity_id_map, emission_map, entity_array);
@@ -561,15 +575,16 @@ void UpdateEmit(
         else if (direction.y < 0)   tile.directions[2] = true;
         tile.active = true;
         tile.color = color;
+        tile.color_total = Vector4Int{color.r, color.g, color.b, color.a};
+        tile.num_colors = 1;
         tile.orientation = orientation;
+        emission_map.SetEmissionTile(new_position.x, new_position.y, tile);
         for (int i = 0; i < 4; ++i) {
             if (tile.directions[i]) {
                 UpdateEmit(emitter_id,directions[i], new_position, tile.color, map, entity_id_map, emission_map, entity_array);
             }
         }
     }
-
-    emission_map.SetEmissionTile(new_position.x, new_position.y, tile);
 }
 
 // NOTE: EntityComponentEmitter state change. Sets layer 2 to laser tiles.
@@ -814,7 +829,7 @@ void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shader
             ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
             if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
 
-            tile = {false, EmissionTile::HORIZONTAL, {false, false, false, false}, Color{0, 0, 0, 0}};
+            tile = {false, EmissionTile::HORIZONTAL, {false, false, false, false}, Color{0, 0, 0, 0}, Vector4Int{0, 0, 0, 0}, 0};
             map.SetEmissionTile(x, y, tile);
 
         }

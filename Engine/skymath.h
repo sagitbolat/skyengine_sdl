@@ -113,7 +113,9 @@ inline Vector2Int operator-(const Vector2Int a, const Vector2Int b) {
 	return Vector2Int{ a.x - b.x, a.y - b.y};
 }
 
-
+inline Vector4Int operator+(const Vector4Int a, const Vector4Int b) {
+	return Vector4Int{ a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w};
+}
 
 // SECTION: COLOR MATH
 
@@ -123,6 +125,10 @@ inline Vector4 Vec4(Color c) {
 }
 inline Vector4 Vec4(fColor c) {
     return Vector4{c.r, c.g, c.b, c.a};
+}
+
+inline Vector4Int Vec4Int(Color c) {
+	return Vector4Int{c.r, c.g, c.b, c.a};
 }
 
 inline Color operator+(const Color a, const Color b) {

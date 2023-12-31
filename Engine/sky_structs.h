@@ -30,6 +30,9 @@ struct Vector2Int {
 struct Vector3Int {
     int x, y, z;
 };
+struct Vector4Int {
+    int x, y, z, w;
+};
 union Matrix3 {
 	//NOTE: Stored ROW MAJOR. (mat.E[ROW][COLUMN] OR mat.D[ROW * 4 + COLUMN).
 	float E[3][3];
