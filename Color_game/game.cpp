@@ -150,8 +150,7 @@ LevelStateInfo level_state_info;
 
 // NOTE: Below is state of player moves for the undo feature
 struct MoveToken {
-    int direction; //NOTE: stores the direction of last move, 0 for up, 1 for right, 2 for down, 3 for left
-    int num_moves; //NOTE: stores how many moves in that direction was made in a row
+    int direction; //NOTE: stores the direction of last move, 1 for up, 2 for right, 3 for down, 4 for left, 0 for undefined
 };
 const int MOVE_LIST_SIZE = 2048;
 MoveToken* move_list; // List of moves performed
@@ -300,7 +299,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 emission_map.height = tilemap.height;
                 free(emission_map.map);
                 emission_map.map = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
-                move_list = (MoveToken*)realloc(move_list, MOVE_LIST_SIZE * sizeof(MoveToken)); 
+                move_list = (MoveToken*)realloc(move_list, MOVE_LIST_SIZE * sizeof(MoveToken));
+                move_list_pointer = 0; 
                 ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{1.0f, 1.0f, 1.0f, 1.0f}));
                 main_camera.width = level_zoom[curr_level_index-1];
                 main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
@@ -345,18 +345,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         
         // NOTE: Undo feature state
         if (moved) {
-            MoveToken* move_token = &move_list[move_list_pointer];
-            if(move_token->direction == 0) move_token->num_moves += 1;
-            else if (move_token->num_moves == 0) {
-                move_token->direction = 3;
-                move_token->num_moves = 1;
-            }
-            else {
-                move_list_pointer += 1;
-                move_token = &move_list[move_list_pointer];
-                move_token->direction = 0;
-                move_token->num_moves = 1;
-            }
+            move_list[move_list_pointer].direction = 1;
+            move_list_pointer++;
         }
     }
     if ((ks->state.S || ks->state.ARROWDOWN) && !entities_array[0].movable.moving) {
@@ -368,18 +358,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         
         // NOTE: Undo feature state
         if (moved) {
-            MoveToken* move_token = &move_list[move_list_pointer];
-            if(move_token->direction == 2) move_token->num_moves += 1;
-            else if (move_token->num_moves == 0) {
-                move_token->direction = 3;
-                move_token->num_moves = 1;
-            }
-            else {
-                move_list_pointer += 1;
-                move_token = &move_list[move_list_pointer];
-                move_token->direction = 2;
-                move_token->num_moves = 1;
-            }
+            move_list[move_list_pointer].direction = 3;
+            move_list_pointer++;
         }
     }
     if ((ks->state.A || ks->state.ARROWLEFT) && !entities_array[0].movable.moving) {
@@ -391,18 +371,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         
         // NOTE: Undo feature state
         if (moved) {
-            MoveToken* move_token = &move_list[move_list_pointer];
-            if(move_token->direction == 3) move_token->num_moves += 1;
-            else if (move_token->num_moves == 0) {
-                move_token->direction = 3;
-                move_token->num_moves = 1;
-            }
-            else {
-                move_list_pointer += 1;
-                move_token = &move_list[move_list_pointer];
-                move_token->direction = 3;
-                move_token->num_moves = 1;
-            }
+            move_list[move_list_pointer].direction = 4;
+            move_list_pointer++;
         }
     }
     if ((ks->state.D || ks->state.ARROWRIGHT) && !entities_array[0].movable.moving) {
@@ -414,18 +384,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         
         // NOTE: Undo feature state
         if (moved) {
-            MoveToken* move_token = &move_list[move_list_pointer];
-            if(move_token->direction == 1) move_token->num_moves += 1;
-            else if (move_token->num_moves == 0) {
-                move_token->direction = 1;
-                move_token->num_moves = 1;
-            }
-            else {
-                move_list_pointer += 1;
-                move_token = &move_list[move_list_pointer];
-                move_token->direction = 1;
-                move_token->num_moves = 1;
-            }
+            move_list[move_list_pointer].direction = 2;
+            move_list_pointer++;
         }
     }
     
@@ -467,102 +427,76 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         //    entity_id_map.SetID(entity.position.x, entity.position.y, entity.entity_layer, entity.id);
         //}
         MoveToken move_token = move_list[move_list_pointer];
-        printf("MoveToken: %d, %d \n", move_token.direction, move_token.num_moves);
-        if (move_token.num_moves > 0) {
-            int x = entities_array[0].position.x;
-            int y = entities_array[0].position.y;
-            switch(move_token.direction) {
-                case 0: { 
-                    // TODO: undo up move
-                    int entity_id = entity_id_map.GetID(x, y, 1);
-                    Entity entity = entities_array[entity_id];
-                    int prev_id = entity_id; 
-                    while (entity_id >= 0 && entity.active && entity.movable.active && y < tilemap.height - 1 && entity.movable.UNDO_times_moved > 0) {
-                        y += 1;
-                        prev_id = entity_id;
-                        entity_id = entity_id_map.GetID(x, y, 1);
-                        entity = entities_array[entity_id];
-                    }
-                    printf("enitity_id: %d\n", prev_id);
-                    printf("entity moves: %d\n", entities_array[prev_id].movable.UNDO_times_moved);
-                    EntityMove(prev_id, {0, -1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT, false); 
-                    if (move_token.num_moves > 1) {
-                        move_token.num_moves-=1;
-                    } else {
-                        move_token.direction = 0;
-                        move_token.num_moves = 0;
-                        move_list_pointer-=1;
-                    }
-                } break;
-                case 1: {
-                    // TODO: undo right move
-                    int entity_id = entity_id_map.GetID(x, y, 1);
-                    Entity entity = entities_array[entity_id];
-                    int prev_id = entity_id; 
-                    while (entity_id >= 0 && entity.active && entity.movable.active && x < tilemap.width - 1 && entity.movable.UNDO_times_moved > 0) {
-                        x += 1;
-                        prev_id = entity_id;
-                        entity_id = entity_id_map.GetID(x, y, 1);
-                        entity = entities_array[entity_id];
-                    }
-                    printf("enitity_id: %d\n", prev_id);
-                    printf("entity moves: %d\n", entities_array[prev_id].movable.UNDO_times_moved);
-                    EntityMove(prev_id, {-1, 0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT, false); 
-                    if (move_token.num_moves > 1) {
-                        move_token.num_moves-=1;
-                    } else {
-                        move_token.direction = 0;
-                        move_token.num_moves = 0;
-                        move_list_pointer-=1;
-                    }
-                } break;
-                case 2: {
-                    // TODO: undo down move
-                    int entity_id = entity_id_map.GetID(x, y, 1);
-                    Entity entity = entities_array[entity_id];
-                    int prev_id = entity_id; 
-                    while (entity_id >= 0 && entity.active && entity.movable.active && y > 0 && entity.movable.UNDO_times_moved > 0) {
-                        y -= 1;
-                        prev_id = entity_id;
-                        entity_id = entity_id_map.GetID(x, y, 1);
-                        entity = entities_array[entity_id];
-                    }
-                    printf("enitity_id: %d\n", prev_id);
-                    printf("entity moves: %d\n", entities_array[prev_id].movable.UNDO_times_moved);
-                    EntityMove(prev_id, {0, 1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT, false); 
-                    if (move_token.num_moves > 1) {
-                        move_token.num_moves-=1;
-                    } else {
-                        move_token.direction = 0;
-                        move_token.num_moves = 0;
-                        move_list_pointer-=1;
-                    }
-                } break;
-                case 3: {
-                    // TODO: undo left move
-                    int entity_id = entity_id_map.GetID(x, y, 1);
-                    Entity entity = entities_array[entity_id];
-                    int prev_id = entity_id; 
-                    while (entity_id >= 0 && entity.active && entity.movable.active && x > 0 && entity.movable.UNDO_times_moved > 0) {
-                        x -= 1;
-                        prev_id = entity_id;
-                        entity_id = entity_id_map.GetID(x, y, 1);
-                        entity = entities_array[entity_id];
-                    }
-                    printf("enitity_id: %d\n", prev_id);
-                    printf("entity moves: %d\n", entities_array[prev_id].movable.UNDO_times_moved);
-                    EntityMove(prev_id, {1, 0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT, false); 
-                    if (move_token.num_moves > 1) {
-                        move_token.num_moves-=1;
-                    } else {
-                        move_token.direction = 0;
-                        move_token.num_moves = 0;
-                        move_list_pointer-=1;
-                    }
-                } break;
-                default:
-                break;
-            }
+        printf("MoveToken: %d\n", move_token.direction);
+        int x = entities_array[0].position.x;
+        int y = entities_array[0].position.y;
+        switch(move_token.direction) {
+            case 1: { 
+                int entity_id = entity_id_map.GetID(x, y, 1);
+                Entity entity = entities_array[entity_id];
+                int prev_id = entity_id; 
+                while (entity_id >= 0 && entity.active && entity.movable.active && y < tilemap.height - 1 && entity.movable.UNDO_times_moved > 0) {
+                    y += 1;
+                    prev_id = entity_id;
+                    entity_id = entity_id_map.GetID(x, y, 1);
+                    entity = entities_array[entity_id];
+                }
+                printf("enitity_id: %d\n", prev_id);
+                printf("entity moves: %d\n", entities_array[prev_id].movable.UNDO_times_moved);
+                EntityMove(prev_id, {0, -1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT, false); 
+                move_token.direction = 0;
+                move_list_pointer-=1;
+            } break;
+            case 2: {
+                int entity_id = entity_id_map.GetID(x, y, 1);
+                Entity entity = entities_array[entity_id];
+                int prev_id = entity_id; 
+                while (entity_id >= 0 && entity.active && entity.movable.active && x < tilemap.width - 1 && entity.movable.UNDO_times_moved > 0) {
+                    x += 1;
+                    prev_id = entity_id;
+                    entity_id = entity_id_map.GetID(x, y, 1);
+                    entity = entities_array[entity_id];
+                }
+                printf("enitity_id: %d\n", prev_id);
+                printf("entity moves: %d\n", entities_array[prev_id].movable.UNDO_times_moved);
+                EntityMove(prev_id, {-1, 0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT, false); 
+                move_token.direction = 0;
+                move_list_pointer-=1;
+            } break;
+            case 3: {
+                int entity_id = entity_id_map.GetID(x, y, 1);
+                Entity entity = entities_array[entity_id];
+                int prev_id = entity_id; 
+                while (entity_id >= 0 && entity.active && entity.movable.active && y > 0 && entity.movable.UNDO_times_moved > 0) {
+                    y -= 1;
+                    prev_id = entity_id;
+                    entity_id = entity_id_map.GetID(x, y, 1);
+                    entity = entities_array[entity_id];
+                }
+                printf("enitity_id: %d\n", prev_id);
+                printf("entity moves: %d\n", entities_array[prev_id].movable.UNDO_times_moved);
+                EntityMove(prev_id, {0, 1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT, false); 
+                move_token.direction = 0;
+                move_list_pointer-=1;
+            } break;
+            case 4: {
+                int entity_id = entity_id_map.GetID(x, y, 1);
+                Entity entity = entities_array[entity_id];
+                int prev_id = entity_id; 
+                while (entity_id >= 0 && entity.active && entity.movable.active && x > 0 && entity.movable.UNDO_times_moved > 0) {
+                    x -= 1;
+                    prev_id = entity_id;
+                    entity_id = entity_id_map.GetID(x, y, 1);
+                    entity = entities_array[entity_id];
+                }
+                printf("enitity_id: %d\n", prev_id);
+                printf("entity moves: %d\n", entities_array[prev_id].movable.UNDO_times_moved);
+                EntityMove(prev_id, {1, 0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT, false); 
+                move_token.direction = 0;
+                move_list_pointer-=1;
+            } break;
+            default:
+            break;
         }
     }
 
@@ -624,9 +558,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
     }
     if (ks->state.SPACE && !ks->prev_state.SPACE) {
-        int num_entities = level_state_info.num_entities;
-        for (int i = 0; i < num_entities; ++i) {
-            printf("%d ", entities_array[i].id); 
+        for (int i = 0; i < move_list_pointer; ++i) {
+            printf("%d ", move_list[i].direction); 
         }
         printf("\n");
     }
