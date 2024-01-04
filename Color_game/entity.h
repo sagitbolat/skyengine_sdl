@@ -60,6 +60,7 @@ struct EntityComponentMover { // NOTE: Whether movable by the player
     float move_timer;
     bool  moving;
     int UNDO_times_moved;
+    int UNDO_turns_since_moved;
 };
 struct EntityComponentEmitter { // NOTE: Laser emitter struct
     bool active;
@@ -110,6 +111,7 @@ void EntityComponentMoverInit(EntityComponentMover* component, float seconds_per
     component->move_timer = 0.0f;
     component->moving = false;
     component->UNDO_times_moved = 0;
+    component->UNDO_turns_since_moved = 0;
 }
 void EntityComponentEmitterInit(EntityComponentEmitter* component, Color emission_color,  EntityComponentEmitter::DIRECTION_ENUM dir, bool active = true) {
     component->active = active;

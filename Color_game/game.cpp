@@ -426,7 +426,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         //    Entity entity = entities_array[i];
         //    entity_id_map.SetID(entity.position.x, entity.position.y, entity.entity_layer, entity.id);
         //}
-        MoveToken move_token = move_list[move_list_pointer];
+        MoveToken move_token = move_list[move_list_pointer-1];
         printf("MoveToken: %d\n", move_token.direction);
         int x = entities_array[0].position.x;
         int y = entities_array[0].position.y;
