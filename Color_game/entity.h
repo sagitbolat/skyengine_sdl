@@ -59,6 +59,7 @@ struct EntityComponentMover { // NOTE: Whether movable by the player
     float seconds_per_tile;
     float move_timer;
     bool  moving;
+    int UNDO_times_moved;
 };
 struct EntityComponentEmitter { // NOTE: Laser emitter struct
     bool active;
@@ -108,6 +109,7 @@ void EntityComponentMoverInit(EntityComponentMover* component, float seconds_per
     component->seconds_per_tile = seconds_per_tile;
     component->move_timer = 0.0f;
     component->moving = false;
+    component->UNDO_times_moved = 0;
 }
 void EntityComponentEmitterInit(EntityComponentEmitter* component, Color emission_color,  EntityComponentEmitter::DIRECTION_ENUM dir, bool active = true) {
     component->active = active;
@@ -184,6 +186,7 @@ void PrintEntity(Entity e) {
     printf("Player::Active:         %d\n", e.player.active);
     printf("Mover::Active           %d\n", e.movable.active);
     printf("Mover::Moving           %d\n", e.movable.moving);
+    printf("Mover::Times Moved      %d\n", e.movable.UNDO_times_moved);
     printf("Emitter::Active:        %d\n", e.emitter.active);
     printf("Emitter::Color:         {%d, %d, %d, %d}\n", e.emitter.emission_color.r, e.emitter.emission_color.g, e.emitter.emission_color.b, e.emitter.emission_color.a);
     printf("Receiver::Active:       %d\n", e.receiver.active);
@@ -381,7 +384,8 @@ void TeleporterInit(
 
 // NOTE: EntityComponentMover state change
 // Returns true if moving was successful. false if was unable to move the entity
-bool EntityMove(int entity_id, Vector2Int direction, Tilemap map, EntityMap entity_id_map, Entity* entity_array, int move_weight = 1) {
+bool EntityMove(int entity_id, Vector2Int direction, Tilemap map, EntityMap entity_id_map, Entity* entity_array, int move_weight = 1, bool is_moving_instead_of_undoing = true) {
+
     if (move_weight < 0) return false;
     
     Entity* entity = &entity_array[entity_id];
@@ -420,6 +424,11 @@ bool EntityMove(int entity_id, Vector2Int direction, Tilemap map, EntityMap enti
         ) {
             return false;
         } 
+        
+        // NOTE: check if undoing and if undo can be done:
+        if (!is_moving_instead_of_undoing && entity->movable.UNDO_times_moved < 1) {
+            return false;
+        }
     }
 
     int new_entity_id = entity_id_map.GetID(new_position.x, new_position.y, entity->entity_layer);
@@ -428,8 +437,9 @@ bool EntityMove(int entity_id, Vector2Int direction, Tilemap map, EntityMap enti
 
 
     bool could_move_new_entity = false;
+    
     if (new_entity_id >= 0 && new_entity->active) {
-        could_move_new_entity = EntityMove(new_entity_id, direction, map, entity_id_map, entity_array, move_weight-1);
+        could_move_new_entity = EntityMove(new_entity_id, direction, map, entity_id_map, entity_array, move_weight-1, is_moving_instead_of_undoing);
     } else if(new_entity_id < 0) {
         could_move_new_entity = true;
     } 
@@ -443,6 +453,11 @@ bool EntityMove(int entity_id, Vector2Int direction, Tilemap map, EntityMap enti
         
         entity->prev_position = new_position - direction;
         
+        if (is_moving_instead_of_undoing) {
+            entity->movable.UNDO_times_moved++;
+        } else {
+            entity->movable.UNDO_times_moved--;
+        } 
         return true;
     }
     return false;
