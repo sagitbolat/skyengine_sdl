@@ -198,6 +198,7 @@ void ReadEntityState(Entity* entity, EntityMap* entity_map, const Sprite* sprite
         entity->door.connected_activators_ids[i] = connected_activator_ids[i]; 
     }
 
+
 }
 
 
@@ -261,8 +262,13 @@ LevelStateInfo ReadLevelState(
     Tilemap* tilemap, 
     Entity** entity_array,
     EntityMap* entity_map,
-    const Sprite* all_sprites 
+    const Sprite* all_sprites,
+    int* num_movable_entities = nullptr 
 ) {
+
+    // NOTE: reset num_movable_entities when loading new level:
+    if (num_movable_entities != nullptr) num_movable_entities = 0;
+
     // NOTE: construct level filepath from name:
     char filepath[256] = {0};
     snprintf(filepath, sizeof(filepath), "%s/%s.%s", level_directory, level_name, level_filetype_extension);
@@ -329,6 +335,12 @@ LevelStateInfo ReadLevelState(
     // NOTE: Read the entity states:
     for (int e = 0; e < num_entities; ++e) {
         ReadEntityState(&(*entity_array)[e], entity_map, all_sprites, file_p);
+        
+        if (num_movable_entities == nullptr) continue;
+        if ((*entity_array)[e].active && (*entity_array)[e].movable.active) {
+            ++num_movable_entities;
+        }
+
     }
 
     fclose(file_p);

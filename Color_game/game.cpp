@@ -4,7 +4,7 @@
 #include "../Engine/SDL_sky.cpp"
 #include "../Engine/skymath.h"
 
-#define MAX_ENTITIES 91 
+#define MAX_ENTITIES 256 
 #include "tilemap.h"
 #include "entity.h"
 #include "level_loader.h"
@@ -138,7 +138,6 @@ Sprite sprites [21];
 
 EntityMap entity_id_map; // NOTE: acts as a lookup table from tilemap coordinate to an entity. a negative value indicates no entity at coordinate.
 Entity* entities_array; // Array of entities in the game. Player is always first element.
-Entity* prev_entities_array;
 EmissionMap emission_map;
 Sprite emission_sprite;
 
@@ -148,14 +147,16 @@ Transform tile_default_transform;
 
 LevelStateInfo level_state_info;
 
-// NOTE: Below is state of player moves for the undo feature
-struct MoveToken {
-    int direction; //NOTE: stores the direction of last move, 1 for up, 2 for right, 3 for down, 4 for left, 0 for undefined
+// NOTE: Below is state of the level for the undo feature
+const int UNDO_LENGTH = 2048;
+struct UndoToken {
+    int id;
+    int x_pos; 
+    int y_pos;
 };
-const int MOVE_LIST_SIZE = 2048;
-MoveToken* move_list; // List of moves performed
-int move_list_pointer = 0; // index in the list of moves performed that pertains to current move
-
+UndoToken* undo_list;
+int undo_list_entity_num = 1;
+int undo_list_pointer = 0;
 
 void Awake(GameMemory *gm)
 {
@@ -231,11 +232,8 @@ void Awake(GameMemory *gm)
 
     // TODO: Load the saved data
 
-    level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites);
-    prev_entities_array = (Entity*)calloc(level_state_info.num_entities, sizeof(Entity));
-    for (int i = 0; i < level_state_info.num_entities; ++i) {
-        prev_entities_array[i] = entities_array[i];
-    }
+    level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites, &undo_list_entity_num);
+    
 
     ++curr_level_index;
 
@@ -244,9 +242,8 @@ void Awake(GameMemory *gm)
     emission_map.map    = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
     for (int i = 0; i < emission_map.width * emission_map.height; ++i) emission_map.map[i] = {0};
 
-    // SECTION: allocate move list history array
-    move_list = (MoveToken*)calloc(MOVE_LIST_SIZE, sizeof(MoveToken));
-
+    // SECTION: allocate undo list history array
+    undo_list = (UndoToken*)calloc(undo_list_entity_num * UNDO_LENGTH, sizeof(UndoToken));
 
     main_camera.position.x  = float(tilemap.width/2);
     main_camera.position.y  = float(tilemap.height/2);
@@ -286,21 +283,20 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{1.0f, 1.0f, 1.0f, complement}));
             }
             else {
-                level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites);
-                free(prev_entities_array); 
-                prev_entities_array = (Entity*)calloc(level_state_info.num_entities, sizeof(Entity));
-                for (int i = 0; i < level_state_info.num_entities; ++i) {
-                    prev_entities_array[i] = entities_array[i];
-                }
+                level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites, &undo_list_entity_num);
                 ++curr_level_index;
                 restarting_level = false; 
                 
+                // NOTE: Undo Feaute
+                undo_list = (UndoToken*)realloc(undo_list, UNDO_LENGTH * sizeof(UndoToken) * undo_list_entity_num);
+                undo_list_pointer = 0; 
+                
+
+
                 emission_map.width  = tilemap.width;
                 emission_map.height = tilemap.height;
                 free(emission_map.map);
                 emission_map.map = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
-                move_list = (MoveToken*)realloc(move_list, MOVE_LIST_SIZE * sizeof(MoveToken));
-                move_list_pointer = 0; 
                 ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{1.0f, 1.0f, 1.0f, 1.0f}));
                 main_camera.width = level_zoom[curr_level_index-1];
                 main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
@@ -337,55 +333,67 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     }
     
     if ((ks->state.W || ks->state.ARROWUP) && !entities_array[0].movable.moving) {
-        memcpy(prev_entities_array, entities_array, level_state_info.num_entities * sizeof(entities_array[0]));
         bool moved = EntityMove(0, {0, 1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::UP;
         printf("moved: %d\n", moved); 
-        printf("move_pointer: %d\n", move_list_pointer); 
         
         // NOTE: Undo feature state
         if (moved) {
-            move_list[move_list_pointer].direction = 1;
-            move_list_pointer++;
+            for (int e = 0; e < level_state_info.num_entities; ++e) {
+                if (!entities_array[e].active || !entities_array[e].movable.active) continue;
+                int x_pos = entities_array[e].position.x;
+                int y_pos = entities_array[e].position.y;
+                undo_list[undo_list_pointer] = UndoToken({e, x_pos, y_pos});
+                undo_list_pointer++;
+            }
         }
     }
     if ((ks->state.S || ks->state.ARROWDOWN) && !entities_array[0].movable.moving) {
-        memcpy(prev_entities_array, entities_array, level_state_info.num_entities * sizeof(entities_array[0]));
         bool moved = EntityMove(0, {0,-1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::DOWN; 
         printf("moved: %d\n", moved);
-        printf("move_pointer: %d\n", move_list_pointer); 
         
         // NOTE: Undo feature state
         if (moved) {
-            move_list[move_list_pointer].direction = 3;
-            move_list_pointer++;
+            for (int e = 0; e < level_state_info.num_entities; ++e) {
+                if (!entities_array[e].active || !entities_array[e].movable.active) continue;
+                int x_pos = entities_array[e].position.x;
+                int y_pos = entities_array[e].position.y;
+                undo_list[undo_list_pointer] = UndoToken({e, x_pos, y_pos});
+                undo_list_pointer++;
+            }
         }
     }
     if ((ks->state.A || ks->state.ARROWLEFT) && !entities_array[0].movable.moving) {
-        memcpy(prev_entities_array, entities_array, level_state_info.num_entities * sizeof(entities_array[0]));
         bool moved = EntityMove(0, {-1,0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::LEFT; 
         printf("moved: %d\n", moved); 
-        printf("move_pointer: %d\n", move_list_pointer); 
         
         // NOTE: Undo feature state
         if (moved) {
-            move_list[move_list_pointer].direction = 4;
-            move_list_pointer++;
+            for (int e = 0; e < level_state_info.num_entities; ++e) {
+                if (!entities_array[e].active || !entities_array[e].movable.active) continue;
+                int x_pos = entities_array[e].position.x;
+                int y_pos = entities_array[e].position.y;
+                undo_list[undo_list_pointer] = UndoToken({e, x_pos, y_pos});
+                undo_list_pointer++;
+            }
         }
     }
     if ((ks->state.D || ks->state.ARROWRIGHT) && !entities_array[0].movable.moving) {
-        memcpy(prev_entities_array, entities_array, level_state_info.num_entities * sizeof(entities_array[0]));
         bool moved = EntityMove(0, {1, 0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::RIGHT; 
         printf("moved: %d\n", moved); 
-        printf("move_pointer: %d\n", move_list_pointer); 
         
         // NOTE: Undo feature state
         if (moved) {
-            move_list[move_list_pointer].direction = 2;
-            move_list_pointer++;
+            for (int e = 0; e < level_state_info.num_entities; ++e) {
+                if (!entities_array[e].active || !entities_array[e].movable.active) continue;
+                int x_pos = entities_array[e].position.x;
+                int y_pos = entities_array[e].position.y;
+                undo_list[undo_list_pointer] = UndoToken({e, x_pos, y_pos});
+                undo_list_pointer++;
+            }
         }
     }
     
@@ -396,7 +404,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     }
 
 
-    { // NOTE: if player standing on the endgoal, begine transition 
+    { // NOTE: if player standing on the endgoal, begin transition 
         Vector2Int player_pos = entities_array[0].position;
         int entity_id_at_player_pos = entity_id_map.GetID(player_pos.x, player_pos.y, 0);
         if (entity_id_at_player_pos >= 0) {
@@ -418,7 +426,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
 
     // NOTE: undo last move
-    if (ks->state.U && !ks->prev_state.U && !level_transitioning && !entities_array[0].movable.moving) {
+    if (ks->state.U && !ks->prev_state.U && !level_transitioning) {
         //memcpy(entities_array, prev_entities_array, level_state_info.num_entities * sizeof(entities_array[0]));
         //entity_id_map.map       = (int*)realloc(entity_id_map.map, sizeof(int) * entity_id_map.height * entity_id_map.width * entity_id_map.depth);
         //for (int i = 0; i < entity_id_map.height * entity_id_map.width * entity_id_map.depth; ++i) entity_id_map.map[i] = -1;
@@ -426,77 +434,32 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         //    Entity entity = entities_array[i];
         //    entity_id_map.SetID(entity.position.x, entity.position.y, entity.entity_layer, entity.id);
         //}
-        MoveToken move_token = move_list[move_list_pointer-1];
-        printf("MoveToken: %d\n", move_token.direction);
-        int x = entities_array[0].position.x;
-        int y = entities_array[0].position.y;
-        switch(move_token.direction) {
-            case 1: { 
-                int entity_id = entity_id_map.GetID(x, y, 1);
-                Entity entity = entities_array[entity_id];
-                int prev_id = entity_id; 
-                while (entity_id >= 0 && entity.active && entity.movable.active && y < tilemap.height - 1 && entity.movable.UNDO_times_moved > 0) {
-                    y += 1;
-                    prev_id = entity_id;
-                    entity_id = entity_id_map.GetID(x, y, 1);
-                    entity = entities_array[entity_id];
-                }
-                printf("enitity_id: %d\n", prev_id);
-                printf("entity moves: %d\n", entities_array[prev_id].movable.UNDO_times_moved);
-                EntityMove(prev_id, {0, -1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT, false); 
-                move_token.direction = 0;
-                move_list_pointer-=1;
-            } break;
-            case 2: {
-                int entity_id = entity_id_map.GetID(x, y, 1);
-                Entity entity = entities_array[entity_id];
-                int prev_id = entity_id; 
-                while (entity_id >= 0 && entity.active && entity.movable.active && x < tilemap.width - 1 && entity.movable.UNDO_times_moved > 0) {
-                    x += 1;
-                    prev_id = entity_id;
-                    entity_id = entity_id_map.GetID(x, y, 1);
-                    entity = entities_array[entity_id];
-                }
-                printf("enitity_id: %d\n", prev_id);
-                printf("entity moves: %d\n", entities_array[prev_id].movable.UNDO_times_moved);
-                EntityMove(prev_id, {-1, 0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT, false); 
-                move_token.direction = 0;
-                move_list_pointer-=1;
-            } break;
-            case 3: {
-                int entity_id = entity_id_map.GetID(x, y, 1);
-                Entity entity = entities_array[entity_id];
-                int prev_id = entity_id; 
-                while (entity_id >= 0 && entity.active && entity.movable.active && y > 0 && entity.movable.UNDO_times_moved > 0) {
-                    y -= 1;
-                    prev_id = entity_id;
-                    entity_id = entity_id_map.GetID(x, y, 1);
-                    entity = entities_array[entity_id];
-                }
-                printf("enitity_id: %d\n", prev_id);
-                printf("entity moves: %d\n", entities_array[prev_id].movable.UNDO_times_moved);
-                EntityMove(prev_id, {0, 1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT, false); 
-                move_token.direction = 0;
-                move_list_pointer-=1;
-            } break;
-            case 4: {
-                int entity_id = entity_id_map.GetID(x, y, 1);
-                Entity entity = entities_array[entity_id];
-                int prev_id = entity_id; 
-                while (entity_id >= 0 && entity.active && entity.movable.active && x > 0 && entity.movable.UNDO_times_moved > 0) {
-                    x -= 1;
-                    prev_id = entity_id;
-                    entity_id = entity_id_map.GetID(x, y, 1);
-                    entity = entities_array[entity_id];
-                }
-                printf("enitity_id: %d\n", prev_id);
-                printf("entity moves: %d\n", entities_array[prev_id].movable.UNDO_times_moved);
-                EntityMove(prev_id, {1, 0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT, false); 
-                move_token.direction = 0;
-                move_list_pointer-=1;
-            } break;
-            default:
-            break;
+        printf("Undoing: %d, %d\n", undo_list_pointer, undo_list_entity_num);
+        if (undo_list_pointer - undo_list_entity_num >= 0) {
+            undo_list_pointer -= undo_list_entity_num;
+            for (int i = 0; i < undo_list_entity_num; ++i) {
+                printf("UNDO %d\n", i);
+                int e = undo_list[undo_list_pointer + i].id;
+                
+                int old_x = entities_array[e].position.x;
+                int old_y = entities_array[e].position.y;
+                entity_id_map.SetID(old_x, old_y, 1, -1);
+            }
+
+            for (int i = 0; i < undo_list_entity_num; ++i) {
+                int e = undo_list[undo_list_pointer + i].id;
+                int x = undo_list[undo_list_pointer + i].x_pos;
+                int y = undo_list[undo_list_pointer + i].y_pos;
+                printf("UNDO %d (%d, %d)\n", e, x, y);
+                undo_list[undo_list_pointer + i] = UndoToken({0, 0, 0});
+                (&entities_array[e])->position.x = x;
+                (&entities_array[e])->position.y = y;
+                (&entities_array[e])->prev_position.x = x;
+                (&entities_array[e])->prev_position.y = y;
+                (&entities_array[e])->transform.position.x = x;
+                (&entities_array[e])->transform.position.y = y;
+                entity_id_map.SetID(x, y, 1, e);
+            }
         }
     }
 
@@ -520,11 +483,10 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     if (ks->state.Q && !ks->prev_state.Q) {
         --curr_level_index;
         if (curr_level_index <= 0) curr_level_index = NUM_LEVELS;
-        level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites);
-        free(prev_entities_array); 
-        prev_entities_array = (Entity*)calloc(level_state_info.num_entities, sizeof(Entity));
-        memcpy(prev_entities_array, entities_array, level_state_info.num_entities * sizeof(entities_array[0]));
+        level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites, &undo_list_entity_num);
         printf("Restarting level: %d\n", curr_level_index-1);
+        
+        undo_list = (UndoToken*)realloc(undo_list, UNDO_LENGTH * sizeof(UndoToken) * undo_list_entity_num);
 
         emission_map.width  = tilemap.width;
         emission_map.height = tilemap.height;
@@ -540,12 +502,11 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     if (ks->state.E && !ks->prev_state.E) {
         ++curr_level_index;
         if (curr_level_index > NUM_LEVELS) curr_level_index = 1;
-        level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites);
-        free(prev_entities_array); 
-        prev_entities_array = (Entity*)calloc(level_state_info.num_entities, sizeof(Entity));
-        memcpy(prev_entities_array, entities_array, level_state_info.num_entities * sizeof(entities_array[0]));
+        level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites, &undo_list_entity_num);
         printf("Restarting level: %d\n", curr_level_index-1);
-        
+
+        undo_list = (UndoToken*)realloc(undo_list, UNDO_LENGTH * sizeof(UndoToken) * undo_list_entity_num);
+
         emission_map.width  = tilemap.width;
         emission_map.height = tilemap.height;
         free(emission_map.map);
@@ -558,10 +519,17 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
     }
     if (ks->state.SPACE && !ks->prev_state.SPACE) {
-        for (int i = 0; i < move_list_pointer; ++i) {
-            printf("%d ", move_list[i].direction); 
+        printf("undo entities: %d\n", undo_list_entity_num);
+        printf("undo list ptr: %d\n", undo_list_pointer);
+        for (int i = 0; i < 10; ++i) {
+            for (int u = 0; u < undo_list_entity_num; ++u) {
+                int id = undo_list[i*undo_list_entity_num + u].id;
+                int x = undo_list[i*undo_list_entity_num + u].x_pos;
+                int y = undo_list[i*undo_list_entity_num + u].y_pos;
+                printf("%d: (%d, %d) | ", id, x, y);
+            }
+            printf("\n");
         }
-        printf("\n");
     }
 #endif
 
@@ -733,7 +701,7 @@ void UserFree()
     entities_array[0].active = false;
 
 
-    free(move_list);
+    free(undo_list);
 
     FreeGPUBuffers(gpu_buffers);
     FreeShaders(shaders);
