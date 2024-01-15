@@ -263,11 +263,11 @@ LevelStateInfo ReadLevelState(
     Entity** entity_array,
     EntityMap* entity_map,
     const Sprite* all_sprites,
-    int* num_movable_entities = nullptr 
+    int* num_movable_entities 
 ) {
 
     // NOTE: reset num_movable_entities when loading new level:
-    if (num_movable_entities != nullptr) num_movable_entities = 0;
+    if (num_movable_entities != nullptr) (*num_movable_entities) = 0;
 
     // NOTE: construct level filepath from name:
     char filepath[256] = {0};
@@ -338,7 +338,7 @@ LevelStateInfo ReadLevelState(
         
         if (num_movable_entities == nullptr) continue;
         if ((*entity_array)[e].active && (*entity_array)[e].movable.active) {
-            ++num_movable_entities;
+            ++(*num_movable_entities);
         }
 
     }

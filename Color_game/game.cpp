@@ -333,67 +333,75 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     }
     
     if ((ks->state.W || ks->state.ARROWUP) && !entities_array[0].movable.moving) {
+        // NOTE: Undo feature state
+        for (int e = 0; e < level_state_info.num_entities; ++e) {
+            if (!entities_array[e].active || !entities_array[e].movable.active) continue;
+            int x_pos = entities_array[e].position.x;
+            int y_pos = entities_array[e].position.y;
+            undo_list[undo_list_pointer] = UndoToken({e, x_pos, y_pos});
+            undo_list_pointer++;
+        }
+        
         bool moved = EntityMove(0, {0, 1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::UP;
         printf("moved: %d\n", moved); 
         
-        // NOTE: Undo feature state
-        if (moved) {
-            for (int e = 0; e < level_state_info.num_entities; ++e) {
-                if (!entities_array[e].active || !entities_array[e].movable.active) continue;
-                int x_pos = entities_array[e].position.x;
-                int y_pos = entities_array[e].position.y;
-                undo_list[undo_list_pointer] = UndoToken({e, x_pos, y_pos});
-                undo_list_pointer++;
-            }
+        if (!moved) {
+            undo_list_pointer -= undo_list_entity_num;
         }
     }
     if ((ks->state.S || ks->state.ARROWDOWN) && !entities_array[0].movable.moving) {
+        // NOTE: Undo feature state
+        for (int e = 0; e < level_state_info.num_entities; ++e) {
+            if (!entities_array[e].active || !entities_array[e].movable.active) continue;
+            int x_pos = entities_array[e].position.x;
+            int y_pos = entities_array[e].position.y;
+            undo_list[undo_list_pointer] = UndoToken({e, x_pos, y_pos});
+            undo_list_pointer++;
+        }
+        
         bool moved = EntityMove(0, {0,-1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::DOWN; 
         printf("moved: %d\n", moved);
-        
-        // NOTE: Undo feature state
-        if (moved) {
-            for (int e = 0; e < level_state_info.num_entities; ++e) {
-                if (!entities_array[e].active || !entities_array[e].movable.active) continue;
-                int x_pos = entities_array[e].position.x;
-                int y_pos = entities_array[e].position.y;
-                undo_list[undo_list_pointer] = UndoToken({e, x_pos, y_pos});
-                undo_list_pointer++;
-            }
+
+        if (!moved) {
+            undo_list_pointer -= undo_list_entity_num;
         }
     }
     if ((ks->state.A || ks->state.ARROWLEFT) && !entities_array[0].movable.moving) {
+        // NOTE: Undo feature state
+        for (int e = 0; e < level_state_info.num_entities; ++e) {
+            if (!entities_array[e].active || !entities_array[e].movable.active) continue;
+            int x_pos = entities_array[e].position.x;
+            int y_pos = entities_array[e].position.y;
+            undo_list[undo_list_pointer] = UndoToken({e, x_pos, y_pos});
+            undo_list_pointer++;
+        }
+        
         bool moved = EntityMove(0, {-1,0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::LEFT; 
         printf("moved: %d\n", moved); 
         
-        // NOTE: Undo feature state
-        if (moved) {
-            for (int e = 0; e < level_state_info.num_entities; ++e) {
-                if (!entities_array[e].active || !entities_array[e].movable.active) continue;
-                int x_pos = entities_array[e].position.x;
-                int y_pos = entities_array[e].position.y;
-                undo_list[undo_list_pointer] = UndoToken({e, x_pos, y_pos});
-                undo_list_pointer++;
-            }
+        if (!moved) {
+            undo_list_pointer -= undo_list_entity_num;
         }
     }
     if ((ks->state.D || ks->state.ARROWRIGHT) && !entities_array[0].movable.moving) {
+        // NOTE: Undo feature state
+        for (int e = 0; e < level_state_info.num_entities; ++e) {
+            if (!entities_array[e].active || !entities_array[e].movable.active) continue;
+            int x_pos = entities_array[e].position.x;
+            int y_pos = entities_array[e].position.y;
+            undo_list[undo_list_pointer] = UndoToken({e, x_pos, y_pos});
+            undo_list_pointer++;
+        }
+        
         bool moved = EntityMove(0, {1, 0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
         entities_array[0].player.direction = EntityComponentPlayer::DIRECTION_ENUM::RIGHT; 
         printf("moved: %d\n", moved); 
         
-        // NOTE: Undo feature state
-        if (moved) {
-            for (int e = 0; e < level_state_info.num_entities; ++e) {
-                if (!entities_array[e].active || !entities_array[e].movable.active) continue;
-                int x_pos = entities_array[e].position.x;
-                int y_pos = entities_array[e].position.y;
-                undo_list[undo_list_pointer] = UndoToken({e, x_pos, y_pos});
-                undo_list_pointer++;
-            }
+        if (!moved) {
+            undo_list_pointer -= undo_list_entity_num;
         }
     }
     
@@ -467,7 +475,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     if (ks->state.R && !ks->prev_state.R && !level_transitioning) {
         if (fast_reload) {
             printf("Reloading level %s (index %d)\n", level_names[curr_level_index-1], curr_level_index-1);
-            level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites);
+            level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites, &undo_list_entity_num);
         } else {
             showing_wires = false;
             level_transitioning = true;
