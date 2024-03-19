@@ -66,7 +66,7 @@ char level_names[][64] = { // NOTE: To calculate array length subtract the line 
     "32_22",
     "33_w",
     "31_wh",
-    "34_l",
+    "34_l", // (or 34 instead for a tighter level.)
     "nd2"
 };
 float level_zoom[] = {
