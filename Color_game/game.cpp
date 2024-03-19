@@ -30,7 +30,7 @@ Tileset tileset = {0};
 Tilemap tilemap = {0};
 
 
-const int NUM_LEVELS = 34;
+const int NUM_LEVELS = 35;
 int curr_level_index = 0;
 char level_names[][64] = { // NOTE: To calculate array length subtract the line number of the last string from the line number of this line
     "0",
@@ -63,9 +63,10 @@ char level_names[][64] = { // NOTE: To calculate array length subtract the line 
     "8_w",
     "28_w",
     "22_w2222",
-    "32_2",
-    "33_3",
+    "32_22",
+    "33_w",
     "31_wh",
+    "34_l",
     "nd2"
 };
 float level_zoom[] = {
@@ -101,6 +102,7 @@ float level_zoom[] = {
     18.0f,
     18.0f, //30
     14.0f,
+    18.0f,
     18.0f,
     25.0f
 };
@@ -492,7 +494,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         --curr_level_index;
         if (curr_level_index <= 0) curr_level_index = NUM_LEVELS;
         level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites, &undo_list_entity_num);
-        printf("Restarting level: %d\n", curr_level_index-1);
+        printf("Restarting level: %s (index %d)\n", level_names[curr_level_index-1], curr_level_index-1);
         
         undo_list = (UndoToken*)realloc(undo_list, UNDO_LENGTH * sizeof(UndoToken) * undo_list_entity_num);
 
@@ -511,7 +513,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         ++curr_level_index;
         if (curr_level_index > NUM_LEVELS) curr_level_index = 1;
         level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites, &undo_list_entity_num);
-        printf("Restarting level: %d\n", curr_level_index-1);
+        printf("Restarting level: %s (index %d)\n", level_names[curr_level_index-1], curr_level_index-1);
 
         undo_list = (UndoToken*)realloc(undo_list, UNDO_LENGTH * sizeof(UndoToken) * undo_list_entity_num);
 
