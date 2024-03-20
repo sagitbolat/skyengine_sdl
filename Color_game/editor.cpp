@@ -392,7 +392,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             button_down_sprite,             //19
             teleporter_sprite               //20
         };
-        LevelStateInfo level_state_info = ReadLevelState(level_name, &tilemap, &entities_array, &entity_id_map, sprites);
+        LevelStateInfo level_state_info = ReadLevelState(level_name, &tilemap, &entities_array, &entity_id_map, sprites, nullptr);
         entity_array_offset = level_state_info.num_entities;
         emission_map.width  = tilemap.width;
         emission_map.height = tilemap.height;
@@ -637,7 +637,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 button_down_sprite,             //19
                 teleporter_sprite,
             };
-            LevelStateInfo level_state_info = ReadLevelState(level_names[i], &tilemap, &entities_array, &entity_id_map, sprites);
+            LevelStateInfo level_state_info = ReadLevelState(level_names[i], &tilemap, &entities_array, &entity_id_map, sprites, nullptr);
             entity_array_offset = level_state_info.num_entities;
             emission_map.width  = tilemap.width;
             emission_map.height = tilemap.height;
