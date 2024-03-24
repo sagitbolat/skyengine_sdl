@@ -288,7 +288,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites, &undo_list_entity_num);
                 ++curr_level_index;
                 restarting_level = false; 
-                
+                 
                 // NOTE: Undo Feaute
                 undo_list = (UndoToken*)realloc(undo_list, UNDO_LENGTH * sizeof(UndoToken) * undo_list_entity_num);
                 undo_list_pointer = 0; 
