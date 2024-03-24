@@ -7,7 +7,7 @@
 
 
 
-#define NO_INSTANCING
+//#define NO_INSTANCING
 
 #define NUM_OBJECTS 225
 #define NUM_OBJECTS_ROOT 15

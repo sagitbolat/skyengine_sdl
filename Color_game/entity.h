@@ -101,6 +101,12 @@ struct EntityComponentTeleporter {
     Color color;
     int connected_teleporter_id;
 };
+struct EntityComponentColorChanger {
+    bool active;
+    Color color;
+    enum COLOR_MODE {BLENDED, ADDITIVE, SUBTRACTIVE} color_mode;
+    bool directions[4]; // up, down, left, right
+};
 
 void EntityComponentMoverInit(EntityComponentMover* component, float seconds_per_tile, bool active = true) {
     component->active = active;
@@ -149,11 +155,17 @@ void EntityComponentTeleporterInit(EntityComponentTeleporter* component, int con
     component->connected_teleporter_id = connected_teleporter_id;
     component->color = color;
 }
+void EntityComponentColorChangerInit(EntityComponentColorChanger* component, Color color = {0, 0, 0, 0}, EntityComponentColorChanger::COLOR_MODE color_mode, bool active = true) {
+    component->active = active;
+    component->color = color;
+    component->directions = {false, false, false, false};
+    component->color_mode = color_mode;
+}
 
 // SECTION: Entities
 
 struct Entity {
-    enum ENTITY_TYPE_ENUM {PLAYER, PUSH_BLOCK, STATIC_BLOCK, EMITTER, RECEIVER, DOOR, BUTTON, ENDGOAL, TELEPORTER, COLOR_BLOCK} entity_type;
+    enum ENTITY_TYPE_ENUM {PLAYER, PUSH_BLOCK, STATIC_BLOCK, EMITTER, RECEIVER, DOOR, BUTTON, ENDGOAL, TELEPORTER, COLOR_CHANGER} entity_type;
     int         id;
     bool        active; // NOTE: This is equivalent of a null state if this is false.
     Sprite      sprite;
@@ -169,6 +181,7 @@ struct Entity {
     EntityComponentEndgoal      endgoal;
     EntityComponentButton       button;
     EntityComponentTeleporter   teleporter;
+    EntityComponentColorChanger color_changer;
 }; 
 
 
@@ -241,6 +254,7 @@ void EntityInit (
     EntityComponentDoorInit(&entity->door, false, nullptr, 0, false);
     EntityComponentButtonInit(&entity->button, false, false);
     EntityComponentTeleporterInit(&entity->teleporter, -1, {0, 0, 0, 0}, false);
+    EntityComponentColorChangerInit(&entity->color_changer, Color{0, 0, 0, 0}, EntityComponentColorChanger::COLOR_MODE::BLENDED, false);
 }
 
 void PlayerInit(
@@ -372,6 +386,19 @@ void TeleporterInit(
     EntityInit(teleporter, id, teleporter_sprite, init_position, 0.0f, true);
     EntityComponentTeleporterInit(&teleporter->teleporter, connected_teleporter_id, color, true);
     teleporter->entity_type = Entity::ENTITY_TYPE_ENUM::TELEPORTER;
+}
+void ColorChangerInit(
+    Entity* color_changer,
+    int id,
+    Sprite color_changer_sprite,
+    Color color,
+    EntityComponentColorChanger::COLOR_MODE color_mode,
+    Vector2Int init_position,
+    bool movable = true // Movable means its a layer 1 block, not movable is a layer 0 (can be passed through)
+) {
+    EntityInit(color_changer, id, color_changer_sprite, init_position, movable ? 1.0f : 0.0f, true);
+    EntityComponentColorChangerInit(&color_changer->color_changer, color, color_mode, true);
+    color_changer->entity_type = Entity::ENTITY_TYPE_ENUM::COLOR_CHANGER;
 }
 
 
