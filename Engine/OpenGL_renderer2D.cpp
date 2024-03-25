@@ -355,6 +355,7 @@ GPUBufferIDs InitGPUBuffers(
     buffer_info.vbo = vbo_id;
     buffer_info.vao = vao_id;
     buffer_info.ebo = ebo_id;
+    buffer_info.instance_vbo = nullptr;
 
     return buffer_info;
 }
@@ -419,12 +420,15 @@ GPUBufferIDs InitGPUBuffersInstanced(
     vbo_id->id = VBO;
     GL_ID* vao_id = (GL_ID*)malloc(sizeof(GL_ID)); 
     vao_id->id = VAO;
-    GL_ID* ebo_id = nullptr; 
-    
+    GL_ID* ebo_id = nullptr;
+    GL_ID* instance_vbo_id = (GL_ID*)malloc(sizeof(GL_ID)); 
+    instance_vbo_id->id = instanceVBO;
+
     GPUBufferIDs buffer_info = {0};
     buffer_info.vbo = vbo_id;
     buffer_info.vao = vao_id;
     buffer_info.ebo = ebo_id;
+    buffer_info.instance_vbo = instance_vbo_id;
 
 
     return buffer_info;
@@ -438,11 +442,12 @@ void FreeGPUBuffers(GPUBufferIDs buffer_info) {
     free(buffer_info.vbo);
     free(buffer_info.vao);
     free(buffer_info.ebo);
+    free(buffer_info.instance_vbo);
 
     buffer_info.vbo = nullptr;
     buffer_info.vao = nullptr;
     buffer_info.ebo = nullptr;
-
+    buffer_info.instance_vbo = nullptr;
 }
 
 
@@ -616,6 +621,49 @@ void DrawSpriteInstanced(Sprite sprite, GL_ID* shader, GPUBufferIDs gpu_ids, Cam
     ShaderSetTransform(sprite.shader_id, "transform", CameraToMatrix(camera) * TransformToMatrix(transform));
     
     DrawTextureInstanced(shader, sprite.texture_id, gpu_ids, num_intances);
+}
+
+void UpdateInstancePositions(GPUBufferIDs instance_gpu_buffers, Vector3* positions, int numInstances) {
+    glBindBuffer(GL_ARRAY_BUFFER, instance_gpu_buffers.instance_vbo->id);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, numInstances * sizeof(Vector3), positions);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void UpdateInstancePositionsMapped(GPUBufferIDs instance_gpu_buffers, Vector3* newPositions, int numInstances) {
+    glBindBuffer(GL_ARRAY_BUFFER, instance_gpu_buffers.instance_vbo->id);
+
+    // Map the buffer
+    Vector3* mappedBuffer = (Vector3*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+    if (mappedBuffer != NULL) {
+        // Update the data
+        for (int i = 0; i < numInstances; i++) {
+            mappedBuffer[i] = newPositions[i];
+        }
+
+        // Unmap the buffer
+        glUnmapBuffer(GL_ARRAY_BUFFER);
+    } else {
+        // Handle error 
+        printf("UpdateInstancePositionMapped Error: buffer mapping failed");
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+Vector3* InitInstancePositionsPersistently(GPUBufferIDs instance_gpu_buffers, Vector3* initialData, int numInstances) {
+
+    glBindBuffer(GL_ARRAY_BUFFER, instance_gpu_buffers.instance_vbo->id);
+    // Allocate the buffer with persistent mapping flags
+    glBufferStorage(GL_ARRAY_BUFFER, numInstances * sizeof(Vector3), initialData,
+                    GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+
+    // Map the buffer persistently
+    Vector3* mappedBuffer = (Vector3*)glMapBufferRange(GL_ARRAY_BUFFER, 0, numInstances * sizeof(Vector3),
+                                                       GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    return mappedBuffer;
 }
 
 unsigned int SkyGetGLID(GL_ID* id) {

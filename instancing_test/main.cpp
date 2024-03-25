@@ -9,8 +9,8 @@
 
 //#define NO_INSTANCING
 
-#define NUM_OBJECTS 225
-#define NUM_OBJECTS_ROOT 15
+#define NUM_OBJECTS 1000000
+#define NUM_OBJECTS_ROOT 1000
 
 
 void Init(
@@ -62,11 +62,34 @@ void Awake(GameMemory* gm) {
     main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
 }
 
+Vector3* mapped_buffer;
+
 void Start(GameState* gs, KeyboardState* ks) {
-    
+    mapped_buffer = InitInstancePositionsPersistently(instance_gpu_buffers, translations, NUM_OBJECTS);
 }
 
 void Update(GameState* gs, KeyboardState* ks, double dt) {
+
+    // Seed the random number generator
+    srand(time(NULL));
+
+    // Update the position of each object with random values
+    for (int i = 0; i < NUM_OBJECTS; i++) {
+        translations[i].x += (rand() % 3) - 1; 
+        translations[i].y += (rand() % 3) - 1; 
+
+        // Clamp the positions to the range [0, 100]
+        if (translations[i].x > NUM_OBJECTS_ROOT) translations[i].x = 0;
+        if (translations[i].x < 0) translations[i].x = NUM_OBJECTS_ROOT;
+        if (translations[i].y > NUM_OBJECTS_ROOT) translations[i].y = 0;
+        if (translations[i].y < 0) translations[i].y = NUM_OBJECTS_ROOT;
+
+        mapped_buffer[i].x = translations[i].x;
+        mapped_buffer[i].y = translations[i].y;
+    }
+
+
+
 
     auto start = std::chrono::high_resolution_clock::now();
     #ifdef NO_INSTANCING 
@@ -85,14 +108,24 @@ void Update(GameState* gs, KeyboardState* ks, double dt) {
     transform.position.y = 0.0f;
     #endif
     #ifndef NO_INSTANCING
+    // Update the instance positions using buffer mapping or glBufferSubData
+    //instance_gpu_buffers = InitGPUBuffersInstanced(translations, NUM_OBJECTS);
+    //UpdateInstancePositions(instance_gpu_buffers, translations, NUM_OBJECTS);
+    //UpdateInstancePositionsMapped(instance_gpu_buffers, translations, NUM_OBJECTS);
     DrawSpriteInstanced(sprite, instance_shaders, instance_gpu_buffers, main_camera, NUM_OBJECTS);
+
     #endif
     
     auto end = std::chrono::high_resolution_clock::now();
 
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
-    printf("%lld\n", duration);
+    static long long total_dur = duration;
+    total_dur += duration;
+    static long long num_frames = 0;
+    num_frames++;
+
+    printf("%lld ns avg\n", total_dur/num_frames);
 }
 
 void UserFree() {

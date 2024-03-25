@@ -267,6 +267,7 @@ struct GPUBufferIDs {
     GL_ID* vao;
     GL_ID* vbo;
     GL_ID* ebo;
+    GL_ID* instance_vbo;
 };
 
 struct Sprite {

@@ -42,7 +42,7 @@ if len(args) > 1:
 
 directory = './'  # Replace with the actual directory path
 
-ignore_dirs = ['Engine\\stb', 'Engine\\UI\\nuklear', 'Engine\\UI\\imgui']
+ignore_dirs = ['Engine\\stb', 'Engine\\UI\\imgui']
 
 
 if arg1 == '-f':

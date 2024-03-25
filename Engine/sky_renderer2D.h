@@ -35,7 +35,20 @@ void FreeSprite(Sprite);
 void DrawSprite(Sprite sprite, Transform transform, Camera camera);
 void DrawSpriteInstanced(Sprite sprite, GL_ID* shader, GPUBufferIDs gpu_ids, Camera camera, int num_intances);
 
+// SECTION: Moveing around intanced positions:
+// NOTE: UpdateInstancePositions uses glBufferSubData, and is simple. However, for large or frequent updates, this is slow
+// because it has to copy data from the CPU to the GPU.
+void UpdateInstancePositions(GPUBufferIDs instance_gpu_buffers, Vector3* positions, int numInstances);
+// NOTE: UpdateIntancePositionsMapped uses buffer mapping. It is faster for frequent updates than glBufferSubData
+// but still has overhead, as it maps and unmaps the buffers every time it is called. For large buffer sets
+// use the persistent mapping methods instead.
+void UpdateInstancePositionsMapped(GPUBufferIDs instance_gpu_buffers, Vector3* newPositions, int numInstances);
+
+// NOTE: The functions below initialize the persistent buffer that can then be updated by the update function.
+// The init function returns the mapped_buffer, which then can be edited directly. No need to create a seperate array
+// and iterate over it.
+Vector3* InitInstancePositionsPersistently(GPUBufferIDs instance_gpu_buffers, Vector3* initialData, int numInstances);
+
 
 // NOTE: For engine use
-
 unsigned int SkyGetGLID(GL_ID* id);
