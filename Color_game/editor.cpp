@@ -400,7 +400,9 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             button_up_sprite,               //18
             button_down_sprite,             //19
             teleporter_sprite,              //20
-            color_changer_sprite            //21
+            color_changer_sprite,           //21
+            color_changer_frame_sprite,     //22
+            color_changer_overlay_atlas     //23
         };
         LevelStateInfo level_state_info = ReadLevelState(level_name, &tilemap, &entities_array, &entity_id_map, sprites, nullptr);
         entity_array_offset = level_state_info.num_entities;

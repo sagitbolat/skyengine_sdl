@@ -136,7 +136,10 @@ Sprite endgoal_sprite;
 Sprite button_up_sprite;
 Sprite button_down_sprite;
 Sprite teleporter_sprite;
-Sprite sprites [21];
+Sprite color_changer_sprite;
+Sprite color_changer_frame_sprite;
+Sprite color_changer_overlay_atlas;
+Sprite sprites [24];
 
 EntityMap entity_id_map; // NOTE: acts as a lookup table from tilemap coordinate to an entity. a negative value indicates no entity at coordinate.
 Entity* entities_array; // Array of entities in the game. Player is always first element.
@@ -209,6 +212,9 @@ void Awake(GameMemory *gm)
     button_up_sprite                = LoadSprite("assets/button_up.png", shaders, gpu_buffers);
     button_down_sprite              = LoadSprite("assets/button_down.png", shaders, gpu_buffers);
     teleporter_sprite               = LoadSprite("assets/teleporter.png", shaders, gpu_buffers);
+    color_changer_sprite            = LoadSprite("assets/color_changer.png", shaders, gpu_buffers);
+    color_changer_frame_sprite      = LoadSprite("assets/color_changer_frame.png", shaders, gpu_buffers);
+    color_changer_overlay_atlas     = LoadSprite("assets/color_changer_overlay.png", shaders, gpu_buffers);
 
     sprites[0]  = player_sprite;               
     sprites[1]  = player_up_sprite;           
@@ -231,7 +237,12 @@ void Awake(GameMemory *gm)
     sprites[18] = button_up_sprite;            
     sprites[19] = button_down_sprite;          
     sprites[20] = teleporter_sprite;
-
+    sprites[20] = teleporter_sprite;
+    sprites[20] = teleporter_sprite;
+    sprites[20] = teleporter_sprite;
+    sprites[21] = color_changer_sprite;
+    sprites[22] = color_changer_frame_sprite;
+    sprites[23] = color_changer_overlay_atlas;
     // TODO: Load the saved data
 
     level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites, &undo_list_entity_num);

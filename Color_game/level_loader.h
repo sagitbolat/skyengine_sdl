@@ -132,6 +132,15 @@ void ReadEntityState(Entity* entity, EntityMap* entity_map, const Sprite* sprite
     int teleporter_connected_id = ReadUint32(file_p);
 
 
+    // NOTE: Color Changer
+    int color_changer_active = ReadUint32(file_p);
+    Color color_changer_color = {0};
+    color_changer_color.r = ReadUint32(file_p);
+    color_changer_color.g = ReadUint32(file_p);
+    color_changer_color.b = ReadUint32(file_p);
+    color_changer_color.a = ReadUint32(file_p);
+    EntityComponentColorChanger::COLOR_MODE color_changer_color_mode = (EntityComponentColorChanger::COLOR_MODE)ReadUint32(file_p);
+
     // NOTE: Main inits:
     entity->active = active;
     if (player_active) {
@@ -192,7 +201,10 @@ void ReadEntityState(Entity* entity, EntityMap* entity_map, const Sprite* sprite
     } else if (entity_type == Entity::ENTITY_TYPE_ENUM::TELEPORTER) {
         TeleporterInit(entity, id, sprites[20], teleporter_color, teleporter_connected_id, {pos_x, pos_y});
         entity_map->SetID(pos_x, pos_y, 0, id);
-    } else if (entity_type == Entity::ENTITY_TYPE_ENUM::PUSH_BLOCK) {
+    } else if (color_changer_active) {
+        ColorChangerInit(entity, id, sprites[21], sprites[22], sprites[23], color_changer_color, color_changer_color_mode, {pos_x, pos_y});
+        entity_map->SetID(pos_x, pos_y, 1, id);
+    }else if (entity_type == Entity::ENTITY_TYPE_ENUM::PUSH_BLOCK) {
         PushblockInit(entity, id, sprites[5], {pos_x, pos_y});
         entity_map->SetID(pos_x, pos_y, 1, id);
     } else if (entity_type == Entity::ENTITY_TYPE_ENUM::STATIC_BLOCK) {
@@ -352,8 +364,8 @@ LevelStateInfo ReadLevelState(
     }
 
     fclose(file_p);
-    //printf("LOG::ReadLevelState: Finished reading level from file: %s\n", filepath);
-    //printf("                     Num Entities Loaded: %d\n", num_entities);
+    printf("LOG::ReadLevelState: Finished reading level from file: %s\n", filepath);
+    printf("                     Num Entities Loaded: %d\n", num_entities);
 
     return LevelStateInfo{num_floor, num_entities};
 }
