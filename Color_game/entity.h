@@ -499,7 +499,7 @@ Color AddColor(Color a, Color b) {
     else return a + b;
 }
 
-void EntityUpdateColorChanger(int entity_id, Entity* entity_array, EntityMap entity_id_map, EmissionMap emission_map, Tilemap map); 
+void EntityUpdateColorChanger(int entity_id, Entity* entity_array, EntityMap entity_id_map, EmissionMap emission_map, Tilemap map, Vector2Int direction); 
 void UpdateEmit(
     int emitter_id,
     Vector2Int direction,
@@ -529,7 +529,7 @@ void UpdateEmit(
         }
         // SECTION: Emit from colorchanger if it's hit
         if (new_entity->color_changer.active) {
-            EntityUpdateColorChanger(new_entity_id, entity_array, entity_id_map, emission_map, map);
+            EntityUpdateColorChanger(new_entity_id, entity_array, entity_id_map, emission_map, map, direction);
         }
 
         return;
@@ -717,7 +717,8 @@ void EntityUpdateButton(int entity_id, Entity* entity_array, EntityMap map) {
     else entity->button.is_pressed = true;
 }
 
-void EntityUpdateColorChanger(int entity_id, Entity* entity_array, EntityMap entity_id_map, EmissionMap emission_map, Tilemap map) {
+void EntityUpdateColorChanger(int entity_id, Entity* entity_array, EntityMap entity_id_map, EmissionMap emission_map, Tilemap map, Vector2Int direction) {
+    if (entity_id < 0) return;
     Entity* entity = &entity_array[entity_id];
     
     if (!entity->active || !entity->color_changer.active) return;
@@ -725,90 +726,54 @@ void EntityUpdateColorChanger(int entity_id, Entity* entity_array, EntityMap ent
     int x_pos = entity->position.x;
     int y_pos = entity->position.y;
 
-    EmissionTile top_tile = emission_map.GetEmissionTile(x_pos, y_pos+1);
-    EmissionTile bot_tile = emission_map.GetEmissionTile(x_pos, y_pos-1);
-    EmissionTile right_tile = emission_map.GetEmissionTile(x_pos + 1, y_pos);
-    EmissionTile left_tile = emission_map.GetEmissionTile(x_pos - 1, y_pos);
-    int top_entity_id = entity_id_map.GetID(x_pos, y_pos+1, 1);
-    int bot_entity_id = entity_id_map.GetID(x_pos, y_pos-1, 1);
-    int right_entity_id = entity_id_map.GetID(x_pos+1, y_pos, 1);
-    int left_entity_id = entity_id_map.GetID(x_pos-1, y_pos, 1);
+    bool is_vertical = false;
+
+    EmissionTile::ORIENTATION_ENUM not_orientation;
+    EntityComponentEmitter::DIRECTION_ENUM emitter_direction;
+
+    if (direction.x < 0) { // Left
+        x_pos++;
+        not_orientation = EmissionTile::ORIENTATION_ENUM::VERTICAL;
+        emitter_direction = EntityComponentEmitter::DIRECTION_ENUM::LEFT;
+    } else if (direction.x > 0) { // Right
+        x_pos--;
+        not_orientation = EmissionTile::ORIENTATION_ENUM::VERTICAL;
+        emitter_direction = EntityComponentEmitter::DIRECTION_ENUM::RIGHT;
+    } else if (direction.y < 0) { // UP
+        y_pos++;
+        not_orientation = EmissionTile::ORIENTATION_ENUM::HORIZONTAL;
+        emitter_direction = EntityComponentEmitter::DIRECTION_ENUM::UP;
+        is_vertical = true;
+    } else if (direction.y > 0) { // DOWN
+        y_pos--;
+        not_orientation = EmissionTile::ORIENTATION_ENUM::HORIZONTAL;
+        emitter_direction = EntityComponentEmitter::DIRECTION_ENUM::DOWN;
+        is_vertical = true;
+    }
+
+    EmissionTile prev_tile = emission_map.GetEmissionTile(x_pos, y_pos);
+    int prev_entity_id = entity_id_map.GetID(x_pos, y_pos, 1);
     
 
     // If an emission is above and is vertical or crossed (not horizontal)
     if (
-        (top_tile.active && top_tile.orientation != EmissionTile::ORIENTATION_ENUM::HORIZONTAL) ||
+        (prev_tile.active && prev_tile.orientation != not_orientation) ||
         (
-            top_entity_id >= 0 &&
-            entity_array[top_entity_id].active && 
-            entity_array[top_entity_id].emitter.active && 
-            entity_array[top_entity_id].emitter.direction == EntityComponentEmitter::DIRECTION_ENUM::DOWN
+            prev_entity_id >= 0 &&
+            entity_array[prev_entity_id].active && 
+            entity_array[prev_entity_id].emitter.active && 
+            entity_array[prev_entity_id].emitter.direction == emitter_direction
         ) 
     ) {
-        Entity top_entity = entity_array[top_entity_id];
-        Vector2Int direction = {0, -1};
+        Entity prev_entity = entity_array[prev_entity_id];
         Color new_color;
-        if (top_tile.active) new_color = BlendColor(top_tile.vertical_color, entity->color_changer.color);
-        else if (top_entity.active) new_color = BlendColor(top_entity.emitter.emission_color, entity->color_changer.color);
-        entity->color_changer.vertical_color = new_color;
+        if (prev_tile.active) new_color = BlendColor(is_vertical ? prev_tile.vertical_color : prev_tile.horizontal_color, entity->color_changer.color);
+        else if (prev_entity.active) new_color = BlendColor(prev_entity.emitter.emission_color, entity->color_changer.color);
+        if (is_vertical) entity->color_changer.vertical_color = new_color;
+        else entity->color_changer.horizontal_color = new_color;
         UpdateEmit(entity_id, direction, entity->position, new_color, map, entity_id_map, emission_map, entity_array);
     } 
-    // If an emission is below and is vertical or crossed (not horizontal)
-    if (
-        (bot_tile.active && bot_tile.orientation != EmissionTile::ORIENTATION_ENUM::HORIZONTAL) ||
-        (
-            bot_entity_id >= 0 &&
-            entity_array[bot_entity_id].active && 
-            entity_array[bot_entity_id].emitter.active && 
-            entity_array[bot_entity_id].emitter.direction == EntityComponentEmitter::DIRECTION_ENUM::UP
-        )
-    ) {
-        Entity bot_entity = entity_array[bot_entity_id];
-        Vector2Int direction = {0, 1};
-        Color new_color;
-        if (bot_tile.active) new_color = BlendColor(bot_tile.vertical_color, entity->color_changer.color);
-        else if (bot_entity.active) new_color = BlendColor(bot_entity.emitter.emission_color, entity->color_changer.color);
-        entity->color_changer.vertical_color = new_color;
-        UpdateEmit(entity_id, direction, entity->position, new_color, map, entity_id_map, emission_map, entity_array);
-    } 
-    // If an emission is to the right and is horizontal or crossed (not vertical)
-    if (
-        (right_tile.active && right_tile.orientation != EmissionTile::ORIENTATION_ENUM::VERTICAL) ||
-        (
-            right_entity_id >= 0 &&
-            entity_array[right_entity_id].active && 
-            entity_array[right_entity_id].emitter.active && 
-            entity_array[right_entity_id].emitter.direction == EntityComponentEmitter::DIRECTION_ENUM::LEFT
-        )
-    ) {
-        Entity right_entity = entity_array[right_entity_id];
-        Vector2Int direction = {-1, 0};
-        Color new_color;
-        if (right_tile.active) new_color = BlendColor(right_tile.horizontal_color, entity->color_changer.color);
-        else if (right_entity.active) new_color = BlendColor(right_entity.emitter.emission_color, entity->color_changer.color);
-        entity->color_changer.horizontal_color = new_color;
-        UpdateEmit(entity_id, direction, entity->position, new_color, map, entity_id_map, emission_map, entity_array);
-    } 
-    // If an emission is to the left and is horizontal or crossed (not vertical)
-    if (
-        (left_tile.active && left_tile.orientation != EmissionTile::ORIENTATION_ENUM::VERTICAL) ||
-        (
-            left_entity_id >= 0 &&
-            entity_array[left_entity_id].active && 
-            entity_array[left_entity_id].emitter.active && 
-            entity_array[left_entity_id].emitter.direction == EntityComponentEmitter::DIRECTION_ENUM::RIGHT
-        )
-    ) {
-        Entity left_entity = entity_array[left_entity_id];
-        Vector2Int direction = {1, 0};
-        Color new_color;
-        if (left_tile.active) new_color = BlendColor(left_tile.horizontal_color, entity->color_changer.color);
-        else if (left_entity.active) new_color = BlendColor(left_entity.emitter.emission_color, entity->color_changer.color);
-        entity->color_changer.horizontal_color = new_color;
-        UpdateEmit(entity_id, direction, entity->position, new_color, map, entity_id_map, emission_map, entity_array);
-    } 
-    entity->color_changer.vertical_color = {0, 0, 0, 0};
-    entity->color_changer.horizontal_color = {0, 0, 0, 0};
+ 
 }
 
 
@@ -932,6 +897,8 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool leve
         ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
 
+        entity->color_changer.vertical_color = {0, 0, 0, 0};
+        entity->color_changer.horizontal_color = {0, 0, 0, 0};
 
     }
     else {
