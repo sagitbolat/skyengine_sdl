@@ -742,12 +742,12 @@ void EntityUpdateColorChanger(int entity_id, Entity* entity_array, EntityMap ent
     } else if (direction.y < 0) { // UP
         y_pos++;
         not_orientation = EmissionTile::ORIENTATION_ENUM::HORIZONTAL;
-        emitter_direction = EntityComponentEmitter::DIRECTION_ENUM::UP;
+        emitter_direction = EntityComponentEmitter::DIRECTION_ENUM::DOWN;
         is_vertical = true;
     } else if (direction.y > 0) { // DOWN
         y_pos--;
         not_orientation = EmissionTile::ORIENTATION_ENUM::HORIZONTAL;
-        emitter_direction = EntityComponentEmitter::DIRECTION_ENUM::DOWN;
+        emitter_direction = EntityComponentEmitter::DIRECTION_ENUM::UP;
         is_vertical = true;
     }
 
@@ -763,12 +763,21 @@ void EntityUpdateColorChanger(int entity_id, Entity* entity_array, EntityMap ent
             entity_array[prev_entity_id].active && 
             entity_array[prev_entity_id].emitter.active && 
             entity_array[prev_entity_id].emitter.direction == emitter_direction
+        ) ||
+        (
+            prev_entity_id >= 0 &&
+            entity_array[prev_entity_id].active &&
+            entity_array[prev_entity_id].color_changer.active 
         ) 
     ) {
         Entity prev_entity = entity_array[prev_entity_id];
         Color new_color;
-        if (prev_tile.active) new_color = BlendColor(is_vertical ? prev_tile.vertical_color : prev_tile.horizontal_color, entity->color_changer.color);
-        else if (prev_entity.active) new_color = BlendColor(prev_entity.emitter.emission_color, entity->color_changer.color);
+        if (prev_tile.active) 
+            new_color = BlendColor(is_vertical ? prev_tile.vertical_color : prev_tile.horizontal_color, entity->color_changer.color);
+        else if (prev_entity.active && prev_entity.emitter.active) 
+            new_color = BlendColor(prev_entity.emitter.emission_color, entity->color_changer.color);
+        else if (prev_entity.active && prev_entity.color_changer.active) 
+            new_color = BlendColor(is_vertical ? prev_entity.color_changer.vertical_color : prev_entity.color_changer.horizontal_color, entity->color_changer.color);
         if (is_vertical) entity->color_changer.vertical_color = new_color;
         else entity->color_changer.horizontal_color = new_color;
         UpdateEmit(entity_id, direction, entity->position, new_color, map, entity_id_map, emission_map, entity_array);
