@@ -104,8 +104,11 @@ struct EntityComponentTeleporter {
 struct EntityComponentColorChanger {
     bool active;
     Color color;
+    Sprite frame_sprite;
+    Sprite laser_sprite_atlas;
     enum COLOR_MODE {BLENDED, ADDITIVE, SUBTRACTIVE} color_mode;
-    bool directions[4]; // up, down, left, right
+    Color vertical_color;
+    Color horizontal_color; 
 };
 
 void EntityComponentMoverInit(EntityComponentMover* component, float seconds_per_tile, bool active = true) {
@@ -155,10 +158,11 @@ void EntityComponentTeleporterInit(EntityComponentTeleporter* component, int con
     component->connected_teleporter_id = connected_teleporter_id;
     component->color = color;
 }
-void EntityComponentColorChangerInit(EntityComponentColorChanger* component, Color color = {0, 0, 0, 0}, EntityComponentColorChanger::COLOR_MODE color_mode, bool active = true) {
+void EntityComponentColorChangerInit(EntityComponentColorChanger* component, Color color = {0, 0, 0, 0}, EntityComponentColorChanger::COLOR_MODE color_mode = EntityComponentColorChanger::COLOR_MODE::ADDITIVE, bool active = true) {
     component->active = active;
     component->color = color;
-    component->directions = {false, false, false, false};
+    component->vertical_color = {0, 0, 0, 0};
+    component->horizontal_color = {0, 0, 0, 0};
     component->color_mode = color_mode;
 }
 
@@ -391,6 +395,8 @@ void ColorChangerInit(
     Entity* color_changer,
     int id,
     Sprite color_changer_sprite,
+    Sprite frame_sprite,
+    Sprite laser_sprite_atlas,
     Color color,
     EntityComponentColorChanger::COLOR_MODE color_mode,
     Vector2Int init_position,
@@ -398,7 +404,10 @@ void ColorChangerInit(
 ) {
     EntityInit(color_changer, id, color_changer_sprite, init_position, movable ? 1.0f : 0.0f, true);
     EntityComponentColorChangerInit(&color_changer->color_changer, color, color_mode, true);
+    EntityComponentMoverInit(&color_changer->movable, MOVE_SPEED, movable);
     color_changer->entity_type = Entity::ENTITY_TYPE_ENUM::COLOR_CHANGER;
+    color_changer->color_changer.frame_sprite = frame_sprite;
+    color_changer->color_changer.laser_sprite_atlas = laser_sprite_atlas;
 }
 
 
@@ -480,9 +489,17 @@ Color BlendColor(Vector4Int c, int i) {
     return Color{uint8_t(c.x / i), uint8_t(c.y / i), uint8_t(c.z / i), uint8_t(c.w / i)};
 }
 Color BlendColor(Color a, Color b) {
-    return Color{uint8_t((a.r + b.r) / 2), uint8_t((a.g + b.g) / 2), uint8_t((a.b + b.b) / 2), uint8_t((a.a + b.a) / 2)};
+    if (a.a == 0) return b;
+    else if (b.a == 0) return a;
+    else return Color{uint8_t((a.r + b.r) / 2), uint8_t((a.g + b.g) / 2), uint8_t((a.b + b.b) / 2), uint8_t((a.a + b.a) / 2)};
+}
+Color AddColor(Color a, Color b) {
+    if (b.a == 0) return a;
+    if (a.a == 0) return b;
+    else return a + b;
 }
 
+void EntityUpdateColorChanger(int entity_id, Entity* entity_array, EntityMap entity_id_map, EmissionMap emission_map, Tilemap map); 
 void UpdateEmit(
     int emitter_id,
     Vector2Int direction,
@@ -503,14 +520,17 @@ void UpdateEmit(
         Entity* new_entity = &entity_array[new_entity_id];
         if (new_entity->receiver.active) {
             // NOTE: If already recieved a signal before, blend the two colors
-            if (new_entity->receiver.signal_received) new_entity->receiver.signal_color = BlendColor(color, new_entity->receiver.signal_color);
+            if (new_entity->receiver.signal_received) new_entity->receiver.signal_color = AddColor(color, new_entity->receiver.signal_color);
             // Otherwise, just set the signal color to the one recieved and set the flag to true.
             else {
                 new_entity->receiver.signal_color = color;
                 new_entity->receiver.signal_received = true;
             }
         }
-
+        // SECTION: Emit from colorchanger if it's hit
+        if (new_entity->color_changer.active) {
+            EntityUpdateColorChanger(new_entity_id, entity_array, entity_id_map, emission_map, map);
+        }
 
         return;
     }
@@ -552,17 +572,25 @@ void UpdateEmit(
             if (tile.orientation == EmissionTile::VERTICAL) {
                 tile.vertical_color = tile.color;
                 tile.horizontal_color = color;
-            } else {
+            } else if (tile.orientation == EmissionTile::HORIZONTAL) {
                 tile.vertical_color = color;
                 tile.horizontal_color = tile.color;
+            } else {
+                if (orientation == EmissionTile::VERTICAL) {
+                    tile.vertical_color = AddColor(tile.vertical_color, color);
+                } else if (orientation == EmissionTile::HORIZONTAL) {
+                    tile.horizontal_color = AddColor(tile.horizontal_color, color);
+                }
             }
             tile.orientation = EmissionTile::CROSSED;
         }
-        tile.color = BlendColor(tile.color, color);
-    } else {
+        tile.color = AddColor(tile.color, color);
+    } else { 
         tile.active = true;
         tile.color = color;
         tile.orientation = orientation;
+        if (tile.orientation == EmissionTile::VERTICAL) tile.vertical_color = color;
+        else if (tile.orientation == EmissionTile::HORIZONTAL) tile.horizontal_color = color;
     }
     emission_map.SetEmissionTile(new_position.x, new_position.y, tile);
     
@@ -600,8 +628,7 @@ Vector2Int EntityUpdateEmit(int entity_id, Tilemap map, EntityMap entity_id_map,
 }
 
 
-// SECTION: Update methods. Should be called every frame (or call EntityUpdate, it encapsulates all other Entity Update functions, and checks
-//          for active components).
+// SECTION: Update methods. Should be called every frame 
 void EntityUpdateMover(int entity_id, Entity* entity_array, float dt) {
     Entity* entity = &entity_array[entity_id];
 
@@ -690,6 +717,99 @@ void EntityUpdateButton(int entity_id, Entity* entity_array, EntityMap map) {
     else entity->button.is_pressed = true;
 }
 
+void EntityUpdateColorChanger(int entity_id, Entity* entity_array, EntityMap entity_id_map, EmissionMap emission_map, Tilemap map) {
+    Entity* entity = &entity_array[entity_id];
+    
+    if (!entity->active || !entity->color_changer.active) return;
+
+    int x_pos = entity->position.x;
+    int y_pos = entity->position.y;
+
+    EmissionTile top_tile = emission_map.GetEmissionTile(x_pos, y_pos+1);
+    EmissionTile bot_tile = emission_map.GetEmissionTile(x_pos, y_pos-1);
+    EmissionTile right_tile = emission_map.GetEmissionTile(x_pos + 1, y_pos);
+    EmissionTile left_tile = emission_map.GetEmissionTile(x_pos - 1, y_pos);
+    int top_entity_id = entity_id_map.GetID(x_pos, y_pos+1, 1);
+    int bot_entity_id = entity_id_map.GetID(x_pos, y_pos-1, 1);
+    int right_entity_id = entity_id_map.GetID(x_pos+1, y_pos, 1);
+    int left_entity_id = entity_id_map.GetID(x_pos-1, y_pos, 1);
+    
+
+    // If an emission is above and is vertical or crossed (not horizontal)
+    if (
+        (top_tile.active && top_tile.orientation != EmissionTile::ORIENTATION_ENUM::HORIZONTAL) ||
+        (
+            top_entity_id >= 0 &&
+            entity_array[top_entity_id].active && 
+            entity_array[top_entity_id].emitter.active && 
+            entity_array[top_entity_id].emitter.direction == EntityComponentEmitter::DIRECTION_ENUM::DOWN
+        ) 
+    ) {
+        Entity top_entity = entity_array[top_entity_id];
+        Vector2Int direction = {0, -1};
+        Color new_color;
+        if (top_tile.active) new_color = BlendColor(top_tile.vertical_color, entity->color_changer.color);
+        else if (top_entity.active) new_color = BlendColor(top_entity.emitter.emission_color, entity->color_changer.color);
+        entity->color_changer.vertical_color = new_color;
+        UpdateEmit(entity_id, direction, entity->position, new_color, map, entity_id_map, emission_map, entity_array);
+    } 
+    // If an emission is below and is vertical or crossed (not horizontal)
+    if (
+        (bot_tile.active && bot_tile.orientation != EmissionTile::ORIENTATION_ENUM::HORIZONTAL) ||
+        (
+            bot_entity_id >= 0 &&
+            entity_array[bot_entity_id].active && 
+            entity_array[bot_entity_id].emitter.active && 
+            entity_array[bot_entity_id].emitter.direction == EntityComponentEmitter::DIRECTION_ENUM::UP
+        )
+    ) {
+        Entity bot_entity = entity_array[bot_entity_id];
+        Vector2Int direction = {0, 1};
+        Color new_color;
+        if (bot_tile.active) new_color = BlendColor(bot_tile.vertical_color, entity->color_changer.color);
+        else if (bot_entity.active) new_color = BlendColor(bot_entity.emitter.emission_color, entity->color_changer.color);
+        entity->color_changer.vertical_color = new_color;
+        UpdateEmit(entity_id, direction, entity->position, new_color, map, entity_id_map, emission_map, entity_array);
+    } 
+    // If an emission is to the right and is horizontal or crossed (not vertical)
+    if (
+        (right_tile.active && right_tile.orientation != EmissionTile::ORIENTATION_ENUM::VERTICAL) ||
+        (
+            right_entity_id >= 0 &&
+            entity_array[right_entity_id].active && 
+            entity_array[right_entity_id].emitter.active && 
+            entity_array[right_entity_id].emitter.direction == EntityComponentEmitter::DIRECTION_ENUM::LEFT
+        )
+    ) {
+        Entity right_entity = entity_array[right_entity_id];
+        Vector2Int direction = {-1, 0};
+        Color new_color;
+        if (right_tile.active) new_color = BlendColor(right_tile.horizontal_color, entity->color_changer.color);
+        else if (right_entity.active) new_color = BlendColor(right_entity.emitter.emission_color, entity->color_changer.color);
+        entity->color_changer.horizontal_color = new_color;
+        UpdateEmit(entity_id, direction, entity->position, new_color, map, entity_id_map, emission_map, entity_array);
+    } 
+    // If an emission is to the left and is horizontal or crossed (not vertical)
+    if (
+        (left_tile.active && left_tile.orientation != EmissionTile::ORIENTATION_ENUM::VERTICAL) ||
+        (
+            left_entity_id >= 0 &&
+            entity_array[left_entity_id].active && 
+            entity_array[left_entity_id].emitter.active && 
+            entity_array[left_entity_id].emitter.direction == EntityComponentEmitter::DIRECTION_ENUM::RIGHT
+        )
+    ) {
+        Entity left_entity = entity_array[left_entity_id];
+        Vector2Int direction = {1, 0};
+        Color new_color;
+        if (left_tile.active) new_color = BlendColor(left_tile.horizontal_color, entity->color_changer.color);
+        else if (left_entity.active) new_color = BlendColor(left_entity.emitter.emission_color, entity->color_changer.color);
+        entity->color_changer.horizontal_color = new_color;
+        UpdateEmit(entity_id, direction, entity->position, new_color, map, entity_id_map, emission_map, entity_array);
+    } 
+    entity->color_changer.vertical_color = {0, 0, 0, 0};
+    entity->color_changer.horizontal_color = {0, 0, 0, 0};
+}
 
 
 // SECTION: Render methods. Should be called after update methods when you actually do the rendering.
@@ -781,6 +901,38 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool leve
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->teleporter.color));
         DrawSprite(entity->sprite, entity->transform, main_camera);
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
+    } else if (entity->color_changer.active) {
+        Transform transform = entity->transform;
+        // NOTE: Draw the transparent bit (main object)
+        if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->color_changer.color));
+        DrawSprite(entity->sprite, transform, main_camera);
+        if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
+        // NOTE: Draw the frame
+        transform.position.z += 0.1f;
+        DrawSprite(entity->color_changer.frame_sprite, transform, main_camera);
+        // NOTE: Draw all the blended lasers
+        ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+        ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f/3.0f, 1.0f});
+        ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+        transform.position.z += 0.1f;
+        if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->color_changer.horizontal_color));
+        DrawSprite(entity->color_changer.laser_sprite_atlas, transform, main_camera);
+        
+        ShaderSetVector(shaders, "uv_offset", Vector2{1.0f/3.0f, 0.0f});
+        transform.position.z += 0.1f;
+        if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->color_changer.vertical_color));
+        DrawSprite(entity->color_changer.laser_sprite_atlas, transform, main_camera);
+        
+        ShaderSetVector(shaders, "uv_offset", Vector2{2.0f/3.0f, 0.0f});
+        transform.position.z += 0.1f;
+        if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(AddColor(entity->color_changer.horizontal_color, entity->color_changer.vertical_color)));
+        DrawSprite(entity->color_changer.laser_sprite_atlas, transform, main_camera);
+        ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+        ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+        ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+        if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
+
+
     }
     else {
         DrawSprite(entity->sprite, entity->transform, main_camera);

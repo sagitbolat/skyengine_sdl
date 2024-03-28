@@ -3,7 +3,7 @@
 #include "../Engine/SDL_sky.cpp"
 #include "../Engine/skymath.h"
 
-#define MAX_ENTITIES 91 
+#define MAX_ENTITIES 256 
 #include "tilemap.h"
 #include "entity.h"
 #include "level_loader.h"
@@ -85,8 +85,9 @@ Sprite endgoal_sprite;
 Sprite button_up_sprite;
 Sprite button_down_sprite;
 Sprite teleporter_sprite;
-
-
+Sprite color_changer_sprite;
+Sprite color_changer_frame_sprite;
+Sprite color_changer_overlay_atlas;
 
 
 int player;         // NOTE: entity id of player. Should be 0.
@@ -175,7 +176,10 @@ void Awake(GameMemory *gm)
     button_up_sprite            = LoadSprite("assets/button_up.png", shaders, gpu_buffers);
     button_down_sprite          = LoadSprite("assets/button_down.png", shaders, gpu_buffers);
     teleporter_sprite           = LoadSprite("assets/teleporter.png", shaders, gpu_buffers);
-
+    color_changer_sprite        = LoadSprite("assets/color_changer.png", shaders, gpu_buffers);
+    color_changer_frame_sprite  = LoadSprite("assets/color_changer_frame.png", shaders, gpu_buffers);
+    color_changer_overlay_atlas = LoadSprite("assets/color_changer_overlay.png", shaders, gpu_buffers);
+    
     entity_id_map.width     = tilemap.width;
     entity_id_map.height    = tilemap.height;
     entity_id_map.depth     = 2;
@@ -390,7 +394,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             endgoal_sprite,                 //17
             button_up_sprite,               //18
             button_down_sprite,             //19
-            teleporter_sprite               //20
+            teleporter_sprite,              //20
+            color_changer_sprite            //21
         };
         LevelStateInfo level_state_info = ReadLevelState(level_name, &tilemap, &entities_array, &entity_id_map, sprites, nullptr);
         entity_array_offset = level_state_info.num_entities;
@@ -474,7 +479,16 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         )
     ) {
         entity_type_to_spawn = 8;
-    } 
+    }
+    if ( DrawSimpleImageButton (
+            "ColorChangerButton", 
+            color_changer_sprite, 
+            {float(108)/float(1280) * 6.6, 0.2}, 
+            {float(108)/float(1280) * 0.6, 0.6}
+        )
+    ) {
+        entity_type_to_spawn = 9;
+    }  
      
     
     if (ks->state.MBL && !ks->prev_state.MBL) {
@@ -583,6 +597,19 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 entity_array_offset++;
 
                 TeleporterInit(&entities_array[e], e, teleporter_sprite, {255, 250, 230, 255}, -1, {tile_mouse_x, tile_mouse_y}); 
+                int x = entities_array[e].position.x;
+                int y = entities_array[e].position.y;
+                entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
+            } break;
+            case 9: {
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0) >= 0) break;
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1) >= 0) break;
+                if (TestTileCollide(tilemap, {tile_mouse_x, tile_mouse_y})) break;
+
+                int e = entity_array_offset;
+                entity_array_offset++;
+
+                ColorChangerInit(&entities_array[e], e, color_changer_sprite, color_changer_frame_sprite, color_changer_overlay_atlas, {255, 255, 255, 255}, EntityComponentColorChanger::COLOR_MODE::BLENDED, {tile_mouse_x, tile_mouse_y}); 
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
@@ -700,7 +727,9 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 entities_array[entity_id].emitter.emission_color = emission_colors[color_index];
             } else if (entities_array[entity_id].receiver.active) {
                 entities_array[entity_id].receiver.accepted_color = emission_colors[color_index];
-            } 
+            } else if (entities_array[entity_id].color_changer.active) {
+                entities_array[entity_id].color_changer.color = emission_colors[color_index];
+            }
         }
         if (entity_id_floor >= 0) {
             if (entities_array[entity_id_floor].teleporter.active) {
