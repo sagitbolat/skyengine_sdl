@@ -71,6 +71,14 @@ void WriteEntityState(
     WriteUint32(int(entity->teleporter.color.a), file_p);
     WriteUint32(int(entity->teleporter.connected_teleporter_id), file_p);
     
+    // NOTE: Color Changer
+    WriteUint32(int(entity->color_changer.active), file_p);
+    WriteUint32(int(entity->color_changer.color.r), file_p);
+    WriteUint32(int(entity->color_changer.color.g), file_p);
+    WriteUint32(int(entity->color_changer.color.b), file_p);
+    WriteUint32(int(entity->color_changer.color.a), file_p);
+    WriteUint32(int(entity->color_changer.color_mode), file_p);
+    
 }
 void ReadEntityState(Entity* entity, EntityMap* entity_map, const Sprite* sprites, FILE* file_p) {
     // NOTE: General attributes

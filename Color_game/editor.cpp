@@ -11,7 +11,7 @@
 #include <chrono>
 #include <thread>
 
-const int NUM_LEVELS = 30;
+const int NUM_LEVELS = 35;
 char level_names[][64] = { // NOTE: To calculate array length subtract the line number of the last string from the line number of this line
     "0",
     "1",
@@ -42,7 +42,12 @@ char level_names[][64] = { // NOTE: To calculate array length subtract the line 
     "21_w", 
     "8_w",
     "28_w",
-    "22_w2222"
+    "22_w2222",
+    "32_22",
+    "33_w",
+    "31_wh",
+    "34_l", // (or 34 instead for a tighter level.)
+    "nd2"
 };
 
 // SECTION: Initialization of stuff...
@@ -662,7 +667,10 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 endgoal_sprite,                 //17
                 button_up_sprite,               //18
                 button_down_sprite,             //19
-                teleporter_sprite,
+                teleporter_sprite,              //20
+                color_changer_sprite,           //21
+                color_changer_frame_sprite,     //22
+                color_changer_overlay_atlas     //23
             };
             LevelStateInfo level_state_info = ReadLevelState(level_names[i], &tilemap, &entities_array, &entity_id_map, sprites, nullptr);
             entity_array_offset = level_state_info.num_entities;
