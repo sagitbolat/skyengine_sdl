@@ -895,14 +895,14 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     
 
 
-    for (int y = 0; y < tilemap.height; ++y) {
+    for (int y = tilemap.height-1; y >= 0; --y) {
         for(int x = 0; x < tilemap.width; ++x) {
-            DrawTile(tileset, {float(x), float(y), float(-1 - y)}, tilemap.map[y*tilemap.width + x]);
+            DrawTile(tileset, {float(x), float(y), float(-1 - (2*y))}, tilemap.map[y*tilemap.width + x]);
             for (int z = 0; z < entity_id_map.depth; z++) {
                 int id = entity_id_map.GetID(x, y, z);
                 if (id < 0) continue;
                 Entity entity = entities_array[id];
-                entity.transform.position.z = float(entity.entity_layer + y);
+                entities_array[id].transform.position.z = float(z - (2*y));
                 EntityRender(id, entities_array, shaders);
                 if (entity.active && entity.door.active) {
                     for (int d = 0; d < MAX_CONNECTED_ACTIVATORS; ++d) {
