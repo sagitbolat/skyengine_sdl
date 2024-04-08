@@ -279,6 +279,7 @@ void PlayerInit(
     player->player.left_sprite  = left_sprite;
     player->player.right_sprite = right_sprite;
     player->entity_type = Entity::ENTITY_TYPE_ENUM::PLAYER;
+    player->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 void PushblockInit(
     Entity* pushblock,
@@ -287,7 +288,7 @@ void PushblockInit(
     Vector2Int init_position
 ) {
     EntityInit(pushblock, id, sprite, init_position, 1.0f);
-    pushblock->transform.scale.y = 2.0;
+    pushblock->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
     EntityComponentMoverInit(&pushblock->movable, MOVE_SPEED, true);
     pushblock->entity_type = Entity::ENTITY_TYPE_ENUM::PUSH_BLOCK;
 }
@@ -793,6 +794,14 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool leve
 
     if (!entity->active) return;
 
+    // NOTE: Below is just for rendering purposes. It brings moving entities to front for when they cross
+    // from higher y to lower y. Without it, the moving entity gets rendering behind any floor entities of
+    // that have a higher y then them (since distance from camera depends on y.)
+    // NOTE 2: This increment to z position is undone at the end of the function with the same conditional.
+    if (entity->movable.active && entity->movable.moving) {
+        entity->transform.position.z += 1.1f;
+    }
+
     if (entity->player.active) {
         switch(entity->player.direction) {
             case EntityComponentPlayer::DIRECTION_ENUM::UP: {
@@ -913,6 +922,15 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool leve
     }
     else {
         DrawSprite(entity->sprite, entity->transform, main_camera);
+    }
+
+
+
+    // NOTE: Below is just for rendering purposes. It brings moving entities to front for when they cross
+    // from higher y to lower y. Without it, the moving entity gets rendering behind any floor entities of
+    // that have a higher y then them (since distance from camera depends on y.)
+    if (entity->movable.active && entity->movable.moving) {
+        entity->transform.position.z -= 1.1f;
     }
 }
 void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shaders, bool level_transitioning = false) {
