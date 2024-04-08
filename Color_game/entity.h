@@ -287,6 +287,7 @@ void PushblockInit(
     Vector2Int init_position
 ) {
     EntityInit(pushblock, id, sprite, init_position, 1.0f);
+    pushblock->transform.scale.y = 2.0;
     EntityComponentMoverInit(&pushblock->movable, MOVE_SPEED, true);
     pushblock->entity_type = Entity::ENTITY_TYPE_ENUM::PUSH_BLOCK;
 }
