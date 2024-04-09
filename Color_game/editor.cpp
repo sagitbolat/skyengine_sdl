@@ -892,7 +892,35 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     }
 
 
-    
+    if (ks->state.ENTER && !ks->prev_state.ENTER) {
+        if (main_camera.projection == PERSPECTIVE_CAMERA) {
+            main_camera.projection = ORTHOGRAPHIC_CAMERA;
+            main_camera.position.x  = float(tilemap.width/2);
+            main_camera.position.y  = float(tilemap.height/2);
+            main_camera.position.z  = 3.0f;
+            main_camera.look_target = {7.0f, 4.0f, 0.0f}; 
+            #ifdef DEBUG_UI
+            main_camera.position.y  = float(tilemap.height/2) + 0.5f;
+            main_camera.look_target = {7.0f, 4.5f, 0.0f}; 
+            #endif
+        }
+        else if (main_camera.projection == ORTHOGRAPHIC_CAMERA) {
+            main_camera.projection = PERSPECTIVE_CAMERA;
+        }
+    }
+
+    if (ks->state.ARROWLEFT && main_camera.projection == PERSPECTIVE_CAMERA) {
+        main_camera.position.x -= 0.01f * dt;
+    }
+    if (ks->state.ARROWRIGHT && main_camera.projection == PERSPECTIVE_CAMERA) {
+        main_camera.position.x += 0.01f * dt;
+    }
+    if (ks->state.ARROWUP && main_camera.projection == PERSPECTIVE_CAMERA) {
+        main_camera.position.z -= 0.01f * dt;
+    }
+    if (ks->state.ARROWDOWN && main_camera.projection == PERSPECTIVE_CAMERA) {
+        main_camera.position.z += 0.01f * dt;
+    }
 
     for (int y = tilemap.height-1; y >= 0; --y) {
         for(int x = 0; x < tilemap.width; ++x) {
@@ -902,11 +930,24 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     for (int z = 0; z < entity_id_map.depth; z++) {
         for (int y = tilemap.height-1; y >= 0; --y) {
             for(int x = 0; x < tilemap.width; ++x) {
+                if (z == 1) {
+                    int floor_id = entity_id_map.GetID(x, y, 0);
+                    if (floor_id >= 0) {
+                        Entity floor_entity = entities_array[floor_id];
+                        if (floor_entity.door.active) {
+                            entities_array[floor_id].transform.position.z = float((0.25f) - (2*y));
+                            EntityRender(floor_id, entities_array, shaders);
+                        }
+                    }
+                }
                 int id = entity_id_map.GetID(x, y, z);
                 if (id < 0) continue;
                 Entity entity = entities_array[id];
-                entities_array[id].transform.position.z = float((z) - (2*y));
-                EntityRender(id, entities_array, shaders);
+                float entity_layer = z;
+                if (!entity.door.active) {
+                    entities_array[id].transform.position.z = float((entity_layer) - (2*y));
+                    EntityRender(id, entities_array, shaders);
+                }
                 if (entity.active && entity.door.active) {
                     for (int d = 0; d < MAX_CONNECTED_ACTIVATORS; ++d) {
                         int id_activator = entity.door.connected_activators_ids[d];
