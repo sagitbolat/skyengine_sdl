@@ -300,6 +300,7 @@ void StaticBlockInit(
 ) {
     EntityInit(static_block, id, sprite, init_position, 1.0f);
     static_block->entity_type = Entity::ENTITY_TYPE_ENUM::STATIC_BLOCK;
+    static_block->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 void EmitterInit(
     Entity* emitter,
@@ -335,6 +336,7 @@ void ReceiverInit(
     receiver->receiver.nozzle_sprite = nozzle_sprite;
     receiver->receiver.indicator_sprite = indicator_sprite;
     receiver->entity_type = Entity::ENTITY_TYPE_ENUM::RECEIVER;
+    receiver->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 void DoorInit(
     Entity* door,
@@ -357,6 +359,7 @@ void DoorInit(
     door->door.open_by_default_open_sprite = open_horizontal_sprite;
     door->door.open_by_default_closed_sprite = closed_horizontal_sprite;
     door->entity_type = Entity::ENTITY_TYPE_ENUM::DOOR;
+    door->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 void EndgoalInit(
     Entity* endgoal,
@@ -410,6 +413,7 @@ void ColorChangerInit(
     color_changer->entity_type = Entity::ENTITY_TYPE_ENUM::COLOR_CHANGER;
     color_changer->color_changer.frame_sprite = frame_sprite;
     color_changer->color_changer.laser_sprite_atlas = laser_sprite_atlas;
+    color_changer->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 
 
