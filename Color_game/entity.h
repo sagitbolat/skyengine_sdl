@@ -359,7 +359,7 @@ void DoorInit(
     door->door.open_by_default_open_sprite = open_horizontal_sprite;
     door->door.open_by_default_closed_sprite = closed_horizontal_sprite;
     door->entity_type = Entity::ENTITY_TYPE_ENUM::DOOR;
-    door->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
+    door->transform.scale.y = 2.0f; // NOTE: if using 3d-esque projection
 }
 void EndgoalInit(
     Entity* endgoal,
@@ -706,7 +706,15 @@ void EntityUpdateDoor(int entity_id, Entity* entity_array, EntityMap map) {
         }
     }
     int top_entity_id = map.GetID(door_entity->position.x, door_entity->position.y, 1);
-    if (top_entity_id >= 0 && entity_array[top_entity_id].active) door_entity->door.is_open = true;
+    if (top_entity_id >= 0 && entity_array[top_entity_id].active && top_entity_id != door_entity->id) door_entity->door.is_open = true;
+
+    if (!door_entity->door.is_open) {
+        map.SetID(door_entity->position.x, door_entity->position.y, 1, door_entity->id);
+    } else if (door_entity->door.is_open) {
+        if (top_entity_id == door_entity->id) {
+            map.SetID(door_entity->position.x, door_entity->position.y, 1, -1);
+        }
+    }
 }
 
 void EntityUpdateButton(int entity_id, Entity* entity_array, EntityMap map) {
@@ -803,7 +811,8 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool leve
     // that have a higher y then them (since distance from camera depends on y.)
     // NOTE 2: This increment to z position is undone at the end of the function with the same conditional.
     if (entity->movable.active && entity->movable.moving) {
-        entity->transform.position.z += 1.1f;
+        if (entity->prev_position.y != entity->position.y)
+            entity->transform.position.z += 1.3f;
     }
 
     if (entity->player.active) {
@@ -836,6 +845,7 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool leve
     else if (entity->door.active) {
         Transform transform = entity->transform;
         if (entity->door.is_open) {
+            transform.scale.y = 1.0f;
             if (entity->door.open_by_default) {
                 DrawSprite(entity->door.open_by_default_open_sprite, transform, main_camera);
             } else {
@@ -934,7 +944,8 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool leve
     // from higher y to lower y. Without it, the moving entity gets rendering behind any floor entities of
     // that have a higher y then them (since distance from camera depends on y.)
     if (entity->movable.active && entity->movable.moving) {
-        entity->transform.position.z -= 1.1f;
+        if (entity->prev_position.y != entity->position.y)
+            entity->transform.position.z -= 1.1f;
     }
 }
 void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shaders, bool level_transitioning = false) {

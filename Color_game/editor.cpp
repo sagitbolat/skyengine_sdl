@@ -60,8 +60,8 @@ void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *cle
     #endif
     *w_in_world_space = 14.0f;
     *fullscreen = false;
-    //*clear_color = {0.8f/2, 0.83f/2, 1.0f/2, 1.0f};
-    *clear_color = {43.0f/255, 43.0f/255, 39.0f/255, 1.0f};
+    //*clear_color = {43.0f/255, 43.0f/255, 39.0f/255, 1.0f};
+    *clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
 }
 
 
@@ -927,27 +927,26 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             DrawTile(tileset, {float(x), float(y), float(-2 - (2*y))}, tilemap.map[y*tilemap.width + x]);
         }
     }
+
     for (int z = 0; z < entity_id_map.depth; z++) {
         for (int y = tilemap.height-1; y >= 0; --y) {
             for(int x = 0; x < tilemap.width; ++x) {
-                if (z == 1) {
-                    int floor_id = entity_id_map.GetID(x, y, 0);
-                    if (floor_id >= 0) {
-                        Entity floor_entity = entities_array[floor_id];
-                        if (floor_entity.door.active) {
-                            entities_array[floor_id].transform.position.z = float((0.25f) - (2*y));
-                            EntityRender(floor_id, entities_array, shaders);
-                        }
-                    }
-                }
+                
+                // SECTION: Entity Rendering
                 int id = entity_id_map.GetID(x, y, z);
                 if (id < 0) continue;
                 Entity entity = entities_array[id];
                 float entity_layer = z;
-                if (!entity.door.active) {
-                    entities_array[id].transform.position.z = float((entity_layer) - (2*y));
-                    EntityRender(id, entities_array, shaders);
+                if (entity.door.active) entity_layer += 0.25f;
+
+                if (entity.door.active && z == 0 && !entity.door.is_open) {
+                    continue;
                 }
+                entities_array[id].transform.position.z = float((entity_layer) - (2*y));
+                EntityRender(id, entities_array, shaders);
+                
+                
+                // SECTION: Wire rendering
                 if (entity.active && entity.door.active) {
                     for (int d = 0; d < MAX_CONNECTED_ACTIVATORS; ++d) {
                         int id_activator = entity.door.connected_activators_ids[d];
