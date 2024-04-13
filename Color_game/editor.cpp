@@ -931,52 +931,56 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     for (int z = 0; z < entity_id_map.depth; z++) {
         for (int y = tilemap.height-1; y >= 0; --y) {
             for(int x = 0; x < tilemap.width; ++x) {
+
                 
+                if (z == 1) {
+                    EmissionRender(x, y, emission_map, emission_sprite, shaders);
+                }
                 // SECTION: Entity Rendering
                 int id = entity_id_map.GetID(x, y, z);
-                if (id < 0) continue;
-                Entity entity = entities_array[id];
-                float entity_layer = z;
-                if (entity.door.active) entity_layer += 0.25f;
+                if (id >= 0) {
+                    Entity entity = entities_array[id];
+                    float entity_layer = z;
+                    if (entity.door.active) entity_layer += 0.25f;
 
-                if (entity.door.active && z == 0 && !entity.door.is_open) {
-                    continue;
-                }
-                entities_array[id].transform.position.z = float((entity_layer) - (2*y));
-                EntityRender(id, entities_array, shaders);
-                
-                
-                // SECTION: Wire rendering
-                if (entity.active && entity.door.active) {
-                    for (int d = 0; d < MAX_CONNECTED_ACTIVATORS; ++d) {
-                        int id_activator = entity.door.connected_activators_ids[d];
-                        if (id_activator >= 0) {
-                            // NOTE: Render a wire
-                            Vector3 door_pos = entity.transform.position;
-                            Vector3 activator_pos = entities_array[id_activator].transform.position;
-                            Transform transform = {0.0f};
-                            transform.position.x = (door_pos.x + activator_pos.x) / 2.0f;
-                            transform.position.y = (door_pos.y + activator_pos.y) / 2.0f;
-                            transform.position.z = 2.0f;
+                    if (entity.door.active && z == 0 && !entity.door.is_open) {
+                        continue;
+                    }
+                    entities_array[id].transform.position.z = float((entity_layer) - (2*y));
+                    EntityRender(id, entities_array, shaders);
+                    // SECTION: Wire rendering
+                    if (entity.active && entity.door.active) {
+                        for (int d = 0; d < MAX_CONNECTED_ACTIVATORS; ++d) {
+                            int id_activator = entity.door.connected_activators_ids[d];
+                            if (id_activator >= 0) {
+                                // NOTE: Render a wire
+                                Vector3 door_pos = entity.transform.position;
+                                Vector3 activator_pos = entities_array[id_activator].transform.position;
+                                Transform transform = {0.0f};
+                                transform.position.x = (door_pos.x + activator_pos.x) / 2.0f;
+                                transform.position.y = (door_pos.y + activator_pos.y) / 2.0f;
+                                transform.position.z = 2.0f;
 
-                            Vector2 direction;
-                            direction.x = activator_pos.x - door_pos.x;
-                            direction.y = activator_pos.y - door_pos.y;
-                            float distance = Magnitude(direction);
+                                Vector2 direction;
+                                direction.x = activator_pos.x - door_pos.x;
+                                direction.y = activator_pos.y - door_pos.y;
+                                float distance = Magnitude(direction);
 
-                            transform.scale.x = 0.1f;
-                            transform.scale.y = distance;
-                            transform.scale.z = 1.0f;
+                                transform.scale.x = 0.1f;
+                                transform.scale.y = distance;
+                                transform.scale.z = 1.0f;
 
-                            // Use the Vector2LookAt function to calculate the rotation
-                            Vector2 transform_position_2d = {transform.position.x, transform.position.y};
-                            Vector2 target_position_2d = {activator_pos.x, activator_pos.y};
-                            transform.rotation = Vector2LookAt(transform_position_2d, target_position_2d);
+                                // Use the Vector2LookAt function to calculate the rotation
+                                Vector2 transform_position_2d = {transform.position.x, transform.position.y};
+                                Vector2 target_position_2d = {activator_pos.x, activator_pos.y};
+                                transform.rotation = Vector2LookAt(transform_position_2d, target_position_2d);
 
-                            DrawSprite(wire_sprite, transform, main_camera);
+                                DrawSprite(wire_sprite, transform, main_camera);
+                            }
                         }
                     }
-                }
+                }                
+                
             }
         
         }
@@ -1029,7 +1033,6 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     //    }
     //}
 
-    EmissionRender(emission_map, emission_sprite, shaders);
 
 
     // NOTE: If F is held down, render wiring connections:

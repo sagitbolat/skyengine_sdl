@@ -319,6 +319,7 @@ void EmitterInit(
     emitter->emitter.nozzle_sprite = nozzle_sprite;
     emitter->emitter.indicator_sprite = indicator_sprite;
     emitter->entity_type = Entity::ENTITY_TYPE_ENUM::EMITTER;
+    emitter->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 void ReceiverInit(
     Entity* receiver,
@@ -617,16 +618,12 @@ Vector2Int EntityUpdateEmit(int entity_id, Tilemap map, EntityMap entity_id_map,
     Vector2Int direction = {0, 0};
 
     if (entity->emitter.direction == EntityComponentEmitter::DIRECTION_ENUM::UP) {
-        entity->transform.rotation.z = 0.0f;
         direction.y = 1;
     } else if (entity->emitter.direction == EntityComponentEmitter::DIRECTION_ENUM::LEFT) {
-        entity->transform.rotation.z = 90.0f;
         direction.x = -1;
     } else if (entity->emitter.direction == EntityComponentEmitter::DIRECTION_ENUM::DOWN) {
-        entity->transform.rotation.z = 180.0f;
         direction.y = -1;
     } else if (entity->emitter.direction == EntityComponentEmitter::DIRECTION_ENUM::RIGHT) {
-        entity->transform.rotation.z = 270.0f;
         direction.x = 1;
     }
     UpdateEmit(entity_id, direction, entity->position, entity->emitter.emission_color, map, entity_id_map, emission_map, entity_array);
@@ -910,18 +907,20 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool leve
         DrawSprite(entity->color_changer.frame_sprite, transform, main_camera);
         // NOTE: Draw all the blended lasers
         ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
-        ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f/3.0f, 1.0f});
+        ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f/4.0f, 1.0f});
         ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
         transform.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->color_changer.horizontal_color));
         DrawSprite(entity->color_changer.laser_sprite_atlas, transform, main_camera);
         
-        ShaderSetVector(shaders, "uv_offset", Vector2{1.0f/3.0f, 0.0f});
+        ShaderSetVector(shaders, "uv_offset", Vector2{1.0f/4.0f, 0.0f});
         transform.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->color_changer.vertical_color));
         DrawSprite(entity->color_changer.laser_sprite_atlas, transform, main_camera);
         
-        ShaderSetVector(shaders, "uv_offset", Vector2{2.0f/3.0f, 0.0f});
+
+        ShaderSetVector(shaders, "uv_offset", Vector2{2.0f/4.0f, 0.0f});
+        if (entity->color_changer.vertical_color.a == 0) ShaderSetVector(shaders, "uv_offset", Vector2{3.0f/4.0f, 0.0f});
         transform.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(AddColor(entity->color_changer.horizontal_color, entity->color_changer.vertical_color)));
         DrawSprite(entity->color_changer.laser_sprite_atlas, transform, main_camera);
@@ -948,12 +947,10 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool leve
             entity->transform.position.z -= 1.1f;
     }
 }
-void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shaders, bool level_transitioning = false) {
+void EmissionRender(int x, int y, EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shaders, bool level_transitioning = false) {
     
-    for (int y = 0; y < map.height; ++y) {
-        for (int x = 0; x < map.width; ++x) {
             EmissionTile tile = map.GetEmissionTile(x, y);
-            if (tile.active == false) continue;
+            if (tile.active == false) return;
 
             float uv_x_offset = 0.0f;
             if (tile.orientation == EmissionTile::VERTICAL) uv_x_offset = (1.0f/5.0f);
@@ -964,9 +961,9 @@ void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shader
             ShaderSetVector(shaders, "uv_offset", Vector2{uv_x_offset, 0.0f});
             
             Transform transform = {0.0f};
-            transform.position = Vector3{float(x), float(y), 2.0f};
+            transform.position = Vector3{float(x), float(y), 0.5f - (2*y)};
             transform.rotation = Vector3{0.0f, 0.0f, 0.0f};
-            transform.scale    = Vector3{1.0f, 1.0f, 1.0f}; 
+            transform.scale    = Vector3{1.0f, 2.0f, 1.0f}; 
             
             if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(map.GetEmissionTile(x,y).color));
             DrawSprite(emission_sprite_sheet, transform, main_camera);
@@ -995,6 +992,4 @@ void EmissionRender(EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shader
             tile = {false, EmissionTile::HORIZONTAL, Color{0, 0, 0, 0}, Color{0, 0, 0, 0}, Color{0, 0, 0, 0}};
             map.SetEmissionTile(x, y, tile);
 
-        }
-    }
 }
