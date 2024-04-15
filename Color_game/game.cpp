@@ -3,6 +3,7 @@
 #define NO_SPLASH_SCREEN
 #include "../Engine/SDL_sky.cpp"
 #include "../Engine/skymath.h"
+#include "../Engine/scene.h"
 
 #define MAX_ENTITIES 256 
 #include "tilemap.h"
@@ -22,7 +23,7 @@ void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *cle
     *w_in_world_space = 14.0f;
     *fullscreen = false;
     //*clear_color = {0.8f/2, 0.83f/2, 1.0f/2, 1.0f};
-    *clear_color = {43.0f/255, 43.0f/255, 39.0f/255, 1.0f};
+    *clear_color = {43.0f/255.0f, 43.0f/255.0f, 39.0f/255.0f, 1.0f};
 }
 
 
@@ -143,6 +144,8 @@ Sprite sprites [24];
 
 Sprite wire_sprite;
 
+Sprite title_text;
+
 EntityMap entity_id_map; // NOTE: acts as a lookup table from tilemap coordinate to an entity. a negative value indicates no entity at coordinate.
 Entity* entities_array; // Array of entities in the game. Player is always first element.
 EmissionMap emission_map;
@@ -154,6 +157,20 @@ Transform tile_default_transform;
 
 LevelStateInfo level_state_info;
 
+SceneManager scene_manager = {0};
+#define NUM_SCENES 2
+#define TITLE_SCENE 0
+#define GAME_SCENE 1
+void TitleAwake() {return;}
+void GameAwake() {return;}
+void TitleStart(GameState *gs, KeyboardState *ks, double dt) {return;}
+void GameStart(GameState *gs, KeyboardState *ks, double dt) {return;} 
+void TitleUpdate(GameState *gs, KeyboardState *ks, double dt);
+void GameUpdate(GameState *gs, KeyboardState *ks, double dt);
+void TitleClose(GameState *gs, KeyboardState *ks, double dt) {return;}
+void GameClose(GameState *gs, KeyboardState *ks, double dt) {return;}
+void TitleFree() {return;}
+void GameFree() {return;}
 // NOTE: Below is state of the level for the undo feature
 const int UNDO_LENGTH = 2048;
 struct UndoToken {
@@ -173,6 +190,9 @@ void Awake(GameMemory *gm)
     ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
 
 
+    scene_manager.InitManager(NUM_SCENES);
+    scene_manager.AwakeScene(TITLE_SCENE, TitleAwake, TitleStart, TitleUpdate, TitleClose, TitleFree);
+    scene_manager.AwakeScene(GAME_SCENE, GameAwake, GameStart, GameUpdate, GameClose, GameFree);
 
     Sprite tileset_sprite   = LoadSprite("assets/tileset.png", shaders, gpu_buffers);
     tileset.atlas           = tileset_sprite;
@@ -219,6 +239,8 @@ void Awake(GameMemory *gm)
     color_changer_overlay_atlas     = LoadSprite("assets/color_changer_overlay.png", shaders, gpu_buffers);
 
     wire_sprite                     = LoadSprite("assets/wire.png", shaders, gpu_buffers);
+
+    title_text                      = LoadSprite("assets/title.png", shaders, gpu_buffers);
 
     sprites[0]  = player_sprite;               
     sprites[1]  = player_up_sprite;           
@@ -268,16 +290,83 @@ void Awake(GameMemory *gm)
 }
 
 void Start(GameState *gs, KeyboardState *ks) {
+    scene_manager.scenes[0].StartScene(gs, ks, 0.0);
+}
+
+void Update (GameState *gs, KeyboardState *ks, double dt) {
+    scene_manager.SceneUpdate(gs, ks, dt);
+}
+
+void TitleUpdate(GameState *gs, KeyboardState *ks, double dt) {
+    static float slide_time = 0.0f;
+    const float SS_DELAY = 1000.0f; // NOTE: How long the delay is on the fade in
+    const float SS_FADE_IN_DURATION = 2000.0f; // NOTE: How long the fade in lasts
+    const float SS_STAY_DURATION = 2000.0f; // NOTE How long between fadein and fadeout
+    const float SS_FADE_OUT_DURATION = 1000.0f; // NOTE: How long the fade out lasts
+    const float SS_POST_DELAY = 1000.0f; // NOTE: How long to wait after fadeout
+    const float SS_TOTAL_DURATION = 7000.0f; // NOTE: How long the whole intro scene lasts (total of the other 4)
+
+    if (slide_time < SS_TOTAL_DURATION) {
+        slide_time += dt;
+        
+        float complement = 0;
+
+        if (slide_time < SS_DELAY + SS_FADE_IN_DURATION) { 
+            complement = FloatClamp((slide_time - SS_DELAY) / (SS_FADE_IN_DURATION), 0.0f, 1.0f); 
+        } else if (slide_time < SS_TOTAL_DURATION - SS_FADE_OUT_DURATION - SS_POST_DELAY) {
+            complement = 1.0f;
+        } else if (slide_time < SS_TOTAL_DURATION - SS_POST_DELAY) {
+            complement =  FloatClamp(1.0f - (((slide_time - (SS_TOTAL_DURATION - SS_FADE_OUT_DURATION - SS_POST_DELAY))) / (SS_FADE_OUT_DURATION)), 0.0f, 1.0f);
+        } else if (slide_time < SS_TOTAL_DURATION) {
+            complement = 0.0f;
+        }
+            
+
+        ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{1.0f, 1.0f, 1.0f, complement}));
+        Transform t = {0};
+        t.position.x = float(tilemap.width/2);
+        t.position.y = main_camera.position.y+1.0f;
+        t.scale.x = 6.0f;
+        t.scale.y = 1.0f;
+        t.scale.z = 1.0f;
+        DrawSprite(title_text, t, main_camera);
+        return; 
+    } else if (slide_time >= SS_TOTAL_DURATION) {
+        ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{1.0f, 1.0f, 1.0f, 1.0f}));
+        scene_manager.SwitchScene(GAME_SCENE, gs, ks, dt);
+    }
+    
 
 }
 
 
-
-
+bool first_load = true; // NOTE: Flag for triggering the transition animation during first loadin
 bool level_transitioning = false;
 bool fast_reload = false;
 bool restarting_level = false; // NOTE: Only used to differentiating between transitions from one level to another and actual restarting.
-void Update(GameState *gs, KeyboardState *ks, double dt) {
+void GameUpdate(GameState *gs, KeyboardState *ks, double dt) {
+
+    if (first_load) {
+        static float load_transition_time = 0.0f;
+        static const float TRANSITION_DURATION = 1.0f * 1000.0f;
+        static const float TRANSITION_ZOOM = 3.0f;
+
+        load_transition_time += dt;
+
+        if (load_transition_time < TRANSITION_DURATION) {
+            float float_val = (load_transition_time / (TRANSITION_DURATION));
+            main_camera.width = (level_zoom[curr_level_index-1] + TRANSITION_ZOOM) - (float_val * TRANSITION_ZOOM);
+            main_camera.height = (float)SCREEN_HEIGHT/(float)SCREEN_WIDTH * main_camera.width;
+            ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{1.0f, 1.0f, 1.0f, float_val}));
+        } else {
+            first_load = false;
+        }
+
+         
+    
+    }
+
+
 
     static bool fading_in = true;
 
@@ -338,6 +427,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             }
         }
     }
+
+
 
     const int BLOCK_PUSH_LIMIT = MAX_ENTITIES;
 

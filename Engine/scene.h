@@ -27,13 +27,13 @@ struct SceneManager {
     // (This should be done during the game's Awake function call).
     void AwakeScene(
         int scene_id,
-        void (*Awake)(),
+        void (*MainAwake)(),
         void (*Start)(GameState*, KeyboardState*, double), 
         void (*Update)(GameState*, KeyboardState*, double), 
         void (*Close)(GameState*, KeyboardState*, double),
         void (*Free)() 
     ) {
-        Awake();
+        MainAwake();
         scenes[scene_id].StartScene = Start;
         scenes[scene_id].UpdateScene = Update;
         scenes[scene_id].CloseScene = Close;
