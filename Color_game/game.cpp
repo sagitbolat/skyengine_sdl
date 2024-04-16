@@ -145,6 +145,8 @@ Sprite sprites [24];
 Sprite wire_sprite;
 
 Sprite title_text;
+Sprite title_text_line2;
+Sprite act1_text;
 
 EntityMap entity_id_map; // NOTE: acts as a lookup table from tilemap coordinate to an entity. a negative value indicates no entity at coordinate.
 Entity* entities_array; // Array of entities in the game. Player is always first element.
@@ -241,6 +243,8 @@ void Awake(GameMemory *gm)
     wire_sprite                     = LoadSprite("assets/wire.png", shaders, gpu_buffers);
 
     title_text                      = LoadSprite("assets/title.png", shaders, gpu_buffers);
+    title_text_line2                = LoadSprite("assets/title2.png", shaders, gpu_buffers);
+    act1_text                       = LoadSprite("assets/act1.png", shaders, gpu_buffers);
 
     sprites[0]  = player_sprite;               
     sprites[1]  = player_up_sprite;           
@@ -297,45 +301,70 @@ void Update (GameState *gs, KeyboardState *ks, double dt) {
     scene_manager.SceneUpdate(gs, ks, dt);
 }
 
-void TitleUpdate(GameState *gs, KeyboardState *ks, double dt) {
-    static float slide_time = 0.0f;
-    const float SS_DELAY = 1000.0f; // NOTE: How long the delay is on the fade in
-    const float SS_FADE_IN_DURATION = 2000.0f; // NOTE: How long the fade in lasts
-    const float SS_STAY_DURATION = 2000.0f; // NOTE How long between fadein and fadeout
-    const float SS_FADE_OUT_DURATION = 1000.0f; // NOTE: How long the fade out lasts
-    const float SS_POST_DELAY = 1000.0f; // NOTE: How long to wait after fadeout
-    const float SS_TOTAL_DURATION = 7000.0f; // NOTE: How long the whole intro scene lasts (total of the other 4)
+bool DisplayTextAnimation( // Returns true when the animation is playing (including both delays), false when the animation is done
+    Sprite text_sprite, Transform t, // Sprite to display and the transform of the sprite
+    float delay, // the delay in milliseconds before the text fades in
+    float fade_in_duration, // how long the fadein is
+    float linger_duration, // how long the text lingers at 100% opacity
+    float fade_out_duration, // how long the text takes to fade out
+    float post_delay,// how long the delay is between the text being fully faded out and the end of the animation
+    float timer
+) {
 
-    if (slide_time < SS_TOTAL_DURATION) {
-        slide_time += dt;
-        
+    float total_duration = delay + fade_in_duration + linger_duration + fade_out_duration + post_delay;
+    if (timer < total_duration) {
         float complement = 0;
-
-        if (slide_time < SS_DELAY + SS_FADE_IN_DURATION) { 
-            complement = FloatClamp((slide_time - SS_DELAY) / (SS_FADE_IN_DURATION), 0.0f, 1.0f); 
-        } else if (slide_time < SS_TOTAL_DURATION - SS_FADE_OUT_DURATION - SS_POST_DELAY) {
+        if (timer < delay) {
+            complement = 0.0f;
+        } else if (timer < delay + fade_in_duration) { 
+            complement = FloatClamp((timer - delay) / (fade_in_duration), 0.0f, 1.0f); 
+        } else if (timer < total_duration - fade_out_duration - post_delay) {
             complement = 1.0f;
-        } else if (slide_time < SS_TOTAL_DURATION - SS_POST_DELAY) {
-            complement =  FloatClamp(1.0f - (((slide_time - (SS_TOTAL_DURATION - SS_FADE_OUT_DURATION - SS_POST_DELAY))) / (SS_FADE_OUT_DURATION)), 0.0f, 1.0f);
-        } else if (slide_time < SS_TOTAL_DURATION) {
+        } else if (timer < total_duration - post_delay) {
+            complement =  FloatClamp(1.0f - (((timer - (total_duration - fade_out_duration - post_delay))) / (fade_out_duration)), 0.0f, 1.0f);
+        } else if (timer < total_duration) {
             complement = 0.0f;
         }
             
 
         ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{1.0f, 1.0f, 1.0f, complement}));
-        Transform t = {0};
-        t.position.x = float(tilemap.width/2);
-        t.position.y = main_camera.position.y+1.0f;
-        t.scale.x = 6.0f;
-        t.scale.y = 1.0f;
-        t.scale.z = 1.0f;
-        DrawSprite(title_text, t, main_camera);
-        return; 
-    } else if (slide_time >= SS_TOTAL_DURATION) {
+        DrawSprite(text_sprite, t, main_camera);
         ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{1.0f, 1.0f, 1.0f, 1.0f}));
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void TitleUpdate(GameState *gs, KeyboardState *ks, double dt) {
+    static float timer = 0.0f;
+
+    Transform t = {0};
+    t.position.x = float(tilemap.width/2);
+    t.position.y = main_camera.position.y+1.0f;
+    t.scale.x = 2.25f;
+    t.scale.y = 1.0f;
+    t.scale.z = 1.0f;
+
+    timer+=dt;
+
+    DisplayTextAnimation(title_text, t, 1000.0f, 2000.0f, 4000.0f, 1000.0f, 1000.0f, timer);
+    t.scale.x = 3.3472f * 2.0f;
+    t.scale.y = 2.0f;
+    t.position.y -= 2.0f;
+    DisplayTextAnimation(title_text_line2, t, 3000.0f, 2000.0f, 2000.0f, 1000.0f, 1000.0f, timer);
+
+    t.position.y += 1.0f;
+    t.scale.x = 1.685f * 3;
+    t.scale.y = 3.0f;
+    t.position.z += 1.0f;
+    if (!DisplayTextAnimation(act1_text, t, 10000.0f, 2000.0f, 2000.0f, 1000.0f, 1000.0f, timer)) {
         scene_manager.SwitchScene(GAME_SCENE, gs, ks, dt);
     }
     
+    if (ks->state.SPACE) {
+        scene_manager.SwitchScene(GAME_SCENE, gs, ks, dt);
+    }
 
 }
 
@@ -735,7 +764,7 @@ void GameUpdate(GameState *gs, KeyboardState *ks, double dt) {
 
                 
                 if (z == 1) {
-                    EmissionRender(x, y, emission_map, emission_sprite, shaders);
+                    EmissionRender(x, y, emission_map, emission_sprite, shaders, level_transitioning);
                 }
                 // SECTION: Entity Rendering
                 int id = entity_id_map.GetID(x, y, z);
@@ -748,7 +777,7 @@ void GameUpdate(GameState *gs, KeyboardState *ks, double dt) {
                         continue;
                     }
                     entities_array[id].transform.position.z = float((entity_layer) - (2*y));
-                    EntityRender(id, entities_array, shaders);
+                    EntityRender(id, entities_array, shaders, level_transitioning);
                     // SECTION: Wire rendering
                     if (entity.active && entity.door.active && showing_wires) {
                         for (int d = 0; d < MAX_CONNECTED_ACTIVATORS; ++d) {

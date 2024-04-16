@@ -907,20 +907,21 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool leve
         DrawSprite(entity->color_changer.frame_sprite, transform, main_camera);
         // NOTE: Draw all the blended lasers
         ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
-        ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f/4.0f, 1.0f});
+        ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f/5.0f, 1.0f});
         ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
         transform.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->color_changer.horizontal_color));
         DrawSprite(entity->color_changer.laser_sprite_atlas, transform, main_camera);
         
-        ShaderSetVector(shaders, "uv_offset", Vector2{1.0f/4.0f, 0.0f});
+        ShaderSetVector(shaders, "uv_offset", Vector2{1.0f/5.0f, 0.0f});
         transform.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->color_changer.vertical_color));
         DrawSprite(entity->color_changer.laser_sprite_atlas, transform, main_camera);
         
 
-        ShaderSetVector(shaders, "uv_offset", Vector2{2.0f/4.0f, 0.0f});
-        if (entity->color_changer.vertical_color.a == 0) ShaderSetVector(shaders, "uv_offset", Vector2{3.0f/4.0f, 0.0f});
+        ShaderSetVector(shaders, "uv_offset", Vector2{2.0f/5.0f, 0.0f});
+        if (entity->color_changer.vertical_color.a == 0) ShaderSetVector(shaders, "uv_offset", Vector2{3.0f/5.0f, 0.0f});
+        else if (entity->color_changer.horizontal_color.a == 0) ShaderSetVector(shaders, "uv_offset", Vector2{4.0f/5.0f, 0.0f});
         transform.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(AddColor(entity->color_changer.horizontal_color, entity->color_changer.vertical_color)));
         DrawSprite(entity->color_changer.laser_sprite_atlas, transform, main_camera);
