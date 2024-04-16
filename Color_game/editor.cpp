@@ -638,6 +638,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         if (entity_id >= 0) {
             if (entities_array[entity_id].emitter.active) {
                 entities_array[entity_id].emitter.direction = (EntityComponentEmitter::DIRECTION_ENUM)((entities_array[entity_id].emitter.direction + 1) % 4);
+            } else if (entities_array[entity_id].receiver.active && entities_array[entity_id].receiver.signal_received) {
+                entities_array[entity_id].receiver.accepted_color = entities_array[entity_id].receiver.signal_color;
             }
         } else {
             entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
@@ -752,12 +754,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     }
 
 
-    // NOTE: When rightclicking, place down wire tiles.
-    if (ks->state.MBR) {
-        int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
-        int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
-        tilemap.map[(tile_mouse_y * tilemap.width) + tile_mouse_x] = 15;
-    }
+   
     if (ks->state.Q && !ks->prev_state.Q) {
         int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
         int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f);

@@ -147,6 +147,7 @@ Sprite wire_sprite;
 Sprite title_text;
 Sprite title_text_line2;
 Sprite act1_text;
+Sprite act1_1_text;
 
 EntityMap entity_id_map; // NOTE: acts as a lookup table from tilemap coordinate to an entity. a negative value indicates no entity at coordinate.
 Entity* entities_array; // Array of entities in the game. Player is always first element.
@@ -245,6 +246,7 @@ void Awake(GameMemory *gm)
     title_text                      = LoadSprite("assets/title.png", shaders, gpu_buffers);
     title_text_line2                = LoadSprite("assets/title2.png", shaders, gpu_buffers);
     act1_text                       = LoadSprite("assets/act1.png", shaders, gpu_buffers);
+    act1_1_text                     = LoadSprite("assets/act1_1.png", shaders, gpu_buffers);
 
     sprites[0]  = player_sprite;               
     sprites[1]  = player_up_sprite;           
@@ -354,11 +356,17 @@ void TitleUpdate(GameState *gs, KeyboardState *ks, double dt) {
     t.position.y -= 2.0f;
     DisplayTextAnimation(title_text_line2, t, 3000.0f, 2000.0f, 2000.0f, 1000.0f, 1000.0f, timer);
 
-    t.position.y += 1.0f;
-    t.scale.x = 1.685f * 3;
-    t.scale.y = 3.0f;
+    t.position.y += 2.0f;
+    t.scale.x = 1.685f * 2;
+    t.scale.y = 2.0f;
     t.position.z += 1.0f;
-    if (!DisplayTextAnimation(act1_text, t, 10000.0f, 2000.0f, 2000.0f, 1000.0f, 1000.0f, timer)) {
+    DisplayTextAnimation(act1_text, t, 10000.0f, 2000.0f, 2000.0f, 1000.0f, 1000.0f, timer);
+    
+    t.position.y -= 2.0f;
+    t.scale.x = 16.4939f * 0.5f;
+    t.scale.y = 0.5f;
+    
+    if(!DisplayTextAnimation(act1_1_text, t, 11000.0f, 2000.0f, 3000.0f, 1000.0f, 1000.0f, timer)) {
         scene_manager.SwitchScene(GAME_SCENE, gs, ks, dt);
     }
     
