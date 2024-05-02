@@ -476,13 +476,26 @@ GL_ID* LoadTexture(const char* image_path, unsigned int* width_p, unsigned int* 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
 
+    GLenum error;
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        printf("ERROR: LoadSprite::%s::%s \n", image_path, error);
+    }
+
     // NOTE: Generate the mipmap
     glTexImage2D(GL_TEXTURE_2D, 0, gl_format, width, height, 0, gl_format, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
-
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        printf("ERROR: LoadSprite::%s::%s \n", image_path, error);
+    }
     // NOTE: Enable mirrored repeat for both the S and T axes (the x and y axes)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        printf("ERROR: LoadSprite::%s::%s \n", image_path, error);
+    }
 
     // NOTE: For better scaling we use mipmapping. We set the filter to be the point filter
     // NOTE: The first one is for shrinking, so we use mipmapping for it
@@ -490,7 +503,14 @@ GL_ID* LoadTexture(const char* image_path, unsigned int* width_p, unsigned int* 
     // NOTE: For magnification, we dont use mipmapping, but we can use a point filter anyway.
     // (just not a mipmap point filter.)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        printf("ERROR: LoadSprite::%s::%s \n", image_path, error);
+    }
    
+    //int max = 0;
+    //glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max);
+    //printf("Max texture size: %d\n", max);
     // NOTE: Free the image afterwards:
 #ifdef STB_IMAGE_IMPLEMENTATION
     stbi_image_free(data);
