@@ -148,6 +148,7 @@ Sprite title_text;
 Sprite title_text_line2;
 Sprite act1_text;
 Sprite act1_1_text;
+Sprite act2_text;
 
 EntityMap entity_id_map; // NOTE: acts as a lookup table from tilemap coordinate to an entity. a negative value indicates no entity at coordinate.
 Entity* entities_array; // Array of entities in the game. Player is always first element.
@@ -161,18 +162,24 @@ Transform tile_default_transform;
 LevelStateInfo level_state_info;
 
 SceneManager scene_manager = {0};
-#define NUM_SCENES 2
+#define NUM_SCENES 3
 #define TITLE_SCENE 0
-#define GAME_SCENE 1
+#define ACT2_SCENE 1
+#define GAME_SCENE 2
 void TitleAwake() {return;}
+void Act2Awake() {return;}
 void GameAwake() {return;}
 void TitleStart(GameState *gs, KeyboardState *ks, double dt) {return;}
+void Act2Start(GameState *gs, KeyboardState *ks, double dt) {return;}
 void GameStart(GameState *gs, KeyboardState *ks, double dt) {return;} 
 void TitleUpdate(GameState *gs, KeyboardState *ks, double dt);
+void Act2Update(GameState *gs, KeyboardState *ks, double dt);
 void GameUpdate(GameState *gs, KeyboardState *ks, double dt);
 void TitleClose(GameState *gs, KeyboardState *ks, double dt) {return;}
+void Act2Close(GameState *gs, KeyboardState *ks, double dt) {return;}
 void GameClose(GameState *gs, KeyboardState *ks, double dt) {return;}
 void TitleFree() {return;}
+void Act2Free() {return;}
 void GameFree() {return;}
 // NOTE: Below is state of the level for the undo feature
 const int UNDO_LENGTH = 2048;
@@ -195,6 +202,7 @@ void Awake(GameMemory *gm)
 
     scene_manager.InitManager(NUM_SCENES);
     scene_manager.AwakeScene(TITLE_SCENE, TitleAwake, TitleStart, TitleUpdate, TitleClose, TitleFree);
+    scene_manager.AwakeScene(ACT2_SCENE, Act2Awake, Act2Start, Act2Update, Act2Close, Act2Free);
     scene_manager.AwakeScene(GAME_SCENE, GameAwake, GameStart, GameUpdate, GameClose, GameFree);
 
     Sprite tileset_sprite   = LoadSprite("assets/tileset.png", shaders, gpu_buffers);
@@ -247,6 +255,7 @@ void Awake(GameMemory *gm)
     title_text_line2                = LoadSprite("assets/title2.png", shaders, gpu_buffers);
     act1_text                       = LoadSprite("assets/act1.png", shaders, gpu_buffers);
     act1_1_text                     = LoadSprite("assets/act1_1.png", shaders, gpu_buffers);
+    act2_text                       = LoadSprite("assets/act1.png", shaders, gpu_buffers);
 
 
     sprites[0]  = player_sprite;               
@@ -378,6 +387,34 @@ void TitleUpdate(GameState *gs, KeyboardState *ks, double dt) {
 
 }
 
+void Act2Update(GameState *gs, KeyboardState *ks, double dt) {
+    static float timer = 0.0f;
+
+    Transform t = {0};
+    t.position.x = float(tilemap.width/2);
+    t.position.y = main_camera.position.y+0.5f;
+    t.scale.x = 1.685f * 2.0f;
+    t.scale.y = 2.0f;
+    t.scale.z = 1.0f;
+
+    timer+=dt;
+
+    DisplayTextAnimation(act2_text, t, 1000.0f, 2000.0f, 2000.0f, 1000.0f, 1000.0f, timer);
+    
+    t.position.y -= 1.5f;
+    t.scale.x = 15.0f * 0.5f;
+    t.scale.y = 0.5f;
+    t.position.z += 1.0f;
+    if (!DisplayTextAnimation(act1_1_text, t, 3000.0f, 2000.0f, 3000.0f, 1000.0f, 1000.0f, timer)) {
+        scene_manager.SwitchScene(GAME_SCENE, gs, ks, dt);
+    }
+
+    
+    if (ks->state.SPACE) {
+        scene_manager.SwitchScene(GAME_SCENE, gs, ks, dt);
+    }
+
+}
 
 bool first_load = true; // NOTE: Flag for triggering the transition animation during first loadin
 bool level_transitioning = false;
@@ -404,10 +441,18 @@ void GameUpdate(GameState *gs, KeyboardState *ks, double dt) {
          
     
     }
-
-
-
+    
     static bool fading_in = true;
+
+    static bool played_act_2_card = false;
+    if (curr_level_index == 13 && !played_act_2_card) {
+        played_act_2_card = true;
+
+        first_load = true;
+        scene_manager.SwitchScene(ACT2_SCENE, gs, ks, dt);
+        return;
+    }
+
 
     if (level_transitioning) {
     
