@@ -871,7 +871,7 @@ void GameUpdate(GameState *gs, KeyboardState *ks, double dt) {
                                         ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 0.0f, 0.0f, 1.0f});
                                     }
                                 }
-                                    DrawSprite(wire_sprite, transform, main_camera);
+                                DrawSprite(wire_sprite, transform, main_camera);
                                 if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
                             }
                         }

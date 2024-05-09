@@ -541,6 +541,28 @@ void UpdateEmit(
 
         return;
     }
+
+    // NOTE: Layer 1 entities if moving left or right (to prevent transparency issues)
+     
+    int left_entity_id = entity_id_map.GetID(IntMax(new_position.x - 1, 0), new_position.y, 1);
+    if (left_entity_id >= 0 
+        && entity_array[left_entity_id].active 
+        && entity_array[left_entity_id].movable.active
+        && entity_array[left_entity_id].movable.moving
+        && entity_array[left_entity_id].prev_position.x == new_position.x
+    ) {
+        return;
+    }
+    int right_entity_id = entity_id_map.GetID(IntMin(new_position.x + 1, entity_id_map.width-1), new_position.y, 1);
+    if (right_entity_id >= 0 
+        && entity_array[right_entity_id].active 
+        && entity_array[right_entity_id].movable.active
+        && entity_array[right_entity_id].movable.moving
+        && entity_array[right_entity_id].prev_position.x == new_position.x
+    ) {
+        return;
+    }
+
     //NOTE: Layer 0 (floor) entities collision (for doors when closed)
     int floor_entity_id = entity_id_map.GetID(new_position.x, new_position.y, 0);
 
