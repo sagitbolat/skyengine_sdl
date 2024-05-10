@@ -640,6 +640,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 entities_array[entity_id].emitter.direction = (EntityComponentEmitter::DIRECTION_ENUM)((entities_array[entity_id].emitter.direction + 1) % 4);
             } else if (entities_array[entity_id].receiver.active && entities_array[entity_id].receiver.signal_received) {
                 entities_array[entity_id].receiver.accepted_color = entities_array[entity_id].receiver.signal_color;
+            } else if (entities_array[entity_id].door.active) {
+                entities_array[entity_id].door.open_by_default = !entities_array[entity_id].door.open_by_default;
             }
         } else {
             entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
