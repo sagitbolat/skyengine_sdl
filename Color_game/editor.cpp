@@ -94,6 +94,8 @@ Sprite color_changer_sprite;
 Sprite color_changer_frame_sprite;
 Sprite color_changer_overlay_atlas;
 
+Sprite sprites[24]; 
+
 Sprite wire_sprite;
 
 int player;         // NOTE: entity id of player. Should be 0.
@@ -185,7 +187,39 @@ void Awake(GameMemory *gm)
     color_changer_sprite        = LoadSprite("assets/color_changer.png", shaders, gpu_buffers);
     color_changer_frame_sprite  = LoadSprite("assets/color_changer_frame.png", shaders, gpu_buffers);
     color_changer_overlay_atlas = LoadSprite("assets/color_changer_overlay.png", shaders, gpu_buffers);
-    
+
+
+    {
+        Sprite temp_sprites[24] = {
+            player_sprite,                  //0 
+            player_up_sprite,               //1
+            player_down_sprite,             //2
+            player_left_sprite,             //3
+            player_right_sprite,            //4
+            push_block_sprite,              //5
+            static_block_sprite,            //6
+            emitter_sprite,                 //7
+            emitter_nozzle_sprite,          //8
+            emitter_indicator_sprite,       //9
+            receiver_sprite,                //10
+            receiver_nozzle_sprite,         //11
+            receiver_indicator_sprite,      //12
+            open_door_vertical_sprite,      //13
+            closed_door_vertical_sprite,    //14
+            open_door_horizontal_sprite,    //15
+            closed_door_horizontal_sprite,  //16
+            endgoal_sprite,                 //17
+            button_up_sprite,               //18
+            button_down_sprite,             //19
+            teleporter_sprite,              //20
+            color_changer_sprite,           //21
+            color_changer_frame_sprite,     //22
+            color_changer_overlay_atlas     //23
+        };
+
+        for (int i = 0; i < 24; ++i) {sprites[i] = temp_sprites[i];}
+    }
+
     wire_sprite                 = LoadSprite("assets/wire.png", shaders, gpu_buffers);
 
     entity_id_map.width     = tilemap.width;
@@ -204,16 +238,7 @@ void Awake(GameMemory *gm)
 
 
 
-    PlayerInit (
-        &entities_array[0], 
-        0,
-        player_sprite, 
-        player_up_sprite, 
-        player_down_sprite, 
-        player_left_sprite, 
-        player_right_sprite, 
-        {7,4}
-    );
+    PlayerInit (&entities_array[0], 0, {7,4});
     player = entities_array[0].id;
     entity_id_map.SetID(entities_array[0].position.x, entities_array[0].position.y, entities_array[0].entity_layer, 0);
 
@@ -271,7 +296,7 @@ void RenderLayer(int z) {
                     continue;
                 }
                 entities_array[id].transform.position.z = float((entity_layer) - (2*y));
-                EntityRender(id, entities_array, shaders);
+                EntityRender(id, entities_array, shaders, sprites);
                 // SECTION: Wire rendering
                 if (entity.active && entity.door.active) {
                     for (int d = 0; d < MAX_CONNECTED_ACTIVATORS; ++d) {
@@ -393,11 +418,6 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             PlayerInit (
                 &entities_array[0], 
                 0,
-                player_sprite, 
-                player_up_sprite, 
-                player_down_sprite, 
-                player_left_sprite, 
-                player_right_sprite, 
                 {tilemap.width/2,tilemap.height/2}
             );
             Entity player = entities_array[0];
@@ -434,33 +454,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             nullptr
         )
     ) {
-        Sprite sprites[] = {
-            player_sprite,                  //0 
-            player_up_sprite,               //1
-            player_down_sprite,             //2
-            player_left_sprite,             //3
-            player_right_sprite,            //4
-            push_block_sprite,              //5
-            static_block_sprite,            //6
-            emitter_sprite,                 //7
-            emitter_nozzle_sprite,          //8
-            emitter_indicator_sprite,       //9
-            receiver_sprite,                //10
-            receiver_nozzle_sprite,         //11
-            receiver_indicator_sprite,      //12
-            open_door_vertical_sprite,      //13
-            closed_door_vertical_sprite,    //14
-            open_door_horizontal_sprite,    //15
-            closed_door_horizontal_sprite,  //16
-            endgoal_sprite,                 //17
-            button_up_sprite,               //18
-            button_down_sprite,             //19
-            teleporter_sprite,              //20
-            color_changer_sprite,           //21
-            color_changer_frame_sprite,     //22
-            color_changer_overlay_atlas     //23
-        };
-        LevelStateInfo level_state_info = ReadLevelState(level_name, &tilemap, &entities_array, &entity_id_map, sprites, nullptr);
+        
+        LevelStateInfo level_state_info = ReadLevelState(level_name, &tilemap, &entities_array, &entity_id_map, nullptr);
         entity_array_offset = level_state_info.num_entities;
         emission_map.width  = tilemap.width;
         emission_map.height = tilemap.height;
@@ -568,7 +563,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
                 int e = entity_array_offset;
                 entity_array_offset++;
-                PushblockInit(&entities_array[e], e, push_block_sprite, {tile_mouse_x, tile_mouse_y});
+                PushblockInit(&entities_array[e], e, {tile_mouse_x, tile_mouse_y});
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
@@ -581,7 +576,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 int e = entity_array_offset;
                 entity_array_offset++;
 
-                StaticBlockInit(&entities_array[e], e, static_block_sprite, {tile_mouse_x, tile_mouse_y});
+                StaticBlockInit(&entities_array[e], e, {tile_mouse_x, tile_mouse_y});
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
@@ -594,7 +589,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 int e = entity_array_offset;
                 entity_array_offset++;
 
-                EmitterInit(&entities_array[e], e, emitter_sprite, emitter_nozzle_sprite, emitter_indicator_sprite, {tile_mouse_x, tile_mouse_y}, {255, 255, 255, 255}, true, EntityComponentEmitter::DOWN); 
+                EmitterInit(&entities_array[e], e, {tile_mouse_x, tile_mouse_y}, {255, 255, 255, 255}, true, EntityComponentEmitter::DOWN); 
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
@@ -607,7 +602,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 int e = entity_array_offset;
                 entity_array_offset++;
 
-                ReceiverInit(&entities_array[e], e, receiver_sprite, receiver_nozzle_sprite, receiver_indicator_sprite, {tile_mouse_x, tile_mouse_y}, {255, 255, 255, 255}, true);
+                ReceiverInit(&entities_array[e], e, {tile_mouse_x, tile_mouse_y}, {255, 255, 255, 255}, true);
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
@@ -620,7 +615,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 int e = entity_array_offset;
                 entity_array_offset++;
 
-                DoorInit(&entities_array[e], e, open_door_vertical_sprite, closed_door_vertical_sprite, open_door_horizontal_sprite, closed_door_horizontal_sprite, {tile_mouse_x, tile_mouse_y}); 
+                DoorInit(&entities_array[e], e, {tile_mouse_x, tile_mouse_y}); 
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
@@ -633,7 +628,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 int e = entity_array_offset;
                 entity_array_offset++;
 
-                EndgoalInit(&entities_array[e], e, endgoal_sprite, {tile_mouse_x, tile_mouse_y}); 
+                EndgoalInit(&entities_array[e], e, {tile_mouse_x, tile_mouse_y}); 
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
@@ -646,7 +641,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 int e = entity_array_offset;
                 entity_array_offset++;
 
-                ButtonInit(&entities_array[e], e, button_up_sprite, button_down_sprite, {tile_mouse_x, tile_mouse_y}); 
+                ButtonInit(&entities_array[e], e, {tile_mouse_x, tile_mouse_y}); 
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
@@ -659,7 +654,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 int e = entity_array_offset;
                 entity_array_offset++;
 
-                TeleporterInit(&entities_array[e], e, teleporter_sprite, {255, 250, 230, 255}, -1, {tile_mouse_x, tile_mouse_y}); 
+                TeleporterInit(&entities_array[e], e, {255, 250, 230, 255}, -1, {tile_mouse_x, tile_mouse_y}); 
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
@@ -672,7 +667,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 int e = entity_array_offset;
                 entity_array_offset++;
 
-                ColorChangerInit(&entities_array[e], e, color_changer_sprite, color_changer_frame_sprite, color_changer_overlay_atlas, {255, 255, 255, 255}, EntityComponentColorChanger::COLOR_MODE::BLENDED, {tile_mouse_x, tile_mouse_y}); 
+                ColorChangerInit(&entities_array[e], e, {255, 255, 255, 255}, EntityComponentColorChanger::COLOR_MODE::BLENDED, {tile_mouse_x, tile_mouse_y}); 
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
@@ -708,33 +703,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     }
     if (ks->state.S && ks->state.R && !ks->prev_state.R) {
         for (int i = 0; i < NUM_LEVELS; ++i) {
-            Sprite sprites[] = {
-                player_sprite,                  //0 
-                player_up_sprite,               //1
-                player_down_sprite,             //2
-                player_left_sprite,             //3
-                player_right_sprite,            //4
-                push_block_sprite,              //5
-                static_block_sprite,            //6
-                emitter_sprite,                 //7
-                emitter_nozzle_sprite,          //8
-                emitter_indicator_sprite,       //9
-                receiver_sprite,                //10
-                receiver_nozzle_sprite,         //11
-                receiver_indicator_sprite,      //12
-                open_door_vertical_sprite,      //13
-                closed_door_vertical_sprite,    //14
-                open_door_horizontal_sprite,    //15
-                closed_door_horizontal_sprite,  //16
-                endgoal_sprite,                 //17
-                button_up_sprite,               //18
-                button_down_sprite,             //19
-                teleporter_sprite,              //20
-                color_changer_sprite,           //21
-                color_changer_frame_sprite,     //22
-                color_changer_overlay_atlas     //23
-            };
-            LevelStateInfo level_state_info = ReadLevelState(level_names[i], &tilemap, &entities_array, &entity_id_map, sprites, nullptr);
+            
+            LevelStateInfo level_state_info = ReadLevelState(level_names[i], &tilemap, &entities_array, &entity_id_map, nullptr);
             entity_array_offset = level_state_info.num_entities;
             emission_map.width  = tilemap.width;
             emission_map.height = tilemap.height;

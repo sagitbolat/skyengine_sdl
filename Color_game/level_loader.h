@@ -80,7 +80,7 @@ void WriteEntityState(
     WriteUint32(int(entity->color_changer.color_mode), file_p);
     
 }
-void ReadEntityState(Entity* entity, EntityMap* entity_map, const Sprite* sprites, FILE* file_p) {
+void ReadEntityState(Entity* entity, EntityMap* entity_map, FILE* file_p) {
     // NOTE: General attributes
     int id         = ReadUint32(file_p); 
     int active     = ReadUint32(file_p); 
@@ -147,11 +147,6 @@ void ReadEntityState(Entity* entity, EntityMap* entity_map, const Sprite* sprite
         PlayerInit(
             entity, 
             id, 
-            sprites[0], 
-            sprites[1], 
-            sprites[2], 
-            sprites[3], 
-            sprites[4], 
             {pos_x, pos_y}
         );
         entity_map->SetID(pos_x, pos_y, 1, id);
@@ -159,9 +154,6 @@ void ReadEntityState(Entity* entity, EntityMap* entity_map, const Sprite* sprite
         EmitterInit(
             entity, 
             id, 
-            sprites[7], 
-            sprites[8], 
-            sprites[9], 
             {pos_x, pos_y}, 
             emitter_emission_color, 
             movable_active, 
@@ -172,43 +164,36 @@ void ReadEntityState(Entity* entity, EntityMap* entity_map, const Sprite* sprite
         ReceiverInit(
             entity, 
             id, 
-            sprites[10], 
-            sprites[11], 
-            sprites[12],
             {pos_x, pos_y}, 
             receiver_accepted_color, 
             movable_active
         );
         entity_map->SetID(pos_x, pos_y, 1, id);
     } else if (endgoal_active) {    
-        EndgoalInit(entity, id, sprites[17], {pos_x, pos_y});
+        EndgoalInit(entity, id, {pos_x, pos_y});
         entity_map->SetID(pos_x, pos_y, 0, id);
     } else if (door_active) {
         DoorInit(
             entity,
             id,
-            sprites[13],
-            sprites[14],
-            sprites[15],
-            sprites[16],
             {pos_x, pos_y},
             (bool)door_open_by_default
         );
         entity_map->SetID(pos_x, pos_y, 0, id);
     } else if (button_active) {
-        ButtonInit(entity, id, sprites[18], sprites[19], {pos_x, pos_y});
+        ButtonInit(entity, id, {pos_x, pos_y});
         entity_map->SetID(pos_x, pos_y, 0, id);
     } else if (entity_type == Entity::ENTITY_TYPE_ENUM::TELEPORTER) {
-        TeleporterInit(entity, id, sprites[20], teleporter_color, teleporter_connected_id, {pos_x, pos_y});
+        TeleporterInit(entity, id, teleporter_color, teleporter_connected_id, {pos_x, pos_y});
         entity_map->SetID(pos_x, pos_y, 0, id);
     } else if (color_changer_active) {
-        ColorChangerInit(entity, id, sprites[21], sprites[22], sprites[23], color_changer_color, color_changer_color_mode, {pos_x, pos_y});
+        ColorChangerInit(entity, id, color_changer_color, color_changer_color_mode, {pos_x, pos_y});
         entity_map->SetID(pos_x, pos_y, 1, id);
     }else if (entity_type == Entity::ENTITY_TYPE_ENUM::PUSH_BLOCK) {
-        PushblockInit(entity, id, sprites[5], {pos_x, pos_y});
+        PushblockInit(entity, id, {pos_x, pos_y});
         entity_map->SetID(pos_x, pos_y, 1, id);
     } else if (entity_type == Entity::ENTITY_TYPE_ENUM::STATIC_BLOCK) {
-        StaticBlockInit(entity, id, sprites[6], {pos_x, pos_y});
+        StaticBlockInit(entity, id, {pos_x, pos_y});
         entity_map->SetID(pos_x, pos_y, 1, id);
     }
 
@@ -282,7 +267,6 @@ LevelStateInfo ReadLevelState(
     Tilemap* tilemap, 
     Entity** entity_array,
     EntityMap* entity_map,
-    const Sprite* all_sprites,
     int* num_movable_entities 
 ) {
 
@@ -354,7 +338,7 @@ LevelStateInfo ReadLevelState(
 
     // NOTE: Read the entity states:
     for (int e = 0; e < num_entities; ++e) {
-        ReadEntityState(&(*entity_array)[e], entity_map, all_sprites, file_p);
+        ReadEntityState(&(*entity_array)[e], entity_map, file_p);
         
         if (num_movable_entities == nullptr) continue;
         if ((*entity_array)[e].active && (*entity_array)[e].movable.active) {

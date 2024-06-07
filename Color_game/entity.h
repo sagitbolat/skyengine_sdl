@@ -47,10 +47,6 @@ void EmissionMap::SetEmissionTile(int x, int y, EmissionTile tile) {
 // SECTION: Components
 struct EntityComponentPlayer {
     bool active;
-    Sprite up_sprite;
-    Sprite down_sprite;
-    Sprite left_sprite;
-    Sprite right_sprite;
     enum DIRECTION_ENUM {UP, RIGHT, DOWN, LEFT, NEUTRAL} direction;
 };
 struct EntityComponentMover { // NOTE: Whether movable by the player
@@ -61,15 +57,11 @@ struct EntityComponentMover { // NOTE: Whether movable by the player
 };
 struct EntityComponentEmitter { // NOTE: Laser emitter struct
     bool active;
-    Sprite nozzle_sprite;
-    Sprite indicator_sprite;
     Color emission_color;
     enum DIRECTION_ENUM {UP, RIGHT, DOWN, LEFT} direction;
 };
 struct EntityComponentReceiver { // NOTE: Laser reciever struct
     bool active;
-    Sprite nozzle_sprite;
-    Sprite indicator_sprite;
     Color accepted_color;
     bool signal_received; // NOTE: turns true if a laser hits the Reciever
     bool signal_accepted; // NOTE: turns true if the laser is of the correct color.
@@ -80,10 +72,6 @@ struct EntityComponentDoor { // NOTE: A door that can be open or closed
     bool active;
     bool is_open;
     bool open_by_default; // NOTE: If true, the door will be open by default and closed when activated
-    Sprite open_sprite;
-    Sprite closed_sprite;
-    Sprite open_by_default_open_sprite;
-    Sprite open_by_default_closed_sprite;
     int connected_activators_ids[MAX_CONNECTED_ACTIVATORS];
     int num_connected_activators;
 };
@@ -92,8 +80,6 @@ struct EntityComponentEndgoal {
 };
 struct EntityComponentButton {
     bool active;
-    Sprite up_sprite;
-    Sprite down_sprite;
     bool is_pressed;
 };
 struct EntityComponentTeleporter {
@@ -104,8 +90,6 @@ struct EntityComponentTeleporter {
 struct EntityComponentColorChanger {
     bool active;
     Color color;
-    Sprite frame_sprite;
-    Sprite laser_sprite_atlas;
     enum COLOR_MODE {BLENDED, ADDITIVE, SUBTRACTIVE} color_mode;
     Color vertical_color;
     Color horizontal_color; 
@@ -172,7 +156,6 @@ struct Entity {
     enum ENTITY_TYPE_ENUM {PLAYER, PUSH_BLOCK, STATIC_BLOCK, EMITTER, RECEIVER, DOOR, BUTTON, ENDGOAL, TELEPORTER, COLOR_CHANGER} entity_type;
     int         id;
     bool        active; // NOTE: This is equivalent of a null state if this is false.
-    Sprite      sprite;
     Transform   transform;
     Vector2Int  prev_position;
     Vector2Int  position;
@@ -230,13 +213,11 @@ void PrintEntity(Entity e) {
 void EntityInit (
     Entity*     entity, 
     int         id, 
-    Sprite      sprite, 
     Vector2Int  position={0, 0},
     float       entity_layer=0,
     bool        active=true 
 ) {
     entity->id            = id;
-    entity->sprite        = sprite;
     entity->active        = active;
     entity->prev_position = position; // NOTE: Cached for transform updates. Do not modify manually
     entity->position      = position;
@@ -264,30 +245,20 @@ void EntityInit (
 void PlayerInit(
     Entity* player,
     int id,
-    Sprite sprite,
-    Sprite up_sprite,
-    Sprite down_sprite,
-    Sprite left_sprite,
-    Sprite right_sprite,
     Vector2Int init_position
 ) {
-    EntityInit(player, id, sprite, init_position, 1.0f);
+    EntityInit(player, id, init_position, 1.0f);
     EntityComponentMoverInit(&player->movable, MOVE_SPEED, true);
     player->player.active = true;
-    player->player.up_sprite    = up_sprite;
-    player->player.down_sprite  = down_sprite;
-    player->player.left_sprite  = left_sprite;
-    player->player.right_sprite = right_sprite;
     player->entity_type = Entity::ENTITY_TYPE_ENUM::PLAYER;
     player->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 void PushblockInit(
     Entity* pushblock,
     int id,
-    Sprite sprite,
     Vector2Int init_position
 ) {
-    EntityInit(pushblock, id, sprite, init_position, 1.0f);
+    EntityInit(pushblock, id, init_position, 1.0f);
     pushblock->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
     EntityComponentMoverInit(&pushblock->movable, MOVE_SPEED, true);
     pushblock->entity_type = Entity::ENTITY_TYPE_ENUM::PUSH_BLOCK;
@@ -295,57 +266,42 @@ void PushblockInit(
 void StaticBlockInit(
     Entity* static_block,
     int id,
-    Sprite sprite,
     Vector2Int init_position
 ) {
-    EntityInit(static_block, id, sprite, init_position, 1.0f);
+    EntityInit(static_block, id, init_position, 1.0f);
     static_block->entity_type = Entity::ENTITY_TYPE_ENUM::STATIC_BLOCK;
     static_block->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 void EmitterInit(
     Entity* emitter,
     int id,
-    Sprite sprite,
-    Sprite nozzle_sprite,
-    Sprite indicator_sprite,
     Vector2Int init_position,
     Color emitter_color,
     bool emitter_movable,
     EntityComponentEmitter::DIRECTION_ENUM direction
 ) {
-    EntityInit(emitter, id, sprite, init_position, 1.0f);
+    EntityInit(emitter, id, init_position, 1.0f);
     EntityComponentEmitterInit(&emitter->emitter, emitter_color, direction, true);
     EntityComponentMoverInit(&emitter->movable, MOVE_SPEED, emitter_movable);
-    emitter->emitter.nozzle_sprite = nozzle_sprite;
-    emitter->emitter.indicator_sprite = indicator_sprite;
     emitter->entity_type = Entity::ENTITY_TYPE_ENUM::EMITTER;
     emitter->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 void ReceiverInit(
     Entity* receiver,
     int id,
-    Sprite sprite,
-    Sprite nozzle_sprite,
-    Sprite indicator_sprite,
     Vector2Int init_position,
     Color accepted_signal_color,
     bool receiver_movable
 ) {
-    EntityInit(receiver, id, sprite, init_position, 1.0f);
+    EntityInit(receiver, id, init_position, 1.0f);
     EntityComponentReceiverInit(&receiver->receiver, accepted_signal_color, true);
     EntityComponentMoverInit(&receiver->movable, MOVE_SPEED, receiver_movable);
-    receiver->receiver.nozzle_sprite = nozzle_sprite;
-    receiver->receiver.indicator_sprite = indicator_sprite;
     receiver->entity_type = Entity::ENTITY_TYPE_ENUM::RECEIVER;
     receiver->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 void DoorInit(
     Entity* door,
     int id,
-    Sprite open_vertical_sprite,
-    Sprite closed_vertical_sprite,
-    Sprite open_horizontal_sprite,
-    Sprite closed_horizontal_sprite,
     Vector2Int init_position,
     bool open_by_default = false,
     int connected_receivers[MAX_CONNECTED_ACTIVATORS] = nullptr,
@@ -353,67 +309,52 @@ void DoorInit(
 ) {
     //EntityInit(door, id, sprite, init_position, 1.0f, true, false);
 
-    EntityInit(door, id, open_vertical_sprite, init_position, 0.0f);
+    EntityInit(door, id, init_position, 0.0f);
     EntityComponentDoorInit(&door->door, open_by_default, connected_receivers, num_connected_activators, true);
-    door->door.open_sprite = open_vertical_sprite;
-    door->door.closed_sprite = closed_vertical_sprite;
-    door->door.open_by_default_open_sprite = open_horizontal_sprite;
-    door->door.open_by_default_closed_sprite = closed_horizontal_sprite;
     door->entity_type = Entity::ENTITY_TYPE_ENUM::DOOR;
     door->transform.scale.y = 2.0f; // NOTE: if using 3d-esque projection
 }
 void EndgoalInit(
     Entity* endgoal,
     int id,
-    Sprite goal_sprite,
     Vector2Int init_position
 ) {
-    EntityInit(endgoal, id, goal_sprite, init_position, 0.0f);
+    EntityInit(endgoal, id, init_position, 0.0f);
     endgoal->endgoal.active = true;
     endgoal->entity_type = Entity::ENTITY_TYPE_ENUM::ENDGOAL;
 }
 void ButtonInit(
     Entity* button,
     int id,
-    Sprite up_sprite,
-    Sprite down_sprite,
     Vector2Int init_position
 ) {
-    EntityInit(button, id, up_sprite, init_position, 0.0f, true);
+    EntityInit(button, id,  init_position, 0.0f, true);
     EntityComponentButtonInit(&button->button, false, true);
-    button->button.up_sprite = up_sprite;
-    button->button.down_sprite = down_sprite;
     button->entity_type = Entity::ENTITY_TYPE_ENUM::BUTTON;
 }
 void TeleporterInit(
     Entity* teleporter,
     int id,
-    Sprite teleporter_sprite,
     Color color,
     int connected_teleporter_id,
     Vector2Int init_position
 ) {
-    EntityInit(teleporter, id, teleporter_sprite, init_position, 0.0f, true);
+    EntityInit(teleporter, id, init_position, 0.0f, true);
     EntityComponentTeleporterInit(&teleporter->teleporter, connected_teleporter_id, color, true);
     teleporter->entity_type = Entity::ENTITY_TYPE_ENUM::TELEPORTER;
 }
 void ColorChangerInit(
     Entity* color_changer,
     int id,
-    Sprite color_changer_sprite,
-    Sprite frame_sprite,
-    Sprite laser_sprite_atlas,
     Color color,
     EntityComponentColorChanger::COLOR_MODE color_mode,
     Vector2Int init_position,
     bool movable = true // Movable means its a layer 1 block, not movable is a layer 0 (can be passed through)
 ) {
-    EntityInit(color_changer, id, color_changer_sprite, init_position, movable ? 1.0f : 0.0f, true);
+    EntityInit(color_changer, id, init_position, movable ? 1.0f : 0.0f, true);
     EntityComponentColorChangerInit(&color_changer->color_changer, color, color_mode, true);
     EntityComponentMoverInit(&color_changer->movable, MOVE_SPEED, movable);
     color_changer->entity_type = Entity::ENTITY_TYPE_ENUM::COLOR_CHANGER;
-    color_changer->color_changer.frame_sprite = frame_sprite;
-    color_changer->color_changer.laser_sprite_atlas = laser_sprite_atlas;
     color_changer->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 
@@ -820,7 +761,7 @@ void EntityUpdateColorChanger(int entity_id, Entity* entity_array, EntityMap ent
 
 
 // SECTION: Render methods. Should be called after update methods when you actually do the rendering.
-void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool level_transitioning = false) {
+void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Sprite* sprites, bool rendering_top = truea, bool level_transitioning = false) {
     Entity* entity = &entity_array[entity_id];
 
     if (!entity->active) return;
@@ -837,23 +778,23 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool leve
     if (entity->player.active) {
         switch(entity->player.direction) {
             case EntityComponentPlayer::DIRECTION_ENUM::UP: {
-                DrawSprite(entity->player.up_sprite, entity->transform, main_camera);
+                DrawSprite(sprites[1], entity->transform, main_camera);
                 return;
             } break;
             case EntityComponentPlayer::DIRECTION_ENUM::DOWN: {
-                DrawSprite(entity->player.down_sprite, entity->transform, main_camera);
+                DrawSprite(sprites[2], entity->transform, main_camera);
                 return;
             } break;
             case EntityComponentPlayer::DIRECTION_ENUM::LEFT: {
-                DrawSprite(entity->player.left_sprite, entity->transform, main_camera);
+                DrawSprite(sprites[3], entity->transform, main_camera);
                 return;
             } break;
             case EntityComponentPlayer::DIRECTION_ENUM::RIGHT: {
-                DrawSprite(entity->player.right_sprite, entity->transform, main_camera);
+                DrawSprite(sprites[4], entity->transform, main_camera);
                 return;
             } break;
             case EntityComponentPlayer::DIRECTION_ENUM::NEUTRAL: {
-                DrawSprite(entity->sprite, entity->transform, main_camera);
+                DrawSprite(sprites[0], entity->transform, main_camera);
                 return;
             } break;
         }
@@ -866,15 +807,15 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool leve
         if (entity->door.is_open) {
             transform.scale.y = 1.0f;
             if (entity->door.open_by_default) {
-                DrawSprite(entity->door.open_by_default_open_sprite, transform, main_camera);
+                DrawSprite(sprites[15], transform, main_camera);
             } else {
-                DrawSprite(entity->door.open_sprite, transform, main_camera);
+                DrawSprite(sprites[13], transform, main_camera);
             }
         } else {
             if (entity->door.open_by_default) {
-                DrawSprite(entity->door.open_by_default_closed_sprite, transform, main_camera);
+                DrawSprite(sprites[16], transform, main_camera);
             } else {
-                DrawSprite(entity->door.closed_sprite, transform, main_camera);
+                DrawSprite(sprites[14], transform, main_camera);
             }
         }
     }
@@ -882,63 +823,63 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool leve
     else if (entity->button.active) {
         Transform transform = entity->transform;
         if (entity->button.is_pressed) {
-            DrawSprite(entity->button.down_sprite, transform, main_camera);
+            DrawSprite(sprites[19], transform, main_camera);
         } else {
-            DrawSprite(entity->button.up_sprite, transform, main_camera);
+            DrawSprite(sprites[18], transform, main_camera);
         }
 
     }
 
     // SECTION: Emitter rendering
     else if (entity->emitter.active && !entity->movable.moving) {
-        DrawSprite(entity->sprite, entity->transform, main_camera);
+        DrawSprite(sprites[7], entity->transform, main_camera);
         Transform transform = entity->transform;
         transform.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->emitter.emission_color));
-        DrawSprite(entity->emitter.nozzle_sprite, transform, main_camera);
+        DrawSprite(sprites[8], transform, main_camera);
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
     }
     // SECTION: Receiver rendering
     else if (entity->receiver.active) {
-        DrawSprite(entity->sprite, entity->transform, main_camera);
+        DrawSprite(sprites[10], entity->transform, main_camera);
         Transform transform = entity->transform;
         transform.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->receiver.accepted_color));
-        DrawSprite(entity->receiver.indicator_sprite, transform, main_camera);
+        DrawSprite(sprites[12], transform, main_camera);
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
         transform.position.z += 0.1f;
         if (entity->receiver.signal_received) {
             if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->receiver.signal_color));
-            DrawSprite(entity->receiver.nozzle_sprite, transform, main_camera);
+            DrawSprite(sprites[11], transform, main_camera);
         }
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
         // NOTE: now that we finished rendering, we can mark receiver non-signaled.
         entity->receiver.signal_received = false;
     } else if (entity->teleporter.active) {
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->teleporter.color));
-        DrawSprite(entity->sprite, entity->transform, main_camera);
+        DrawSprite(sprites[20], entity->transform, main_camera);
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
     } else if (entity->color_changer.active) {
         Transform transform = entity->transform;
         // NOTE: Draw the transparent bit (main object)
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->color_changer.color));
-        DrawSprite(entity->sprite, transform, main_camera);
+        DrawSprite(sprites[21], transform, main_camera);
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
         // NOTE: Draw the frame
         transform.position.z += 0.1f;
-        DrawSprite(entity->color_changer.frame_sprite, transform, main_camera);
+        DrawSprite(sprites[22], transform, main_camera);
         // NOTE: Draw all the blended lasers
         ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
         ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f/5.0f, 1.0f});
         ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
         transform.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->color_changer.horizontal_color));
-        DrawSprite(entity->color_changer.laser_sprite_atlas, transform, main_camera);
+        DrawSprite(sprites[23], transform, main_camera);
         
         ShaderSetVector(shaders, "uv_offset", Vector2{1.0f/5.0f, 0.0f});
         transform.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->color_changer.vertical_color));
-        DrawSprite(entity->color_changer.laser_sprite_atlas, transform, main_camera);
+        DrawSprite(sprites[23], transform, main_camera);
         
 
         ShaderSetVector(shaders, "uv_offset", Vector2{2.0f/5.0f, 0.0f});
@@ -946,7 +887,7 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool leve
         else if (entity->color_changer.horizontal_color.a == 0) ShaderSetVector(shaders, "uv_offset", Vector2{4.0f/5.0f, 0.0f});
         transform.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(AddColor(entity->color_changer.horizontal_color, entity->color_changer.vertical_color)));
-        DrawSprite(entity->color_changer.laser_sprite_atlas, transform, main_camera);
+        DrawSprite(sprites[23], transform, main_camera);
         ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
         ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
         ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
@@ -956,8 +897,13 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, bool leve
         entity->color_changer.horizontal_color = {0, 0, 0, 0};
 
     }
-    else {
-        DrawSprite(entity->sprite, entity->transform, main_camera);
+        // NOTE: Handle pushblock, static block, endgoal
+    else if (entity->endgoal.active) {
+        DrawSprite(sprites[17], entity->transform, main_camera);
+    } else if (entity->movable.active) {
+        DrawSprite(sprites[5], entity->transform, main_camera);
+    } else {
+        DrawSprite(sprites[6], entity->transform, main_camera);
     }
 
 
