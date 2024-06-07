@@ -761,7 +761,7 @@ void EntityUpdateColorChanger(int entity_id, Entity* entity_array, EntityMap ent
 
 
 // SECTION: Render methods. Should be called after update methods when you actually do the rendering.
-void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Sprite* sprites, bool rendering_top = truea, bool level_transitioning = false) {
+void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Sprite* sprites, bool rendering_top = true, bool level_transitioning = false) {
     Entity* entity = &entity_array[entity_id];
 
     if (!entity->active) return;

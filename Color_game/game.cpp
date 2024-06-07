@@ -287,7 +287,7 @@ void Awake(GameMemory *gm)
     sprites[23] = color_changer_overlay_atlas;
     // TODO: Load the saved data
 
-    level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites, &undo_list_entity_num);
+    level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, &undo_list_entity_num);
     
 
     ++curr_level_index;
@@ -473,7 +473,7 @@ void GameUpdate(GameState *gs, KeyboardState *ks, double dt) {
                 ShaderSetVector(shaders, "i_color_multiplier", Vec4(fColor{1.0f, 1.0f, 1.0f, complement}));
             }
             else {
-                level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, sprites, &undo_list_entity_num);
+                level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, &undo_list_entity_num);
                 ++curr_level_index;
                 restarting_level = false; 
                  
@@ -667,7 +667,7 @@ void GameUpdate(GameState *gs, KeyboardState *ks, double dt) {
     if (ks->state.R && !ks->prev_state.R && !level_transitioning) {
         if (fast_reload) {
             printf("Reloading level %s (index %d)\n", level_names[curr_level_index-1], curr_level_index-1);
-            level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites, &undo_list_entity_num);
+            level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, &undo_list_entity_num);
         } else {
             showing_wires = false;
             level_transitioning = true;
@@ -683,7 +683,7 @@ void GameUpdate(GameState *gs, KeyboardState *ks, double dt) {
     if (ks->state.Q && !ks->prev_state.Q) {
         --curr_level_index;
         if (curr_level_index <= 0) curr_level_index = NUM_LEVELS;
-        level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites, &undo_list_entity_num);
+        level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, &undo_list_entity_num);
         printf("Restarting level: %s (index %d)\n", level_names[curr_level_index-1], curr_level_index-1);
         
         undo_list = (UndoToken*)realloc(undo_list, UNDO_LENGTH * sizeof(UndoToken) * undo_list_entity_num);
@@ -702,7 +702,7 @@ void GameUpdate(GameState *gs, KeyboardState *ks, double dt) {
     if (ks->state.E && !ks->prev_state.E) {
         ++curr_level_index;
         if (curr_level_index > NUM_LEVELS) curr_level_index = 1;
-        level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, sprites, &undo_list_entity_num);
+        level_state_info = ReadLevelState(level_names[curr_level_index-1], &tilemap, &entities_array, &entity_id_map, &undo_list_entity_num);
         printf("Restarting level: %s (index %d)\n", level_names[curr_level_index-1], curr_level_index-1);
 
         undo_list = (UndoToken*)realloc(undo_list, UNDO_LENGTH * sizeof(UndoToken) * undo_list_entity_num);
@@ -832,7 +832,7 @@ void GameUpdate(GameState *gs, KeyboardState *ks, double dt) {
                         continue;
                     }
                     entities_array[id].transform.position.z = float((entity_layer) - (2*y));
-                    EntityRender(id, entities_array, shaders, level_transitioning);
+                    EntityRender(id, entities_array, shaders, sprites, true, level_transitioning);
                     // SECTION: Wire rendering
                     if (entity.active && entity.door.active && showing_wires) {
                         for (int d = 0; d < MAX_CONNECTED_ACTIVATORS; ++d) {
