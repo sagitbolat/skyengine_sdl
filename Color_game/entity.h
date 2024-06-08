@@ -251,7 +251,7 @@ void PlayerInit(
     EntityComponentMoverInit(&player->movable, MOVE_SPEED, true);
     player->player.active = true;
     player->entity_type = Entity::ENTITY_TYPE_ENUM::PLAYER;
-    player->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
+    //player->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 void PushblockInit(
     Entity* pushblock,
@@ -261,7 +261,7 @@ void PushblockInit(
     EntityInit(pushblock, id, init_position, 1.0f);
     //pushblock->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
     EntityComponentMoverInit(&pushblock->movable, MOVE_SPEED, true);
-    pushblock->entity_type = Entity::ENTITY_TYPE_ENUM::PUSH_BLOCK;
+    //pushblock->entity_type = Entity::ENTITY_TYPE_ENUM::PUSH_BLOCK;
 }
 void StaticBlockInit(
     Entity* static_block,
@@ -270,7 +270,7 @@ void StaticBlockInit(
 ) {
     EntityInit(static_block, id, init_position, 1.0f);
     static_block->entity_type = Entity::ENTITY_TYPE_ENUM::STATIC_BLOCK;
-    static_block->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
+    //static_block->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 void EmitterInit(
     Entity* emitter,
@@ -284,7 +284,7 @@ void EmitterInit(
     EntityComponentEmitterInit(&emitter->emitter, emitter_color, direction, true);
     EntityComponentMoverInit(&emitter->movable, MOVE_SPEED, emitter_movable);
     emitter->entity_type = Entity::ENTITY_TYPE_ENUM::EMITTER;
-    emitter->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
+    //emitter->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 void ReceiverInit(
     Entity* receiver,
@@ -297,7 +297,7 @@ void ReceiverInit(
     EntityComponentReceiverInit(&receiver->receiver, accepted_signal_color, true);
     EntityComponentMoverInit(&receiver->movable, MOVE_SPEED, receiver_movable);
     receiver->entity_type = Entity::ENTITY_TYPE_ENUM::RECEIVER;
-    receiver->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
+    //receiver->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 void DoorInit(
     Entity* door,
@@ -312,7 +312,7 @@ void DoorInit(
     EntityInit(door, id, init_position, 0.0f);
     EntityComponentDoorInit(&door->door, open_by_default, connected_receivers, num_connected_activators, true);
     door->entity_type = Entity::ENTITY_TYPE_ENUM::DOOR;
-    door->transform.scale.y = 2.0f; // NOTE: if using 3d-esque projection
+    //door->transform.scale.y = 2.0f; // NOTE: if using 3d-esque projection
 }
 void EndgoalInit(
     Entity* endgoal,

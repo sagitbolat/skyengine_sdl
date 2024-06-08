@@ -1090,7 +1090,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 entities_array[id].transform.position.z = float((entity_layer) - (2*y));
                 EntityRender(id, entities_array, shaders, sprites, false, false);
             }
-            EmissionRender(x, y, emission_map, emission_sprite, shaders);
+            //EmissionRender(x, y, emission_map, emission_sprite, shaders);
         }
     }
 
