@@ -259,7 +259,7 @@ void PushblockInit(
     Vector2Int init_position
 ) {
     EntityInit(pushblock, id, init_position, 1.0f);
-    pushblock->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
+    //pushblock->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
     EntityComponentMoverInit(&pushblock->movable, MOVE_SPEED, true);
     pushblock->entity_type = Entity::ENTITY_TYPE_ENUM::PUSH_BLOCK;
 }
@@ -355,7 +355,7 @@ void ColorChangerInit(
     EntityComponentColorChangerInit(&color_changer->color_changer, color, color_mode, true);
     EntityComponentMoverInit(&color_changer->movable, MOVE_SPEED, movable);
     color_changer->entity_type = Entity::ENTITY_TYPE_ENUM::COLOR_CHANGER;
-    color_changer->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
+    //color_changer->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 
 
@@ -778,23 +778,23 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
     if (entity->player.active) {
         switch(entity->player.direction) {
             case EntityComponentPlayer::DIRECTION_ENUM::UP: {
-                DrawSprite(sprites[1], entity->transform, main_camera);
+                DrawSprite(sprites[PLAYER_UP_SPRITE_TOP_INDEX], entity->transform, main_camera);
                 return;
             } break;
             case EntityComponentPlayer::DIRECTION_ENUM::DOWN: {
-                DrawSprite(sprites[2], entity->transform, main_camera);
+                DrawSprite(sprites[PLAYER_DOWN_SPRITE_TOP_INDEX], entity->transform, main_camera);
                 return;
             } break;
             case EntityComponentPlayer::DIRECTION_ENUM::LEFT: {
-                DrawSprite(sprites[3], entity->transform, main_camera);
+                DrawSprite(sprites[PLAYER_LEFT_SPRITE_TOP_INDEX], entity->transform, main_camera);
                 return;
             } break;
             case EntityComponentPlayer::DIRECTION_ENUM::RIGHT: {
-                DrawSprite(sprites[4], entity->transform, main_camera);
+                DrawSprite(sprites[PLAYER_RIGHT_SPRITE_TOP_INDEX], entity->transform, main_camera);
                 return;
             } break;
             case EntityComponentPlayer::DIRECTION_ENUM::NEUTRAL: {
-                DrawSprite(sprites[0], entity->transform, main_camera);
+                DrawSprite(sprites[PLAYER_SPRITE_TOP_INDEX], entity->transform, main_camera);
                 return;
             } break;
         }
@@ -807,15 +807,15 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
         if (entity->door.is_open) {
             transform.scale.y = 1.0f;
             if (entity->door.open_by_default) {
-                DrawSprite(sprites[15], transform, main_camera);
+                DrawSprite(sprites[OPEN_DOOR_HORIZONTAL_SPRITE_INDEX], transform, main_camera);
             } else {
-                DrawSprite(sprites[13], transform, main_camera);
+                DrawSprite(sprites[OPEN_DOOR_VERTICAL_SPRITE_INDEX], transform, main_camera);
             }
         } else {
             if (entity->door.open_by_default) {
-                DrawSprite(sprites[16], transform, main_camera);
+                DrawSprite(sprites[CLOSED_DOOR_HORIZONTAL_SPRITE_TOP_INDEX], transform, main_camera);
             } else {
-                DrawSprite(sprites[14], transform, main_camera);
+                DrawSprite(sprites[CLOSED_DOOR_VERTICAL_SPRITE_TOP_INDEX], transform, main_camera);
             }
         }
     }
@@ -823,63 +823,63 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
     else if (entity->button.active) {
         Transform transform = entity->transform;
         if (entity->button.is_pressed) {
-            DrawSprite(sprites[19], transform, main_camera);
+            DrawSprite(sprites[BUTTON_DOWN_SPRITE_INDEX], transform, main_camera);
         } else {
-            DrawSprite(sprites[18], transform, main_camera);
+            DrawSprite(sprites[BUTTON_UP_SPRITE_INDEX], transform, main_camera);
         }
 
     }
 
     // SECTION: Emitter rendering
-    else if (entity->emitter.active && !entity->movable.moving) {
-        DrawSprite(sprites[7], entity->transform, main_camera);
+    else if (entity->emitter.active) {
+        DrawSprite(sprites[EMITTER_SPRITE_TOP_INDEX], entity->transform, main_camera);
         Transform transform = entity->transform;
         transform.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->emitter.emission_color));
-        DrawSprite(sprites[8], transform, main_camera);
+        DrawSprite(sprites[EMITTER_NOZZLE_SPRITE_TOP_INDEX], transform, main_camera);
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
     }
     // SECTION: Receiver rendering
     else if (entity->receiver.active) {
-        DrawSprite(sprites[10], entity->transform, main_camera);
+        DrawSprite(sprites[RECEIVER_SPRITE_TOP_INDEX], entity->transform, main_camera);
         Transform transform = entity->transform;
         transform.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->receiver.accepted_color));
-        DrawSprite(sprites[12], transform, main_camera);
+        DrawSprite(sprites[RECEIVER_INDICATOR_SPRITE_TOP_INDEX], transform, main_camera);
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
         transform.position.z += 0.1f;
         if (entity->receiver.signal_received) {
             if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->receiver.signal_color));
-            DrawSprite(sprites[11], transform, main_camera);
+            DrawSprite(sprites[RECEIVER_NOZZLE_SPRITE_TOP_INDEX], transform, main_camera);
         }
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
         // NOTE: now that we finished rendering, we can mark receiver non-signaled.
         entity->receiver.signal_received = false;
     } else if (entity->teleporter.active) {
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->teleporter.color));
-        DrawSprite(sprites[20], entity->transform, main_camera);
+        DrawSprite(sprites[TELEPORTER_SPRITE_INDEX], entity->transform, main_camera);
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
     } else if (entity->color_changer.active) {
         Transform transform = entity->transform;
-        // NOTE: Draw the transparent bit (main object)
+        // NOTE: Draw the transparent part (main object)
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->color_changer.color));
-        DrawSprite(sprites[21], transform, main_camera);
+        DrawSprite(sprites[COLOR_CHANGER_SPRITE_TOP_INDEX], transform, main_camera);
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
         // NOTE: Draw the frame
         transform.position.z += 0.1f;
-        DrawSprite(sprites[22], transform, main_camera);
+        DrawSprite(sprites[COLOR_CHANGER_FRAME_SPRITE_TOP_INDEX], transform, main_camera);
         // NOTE: Draw all the blended lasers
         ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
         ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f/5.0f, 1.0f});
         ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
         transform.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->color_changer.horizontal_color));
-        DrawSprite(sprites[23], transform, main_camera);
-        
+        DrawSprite(sprites[COLOR_CHANGER_OVERLAY_ATLAS_INDEX], transform, main_camera);
+
         ShaderSetVector(shaders, "uv_offset", Vector2{1.0f/5.0f, 0.0f});
         transform.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->color_changer.vertical_color));
-        DrawSprite(sprites[23], transform, main_camera);
+        DrawSprite(sprites[COLOR_CHANGER_OVERLAY_ATLAS_INDEX], transform, main_camera);
         
 
         ShaderSetVector(shaders, "uv_offset", Vector2{2.0f/5.0f, 0.0f});
@@ -887,7 +887,7 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
         else if (entity->color_changer.horizontal_color.a == 0) ShaderSetVector(shaders, "uv_offset", Vector2{4.0f/5.0f, 0.0f});
         transform.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(AddColor(entity->color_changer.horizontal_color, entity->color_changer.vertical_color)));
-        DrawSprite(sprites[23], transform, main_camera);
+        DrawSprite(sprites[COLOR_CHANGER_OVERLAY_ATLAS_INDEX], transform, main_camera);
         ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
         ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
         ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
@@ -897,13 +897,20 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
         entity->color_changer.horizontal_color = {0, 0, 0, 0};
 
     }
-        // NOTE: Handle pushblock, static block, endgoal
     else if (entity->endgoal.active) {
-        DrawSprite(sprites[17], entity->transform, main_camera);
+        DrawSprite(sprites[ENDGOAL_SPRITE_INDEX], entity->transform, main_camera);
     } else if (entity->movable.active) {
-        DrawSprite(sprites[5], entity->transform, main_camera);
+        if (rendering_top) {
+            entity->transform.position.y +=0.5f;
+            DrawSprite(sprites[PUSH_BLOCK_SPRITE_TOP_INDEX], entity->transform, main_camera);
+            entity->transform.position.y -= 0.5f;
+        } else {
+            entity->transform.position.y -= 0.5f;
+            DrawSprite(sprites[PUSH_BLOCK_SPRITE_SIDE_INDEX], entity->transform, main_camera);
+            entity->transform.position.y += 0.5f;
+        } 
     } else {
-        DrawSprite(sprites[6], entity->transform, main_camera);
+        DrawSprite(sprites[STATIC_BLOCK_SPRITE_TOP_INDEX], entity->transform, main_camera);
     }
 
 

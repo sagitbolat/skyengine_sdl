@@ -4,6 +4,54 @@
 #include "../Engine/skymath.h"
 
 #define MAX_ENTITIES 256 
+const int PLAYER_SPRITE_TOP_INDEX = 0;
+const int PLAYER_UP_SPRITE_TOP_INDEX = 1;
+const int PLAYER_DOWN_SPRITE_TOP_INDEX = 2;
+const int PLAYER_LEFT_SPRITE_TOP_INDEX = 3;
+const int PLAYER_RIGHT_SPRITE_TOP_INDEX = 4;
+const int PLAYER_SPRITE_SIDE_INDEX = 5;
+const int PLAYER_UP_SPRITE_SIDE_INDEX = 6;
+const int PLAYER_DOWN_SPRITE_SIDE_INDEX = 7;
+const int PLAYER_LEFT_SPRITE_SIDE_INDEX = 8;
+const int PLAYER_RIGHT_SPRITE_SIDE_INDEX = 9;
+
+const int PUSH_BLOCK_SPRITE_TOP_INDEX = 10;
+const int PUSH_BLOCK_SPRITE_SIDE_INDEX = 11;
+
+const int STATIC_BLOCK_SPRITE_TOP_INDEX = 12;
+const int STATIC_BLOCK_SPRITE_SIDE_INDEX = 13;
+
+const int EMITTER_SPRITE_TOP_INDEX = 14;
+const int EMITTER_NOZZLE_SPRITE_TOP_INDEX = 15;
+const int EMITTER_INDICATOR_SPRITE_TOP_INDEX = 16;
+const int EMITTER_SPRITE_SIDE_INDEX = 17;
+const int EMITTER_NOZZLE_SPRITE_SIDE_INDEX = 18;
+const int EMITTER_INDICATOR_SPRITE_SIDE_INDEX = 19;
+
+const int RECEIVER_SPRITE_TOP_INDEX = 20;
+const int RECEIVER_NOZZLE_SPRITE_TOP_INDEX = 21;
+const int RECEIVER_INDICATOR_SPRITE_TOP_INDEX = 22;
+const int RECEIVER_SPRITE_SIDE_INDEX = 23;
+const int RECEIVER_NOZZLE_SPRITE_SIDE_INDEX = 24;
+const int RECEIVER_INDICATOR_SPRITE_SIDE_INDEX = 25;
+
+const int OPEN_DOOR_VERTICAL_SPRITE_INDEX = 26;
+const int CLOSED_DOOR_VERTICAL_SPRITE_TOP_INDEX = 27;
+const int CLOSED_DOOR_VERTICAL_SPRITE_SIDE_INDEX = 28;
+const int OPEN_DOOR_HORIZONTAL_SPRITE_INDEX = 29;
+const int CLOSED_DOOR_HORIZONTAL_SPRITE_TOP_INDEX = 30;
+const int CLOSED_DOOR_HORIZONTAL_SPRITE_SIDE_INDEX = 31;
+
+const int ENDGOAL_SPRITE_INDEX = 32;
+const int BUTTON_UP_SPRITE_INDEX = 33;
+const int BUTTON_DOWN_SPRITE_INDEX = 34;
+const int TELEPORTER_SPRITE_INDEX = 35;
+
+const int COLOR_CHANGER_SPRITE_TOP_INDEX = 36;
+const int COLOR_CHANGER_FRAME_SPRITE_TOP_INDEX = 37;
+const int COLOR_CHANGER_SPRITE_SIDE_INDEX = 38;
+const int COLOR_CHANGER_FRAME_SPRITE_SIDE_INDEX = 39;
+const int COLOR_CHANGER_OVERLAY_ATLAS_INDEX = 40;
 #include "tilemap.h"
 #include "entity.h"
 #include "level_loader.h"
@@ -69,32 +117,59 @@ Tileset tileset = {0};
 Tilemap tilemap = {0};
 
 
-Sprite player_sprite; 
-Sprite player_up_sprite; 
-Sprite player_down_sprite; 
-Sprite player_left_sprite; 
-Sprite player_right_sprite; 
-Sprite push_block_sprite;        
-Sprite static_block_sprite;      
-Sprite emitter_sprite;     
-Sprite emitter_nozzle_sprite;    
-Sprite emitter_indicator_sprite; 
-Sprite receiver_sprite;          
-Sprite receiver_nozzle_sprite;   
-Sprite receiver_indicator_sprite;
+Sprite player_sprite_top; 
+Sprite player_up_sprite_top; 
+Sprite player_down_sprite_top; 
+Sprite player_left_sprite_top; 
+Sprite player_right_sprite_top; 
+Sprite player_sprite_side; 
+Sprite player_up_sprite_side; 
+Sprite player_down_sprite_side; 
+Sprite player_left_sprite_side; 
+Sprite player_right_sprite_side; 
+
+Sprite push_block_sprite_top;
+Sprite push_block_sprite_side;        
+
+Sprite static_block_sprite_top;      
+Sprite static_block_sprite_side;      
+
+Sprite emitter_sprite_top;     
+Sprite emitter_nozzle_sprite_top;    
+Sprite emitter_indicator_sprite_top; 
+Sprite emitter_sprite_side;     
+Sprite emitter_nozzle_sprite_side;    
+Sprite emitter_indicator_sprite_side; 
+
+Sprite receiver_sprite_top;          
+Sprite receiver_nozzle_sprite_top;   
+Sprite receiver_indicator_sprite_top;
+Sprite receiver_sprite_side;          
+Sprite receiver_nozzle_sprite_side;   
+Sprite receiver_indicator_sprite_side;
+
 Sprite open_door_vertical_sprite;
-Sprite closed_door_vertical_sprite;
+Sprite closed_door_vertical_sprite_top;
+Sprite closed_door_vertical_sprite_side;
 Sprite open_door_horizontal_sprite;
-Sprite closed_door_horizontal_sprite;
+Sprite closed_door_horizontal_sprite_top;
+Sprite closed_door_horizontal_sprite_side;
+
 Sprite endgoal_sprite;
 Sprite button_up_sprite;
 Sprite button_down_sprite;
 Sprite teleporter_sprite;
-Sprite color_changer_sprite;
-Sprite color_changer_frame_sprite;
+
+Sprite color_changer_sprite_top;
+Sprite color_changer_frame_sprite_top;
+Sprite color_changer_sprite_side;
+Sprite color_changer_frame_sprite_side;
 Sprite color_changer_overlay_atlas;
 
-Sprite sprites[24]; 
+
+
+
+Sprite sprites[41]; 
 
 Sprite wire_sprite;
 
@@ -162,62 +237,109 @@ void Awake(GameMemory *gm)
 
 
 
-    player_sprite               = LoadSprite("assets/player.png", shaders, gpu_buffers);
-    player_up_sprite            = LoadSprite("assets/player_up.png", shaders, gpu_buffers);
-    player_down_sprite          = LoadSprite("assets/player_down.png", shaders, gpu_buffers);
-    player_left_sprite          = LoadSprite("assets/player_left.png", shaders, gpu_buffers);
-    player_right_sprite         = LoadSprite("assets/player_right.png", shaders, gpu_buffers);
-    push_block_sprite           = LoadSprite("assets/push_block.png", shaders, gpu_buffers);
-    static_block_sprite         = LoadSprite("assets/static_block.png", shaders, gpu_buffers);
-    emitter_sprite              = LoadSprite("assets/emitter.png", shaders, gpu_buffers);
-    emitter_nozzle_sprite       = LoadSprite("assets/emitter_nozzle.png", shaders, gpu_buffers);
-    emitter_indicator_sprite    = LoadSprite("assets/emitter_indicator.png", shaders, gpu_buffers);
-    receiver_sprite             = LoadSprite("assets/receiver.png", shaders, gpu_buffers);
-    receiver_nozzle_sprite      = LoadSprite("assets/receiver_nozzle.png", shaders, gpu_buffers);
-    receiver_indicator_sprite   = LoadSprite("assets/receiver_indicator.png", shaders, gpu_buffers);
-    emission_sprite             = LoadSprite("assets/emission.png", shaders, gpu_buffers);
-    open_door_vertical_sprite   = LoadSprite("assets/door_open.png", shaders, gpu_buffers);
-    closed_door_vertical_sprite = LoadSprite("assets/door_closed.png", shaders, gpu_buffers);
-    open_door_horizontal_sprite = LoadSprite("assets/door_open_horiz.png", shaders, gpu_buffers);
-    closed_door_horizontal_sprite = LoadSprite("assets/door_closed_horiz.png", shaders, gpu_buffers);
-    endgoal_sprite              = LoadSprite("assets/endgoal.png", shaders, gpu_buffers);
-    button_up_sprite            = LoadSprite("assets/button_up.png", shaders, gpu_buffers);
-    button_down_sprite          = LoadSprite("assets/button_down.png", shaders, gpu_buffers);
-    teleporter_sprite           = LoadSprite("assets/teleporter.png", shaders, gpu_buffers);
-    color_changer_sprite        = LoadSprite("assets/color_changer.png", shaders, gpu_buffers);
-    color_changer_frame_sprite  = LoadSprite("assets/color_changer_frame.png", shaders, gpu_buffers);
-    color_changer_overlay_atlas = LoadSprite("assets/color_changer_overlay.png", shaders, gpu_buffers);
+    player_sprite_top        = LoadSprite("assets/player_top.png", shaders, gpu_buffers);
+    player_up_sprite_top     = LoadSprite("assets/player_up_top.png", shaders, gpu_buffers);
+    player_down_sprite_top   = LoadSprite("assets/player_down_top.png", shaders, gpu_buffers);
+    player_left_sprite_top   = LoadSprite("assets/player_left_top.png", shaders, gpu_buffers);
+    player_right_sprite_top  = LoadSprite("assets/player_right_top.png", shaders, gpu_buffers);
+    player_sprite_side       = LoadSprite("assets/player_side.png", shaders, gpu_buffers);
+    player_up_sprite_side    = LoadSprite("assets/player_up_side.png", shaders, gpu_buffers);
+    player_down_sprite_side  = LoadSprite("assets/player_down_side.png", shaders, gpu_buffers);
+    player_left_sprite_side  = LoadSprite("assets/player_left_side.png", shaders, gpu_buffers);
+    player_right_sprite_side = LoadSprite("assets/player_right_side.png", shaders, gpu_buffers);
+
+    push_block_sprite_top  = LoadSprite("assets/push_block_top.png", shaders, gpu_buffers);
+    push_block_sprite_side = LoadSprite("assets/push_block_side.png", shaders, gpu_buffers);
+
+    static_block_sprite_top  = LoadSprite("assets/static_block_top.png", shaders, gpu_buffers);
+    static_block_sprite_side = LoadSprite("assets/static_block_side.png", shaders, gpu_buffers);
+
+    emitter_sprite_top            = LoadSprite("assets/emitter_top.png", shaders, gpu_buffers);
+    emitter_nozzle_sprite_top     = LoadSprite("assets/emitter_nozzle_top.png", shaders, gpu_buffers);
+    emitter_indicator_sprite_top  = LoadSprite("assets/emitter_indicator_top.png", shaders, gpu_buffers);
+    emitter_sprite_side           = LoadSprite("assets/emitter_side.png", shaders, gpu_buffers);
+    emitter_nozzle_sprite_side    = LoadSprite("assets/emitter_nozzle_side.png", shaders, gpu_buffers);
+    emitter_indicator_sprite_side = LoadSprite("assets/emitter_indicator_side.png", shaders, gpu_buffers);
+
+    receiver_sprite_top            = LoadSprite("assets/receiver_top.png", shaders, gpu_buffers);
+    receiver_nozzle_sprite_top     = LoadSprite("assets/receiver_nozzle_top.png", shaders, gpu_buffers);
+    receiver_indicator_sprite_top  = LoadSprite("assets/receiver_indicator_top.png", shaders, gpu_buffers);
+    receiver_sprite_side           = LoadSprite("assets/receiver_side.png", shaders, gpu_buffers);
+    receiver_nozzle_sprite_side    = LoadSprite("assets/receiver_nozzle_side.png", shaders, gpu_buffers);
+    receiver_indicator_sprite_side = LoadSprite("assets/receiver_indicator_side.png", shaders, gpu_buffers);
+
+    open_door_vertical_sprite          = LoadSprite("assets/open_door_vertical.png", shaders, gpu_buffers);
+    closed_door_vertical_sprite_top    = LoadSprite("assets/closed_door_vertical_top.png", shaders, gpu_buffers);
+    closed_door_vertical_sprite_side   = LoadSprite("assets/closed_door_vertical_side.png", shaders, gpu_buffers);
+    open_door_horizontal_sprite        = LoadSprite("assets/open_door_horizontal.png", shaders, gpu_buffers);
+    closed_door_horizontal_sprite_top  = LoadSprite("assets/closed_door_horizontal_top.png", shaders, gpu_buffers);
+    closed_door_horizontal_sprite_side = LoadSprite("assets/closed_door_horizontal_side.png", shaders, gpu_buffers);
+
+    endgoal_sprite     = LoadSprite("assets/endgoal.png", shaders, gpu_buffers);
+    button_up_sprite   = LoadSprite("assets/button_up.png", shaders, gpu_buffers);
+    button_down_sprite = LoadSprite("assets/button_down.png", shaders, gpu_buffers);
+    teleporter_sprite  = LoadSprite("assets/teleporter.png", shaders, gpu_buffers);
+
+    color_changer_sprite_top        = LoadSprite("assets/color_changer_top.png", shaders, gpu_buffers);
+    color_changer_frame_sprite_top  = LoadSprite("assets/color_changer_frame_top.png", shaders, gpu_buffers);
+    color_changer_sprite_side       = LoadSprite("assets/color_changer_side.png", shaders, gpu_buffers);
+    color_changer_frame_sprite_side = LoadSprite("assets/color_changer_frame_side.png", shaders, gpu_buffers);
+    color_changer_overlay_atlas     = LoadSprite("assets/color_changer_overlay_atlas.png", shaders, gpu_buffers);
 
 
     {
-        Sprite temp_sprites[24] = {
-            player_sprite,                  //0 
-            player_up_sprite,               //1
-            player_down_sprite,             //2
-            player_left_sprite,             //3
-            player_right_sprite,            //4
-            push_block_sprite,              //5
-            static_block_sprite,            //6
-            emitter_sprite,                 //7
-            emitter_nozzle_sprite,          //8
-            emitter_indicator_sprite,       //9
-            receiver_sprite,                //10
-            receiver_nozzle_sprite,         //11
-            receiver_indicator_sprite,      //12
-            open_door_vertical_sprite,      //13
-            closed_door_vertical_sprite,    //14
-            open_door_horizontal_sprite,    //15
-            closed_door_horizontal_sprite,  //16
-            endgoal_sprite,                 //17
-            button_up_sprite,               //18
-            button_down_sprite,             //19
-            teleporter_sprite,              //20
-            color_changer_sprite,           //21
-            color_changer_frame_sprite,     //22
-            color_changer_overlay_atlas     //23
+        Sprite temp_sprites[41] = {
+            player_sprite_top,
+            player_up_sprite_top,
+            player_down_sprite_top,
+            player_left_sprite_top,
+            player_right_sprite_top,
+            player_sprite_side,
+            player_up_sprite_side,
+            player_down_sprite_side,
+            player_left_sprite_side,
+            player_right_sprite_side,
+            
+            push_block_sprite_top,
+            push_block_sprite_side,
+            
+            static_block_sprite_top,
+            static_block_sprite_side,
+            
+            emitter_sprite_top,
+            emitter_nozzle_sprite_top,
+            emitter_indicator_sprite_top,
+            emitter_sprite_side,
+            emitter_nozzle_sprite_side,
+            emitter_indicator_sprite_side,
+            
+            receiver_sprite_top,
+            receiver_nozzle_sprite_top,
+            receiver_indicator_sprite_top,
+            receiver_sprite_side,
+            receiver_nozzle_sprite_side,
+            receiver_indicator_sprite_side,
+            
+            open_door_vertical_sprite,
+            closed_door_vertical_sprite_top,
+            closed_door_vertical_sprite_side,
+            open_door_horizontal_sprite,
+            closed_door_horizontal_sprite_top,
+            closed_door_horizontal_sprite_side,
+            
+            endgoal_sprite,
+            button_up_sprite,
+            button_down_sprite,
+            teleporter_sprite,
+            
+            color_changer_sprite_top,
+            color_changer_frame_sprite_top,
+            color_changer_sprite_side,
+            color_changer_frame_sprite_side,
+            color_changer_overlay_atlas
         };
 
-        for (int i = 0; i < 24; ++i) {sprites[i] = temp_sprites[i];}
+        for (int i = 0; i < 41; ++i) {sprites[i] = temp_sprites[i];}
     }
 
     wire_sprite                 = LoadSprite("assets/wire.png", shaders, gpu_buffers);
@@ -298,7 +420,7 @@ void RenderLayer(int z) {
                 entities_array[id].transform.position.z = float((entity_layer) - (2*y));
                 EntityRender(id, entities_array, shaders, sprites);
                 // SECTION: Wire rendering
-                if (entity.active && entity.door.active) {
+                if (entity.active && entity.door.active && z == 1) {
                     for (int d = 0; d < MAX_CONNECTED_ACTIVATORS; ++d) {
                         int id_activator = entity.door.connected_activators_ids[d];
                         if (id_activator >= 0) {
@@ -468,7 +590,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     if ( DrawSimpleImageButton (
             "PushBlockButton", 
-            push_block_sprite, 
+            push_block_sprite_top, 
             {float(108)/float(1280) * 0.2, 0.2}, 
             {float(108)/float(1280) * 0.6, 0.6}
         )
@@ -477,7 +599,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     } 
     if ( DrawSimpleImageButton (
             "StaticBlockButton", 
-            static_block_sprite, 
+            static_block_sprite_top, 
             {float(108)/float(1280) * 1.0, 0.2}, 
             {float(108)/float(1280) * 0.6, 0.6}
         )
@@ -486,7 +608,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     } 
     if ( DrawSimpleImageButton (
             "EmitterBlockButton", 
-            emitter_sprite, 
+            emitter_sprite_top, 
             {float(108)/float(1280) * 1.8, 0.2}, 
             {float(108)/float(1280) * 0.6, 0.6}
         )
@@ -495,7 +617,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     } 
     if ( DrawSimpleImageButton (
             "RecieverButton", 
-            receiver_sprite, 
+            receiver_sprite_top, 
             {float(108)/float(1280) * 2.6, 0.2}, 
             {float(108)/float(1280) * 0.6, 0.6}
         )
@@ -504,7 +626,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     } 
     if ( DrawSimpleImageButton (
             "DoorButton", 
-            closed_door_vertical_sprite, 
+            closed_door_vertical_sprite_top, 
             {float(108)/float(1280) * 3.4, 0.2}, 
             {float(108)/float(1280) * 0.6, 0.6}
         )
@@ -540,7 +662,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     }
     if ( DrawSimpleImageButton (
             "ColorChangerButton", 
-            color_changer_sprite, 
+            color_changer_sprite_top, 
             {float(108)/float(1280) * 6.6, 0.2}, 
             {float(108)/float(1280) * 0.6, 0.6}
         )
@@ -955,6 +1077,19 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
 
     for (int y = tilemap.height-1; y >= 0; --y) {
         for(int x = 0; x < tilemap.width; ++x) {
+
+            int id = entity_id_map.GetID(x, y, 1);
+            if (id >= 0) {
+                Entity entity = entities_array[id];
+                float entity_layer = 1;
+                if (entity.door.active) entity_layer += 0.25f;
+
+                if (entity.door.active && !entity.door.is_open) {
+                    continue;
+                }
+                entities_array[id].transform.position.z = float((entity_layer) - (2*y));
+                EntityRender(id, entities_array, shaders, sprites, false, false);
+            }
             EmissionRender(x, y, emission_map, emission_sprite, shaders);
         }
     }
