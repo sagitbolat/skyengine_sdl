@@ -45,10 +45,38 @@ void UI_FrameRender()
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void UI_WindowStart(const char* window_name, Vector2Int window_size, Vector2Int window_pos) {
+
+// NOTE: Passing a {0, 0} or nothing or negative values for window_size will make window fullscreen
+// Passing {0, 0} or nothing for window_pos will make the window start in the top left of the screen. 
+void UI_WindowStart(const char* window_name, Vector2Int window_size = {0, 0}, Vector2Int window_pos = {0, 0}, UI_Window_Options* window_options = nullptr) {
+
+    if (window_size.x <= 0 || window_size.y <= 0) {
+        ImGuiIO& io = ImGui::GetIO();
+        ImVec2 display_size = io.DisplaySize;
+        window_size.x = display_size.x;
+        window_size.y = display_size.y;
+    }
+    
+    ImGuiWindowFlags window_flags = 0; 
+    
+    if (window_options != nullptr) {
+        window_flags = 
+            (window_options->no_title_bar * ImGuiWindowFlags_NoTitleBar) |
+            (window_options->no_resize * ImGuiWindowFlags_NoResize) |
+            (window_options->no_move * ImGuiWindowFlags_NoMove) |
+            (window_options->no_scrollbar * ImGuiWindowFlags_NoScrollbar) |
+            (window_options->no_background * ImGuiWindowFlags_NoBackground) |
+            (window_options->no_collapse_button * ImGuiWindowFlags_NoCollapse); 
+    } else {
+        window_flags = 
+            (ImGuiWindowFlags_NoTitleBar) | 
+            (ImGuiWindowFlags_NoResize) | 
+            (ImGuiWindowFlags_NoMove) | 
+            (ImGuiWindowFlags_NoScrollbar);
+    }
     ImGui::SetNextWindowPos(ImVec2(window_pos.x, window_pos.y));
     ImGui::SetNextWindowSize(ImVec2(window_size.x, window_size.y));
-    ImGui::Begin(window_name, nullptr, ImGuiWindowFlags_NoResize);
+    ImGui::Begin(window_name, nullptr, window_flags);
 }
 void UI_WindowEnd() {
     ImGui::End();

@@ -9,7 +9,7 @@ void MainMenuStart(GameState* gs, KeyboardState* ks, double dt) {
 }
 
 void MainMenuUpdate(GameState* gs, KeyboardState* ks, double dt) {
-
+   
     DrawSprite(bg_sprite, bg_transform, main_camera);
 
     DrawSimpleText("Asteroids", Vector2{0.5f, 0.2f}, UI_Alignment::CENTER_CENTER, title_font, font_color);

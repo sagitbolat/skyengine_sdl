@@ -334,12 +334,26 @@ void RenderLayer(int z) {
     
     }
 }
+
 // NOTE: For empty level creating
 void Update(GameState *gs, KeyboardState *ks, double dt) {
 
+    static double dt_coefficient = 1.0f;
+    if (ks->state.MINUS && !ks->prev_state.MINUS) {
+        dt_coefficient *= 0.5;
+    }
+    if (ks->state.EQUALS && !ks->prev_state.EQUALS) {
+        dt_coefficient *= 2.0;
+    }
+
+    dt *= dt_coefficient;
 
 #ifdef DEBUG_UI
-    UI_WindowStart("Entity Spawn Select", {1280, 108}, {0,0});
+
+    UI_Window_Options ui_wo = {true, true, true, true, false, true};
+
+
+    UI_WindowStart("Entity Spawn Select", {1280, 108}, {0,0}, &ui_wo);
 
     double fps = DeltaTimeToFps(dt);
     char fps_str[64];
@@ -863,23 +877,6 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
     } 
 
-    // NOTE: Print debug info of entity
-    if (ks->state.SPACE && !ks->prev_state.SPACE) {
-        int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
-        int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
-
-        int entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
-        if (entity_id >=0) {
-            Entity entity = entities_array[entity_id];
-            PrintEntity(entity);
-        } 
-        entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1);
-        if (entity_id >=0) {
-            Entity entity = entities_array[entity_id];
-            PrintEntity(entity);
-        }
-        
-    }
     // NOTE: Do toggling movability:
     // TODO:
 
@@ -950,18 +947,61 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         }
     }
 
-
+    for (int y = tilemap.height-1; y >= 0; --y) {
+        for(int x = 0; x < tilemap.width; ++x) {
+            int id = entity_id_map.GetID(x, y, 0);
+            if (id >= 0) {
+                Entity entity = entities_array[id];
+                float entity_layer = 0;
+                if (entity.door.active) entity_layer += 0.25f;
+                entities_array[id].transform.position.z = float((entity_layer) - (2*y));
+                EntityRender(id, entities_array, shaders, sprites, false, false);
+            }
+        }
+    }
     RenderLayer(0);
 
+    
+    for (int y = tilemap.height-1; y >= 0; --y) {
+        for(int x = 0; x < tilemap.width; ++x) {
+            int id = entity_id_map.GetID(x, y, 1);
+            if (id >= 0) {
+                Entity entity = entities_array[id];
+                float entity_layer = 1;
+                if (entity.door.active) entity_layer += 0.25f;
+
+                if (entity.door.active && !entity.door.is_open) {
+                    continue;
+                }
+                entities_array[id].transform.position.z = float((entity_layer) - (2*y));
+                EntityRender(id, entities_array, shaders, sprites, false, false);
+            }
+        }
+    }
+    
     for (int y = tilemap.height-1; y >= 0; --y) {
         for(int x = 0; x < tilemap.width; ++x) {
             EmissionRender(x, y, emission_map, emission_sprite, shaders);
         }
     }
+    // NOTE: Print debug info of entity
+    if (ks->state.SPACE && !ks->prev_state.SPACE) {
+        int tile_mouse_x = int(GetMousePositionInWorldCoords().x + 0.5f);
+        int tile_mouse_y = int(GetMousePositionInWorldCoords().y + 0.5f); 
 
+        int entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0);
+        if (entity_id >=0) {
+            Entity entity = entities_array[entity_id];
+            PrintEntity(entity);
+        } 
+        entity_id = entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1);
+        if (entity_id >=0) {
+            Entity entity = entities_array[entity_id];
+            PrintEntity(entity);
+        }
+        
+    }
     RenderLayer(1);
-    
-    
     // NOTE: Render entities through entity_id_map
     //for (int z = 0; z < entity_id_map.depth; z++) {
     //    for (int y = 0; y < entity_id_map.height; y++) {

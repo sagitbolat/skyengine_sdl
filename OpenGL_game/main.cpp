@@ -1,5 +1,4 @@
 #define INCLUDE_IMGUI
-#define FPS_SHOW
 
 #include "../Engine/SDL_sky.cpp"
 #include "../Engine/skymath.h"
@@ -105,7 +104,7 @@ void Awake(GameMemory *gm)
     laser_sound             = LoadSoundClip("laser_shot.ogg");
     player_death_sound      = LoadSoundClip("hit_hurt.ogg");
     game_over_sound         = LoadSoundClip("game_over.ogg");
-    enemy_death_sound       = LoadSoundClip("explosion.ogg");   
+    enemy_death_sound       = LoadSoundClip("explosion.ogg");
     
     // SECTION: SceneManager init
     scene_manager.InitManager(NUM_SCENES);
@@ -167,7 +166,10 @@ void Update(GameState *gs, KeyboardState *ks, double dt)
         PlaySoundFromSource(global_audio_source, background_tracks[track_num % NUM_BACKGROUND_TRACKS]);
         ++track_num;
     }
+    UI_Window_Options ui_wo = {true, true, true, true, true, true};
+    UI_WindowStart("Main", {SCREEN_WIDTH, SCREEN_HEIGHT}, {0, 0}, &ui_wo);
     scene_manager.SceneUpdate(gs, ks, dt);
+    UI_WindowEnd();
 }
 
 void UserFree()

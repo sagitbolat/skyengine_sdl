@@ -348,3 +348,20 @@ fColor operator*(fColor c, float a) {
 fColor operator*(float a, fColor c) {
 	return c*a;
 }
+
+// SECTION: Transforms
+
+// NOTE: copies the values from source to destination
+void CopyTransform(Transform* destination, Transform source) {
+	destination->position.x = source.position.x;
+	destination->position.y = source.position.y;
+	destination->position.z = source.position.z;
+
+	destination->rotation.x = source.rotation.x;
+	destination->rotation.y = source.rotation.y;
+	destination->rotation.z = source.rotation.z;
+
+	destination->scale.x = source.scale.x;
+	destination->scale.y = source.scale.y;
+	destination->scale.z = source.scale.z;
+}

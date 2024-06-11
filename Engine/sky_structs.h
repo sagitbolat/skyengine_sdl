@@ -176,7 +176,7 @@ struct KeyState {
     unsigned int NUM0 : 1; 
     unsigned int TILDA : 1;
     unsigned int MINUS : 1; 
-    unsigned int PLUS : 1; 
+    unsigned int EQUALS : 1; 
     unsigned int BACKSPACE : 1;   
     unsigned int TAB : 1; 
     unsigned int CAPS : 1;

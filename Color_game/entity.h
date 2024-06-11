@@ -251,7 +251,6 @@ void PlayerInit(
     EntityComponentMoverInit(&player->movable, MOVE_SPEED, true);
     player->player.active = true;
     player->entity_type = Entity::ENTITY_TYPE_ENUM::PLAYER;
-    player->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 void PushblockInit(
     Entity* pushblock,
@@ -259,7 +258,6 @@ void PushblockInit(
     Vector2Int init_position
 ) {
     EntityInit(pushblock, id, init_position, 1.0f);
-    pushblock->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
     EntityComponentMoverInit(&pushblock->movable, MOVE_SPEED, true);
     pushblock->entity_type = Entity::ENTITY_TYPE_ENUM::PUSH_BLOCK;
 }
@@ -270,7 +268,6 @@ void StaticBlockInit(
 ) {
     EntityInit(static_block, id, init_position, 1.0f);
     static_block->entity_type = Entity::ENTITY_TYPE_ENUM::STATIC_BLOCK;
-    static_block->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 void EmitterInit(
     Entity* emitter,
@@ -284,7 +281,6 @@ void EmitterInit(
     EntityComponentEmitterInit(&emitter->emitter, emitter_color, direction, true);
     EntityComponentMoverInit(&emitter->movable, MOVE_SPEED, emitter_movable);
     emitter->entity_type = Entity::ENTITY_TYPE_ENUM::EMITTER;
-    emitter->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 void ReceiverInit(
     Entity* receiver,
@@ -297,7 +293,6 @@ void ReceiverInit(
     EntityComponentReceiverInit(&receiver->receiver, accepted_signal_color, true);
     EntityComponentMoverInit(&receiver->movable, MOVE_SPEED, receiver_movable);
     receiver->entity_type = Entity::ENTITY_TYPE_ENUM::RECEIVER;
-    receiver->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 void DoorInit(
     Entity* door,
@@ -312,7 +307,6 @@ void DoorInit(
     EntityInit(door, id, init_position, 0.0f);
     EntityComponentDoorInit(&door->door, open_by_default, connected_receivers, num_connected_activators, true);
     door->entity_type = Entity::ENTITY_TYPE_ENUM::DOOR;
-    door->transform.scale.y = 2.0f; // NOTE: if using 3d-esque projection
 }
 void EndgoalInit(
     Entity* endgoal,
@@ -355,7 +349,6 @@ void ColorChangerInit(
     EntityComponentColorChangerInit(&color_changer->color_changer, color, color_mode, true);
     EntityComponentMoverInit(&color_changer->movable, MOVE_SPEED, movable);
     color_changer->entity_type = Entity::ENTITY_TYPE_ENUM::COLOR_CHANGER;
-    color_changer->transform.scale.y = 2.0; // NOTE: if using 3d-esque projection
 }
 
 
@@ -778,23 +771,143 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
     if (entity->player.active) {
         switch(entity->player.direction) {
             case EntityComponentPlayer::DIRECTION_ENUM::UP: {
-                DrawSprite(sprites[1], entity->transform, main_camera);
+                Transform t = {0.0f};
+                CopyTransform(&t, entity->transform);
+                if (rendering_top) {
+                    t.position.y += 0.5f;
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+                    ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
+                    
+                    DrawSprite(sprites[1], t, main_camera);
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+                    ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+                } else {
+                    t.position.y -= 0.5f;
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+                    
+                    DrawSprite(sprites[1], t, main_camera);
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+                }
                 return;
             } break;
             case EntityComponentPlayer::DIRECTION_ENUM::DOWN: {
-                DrawSprite(sprites[2], entity->transform, main_camera);
+                Transform t = {0.0f};
+                CopyTransform(&t, entity->transform);
+                if (rendering_top) {
+                    t.position.y += 0.5f;
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+                    ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
+                    
+                    DrawSprite(sprites[2], t, main_camera);
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+                    ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+                } else {
+                    t.position.y -= 0.5f;
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+                    
+                    DrawSprite(sprites[2], t, main_camera);
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+                }
                 return;
             } break;
             case EntityComponentPlayer::DIRECTION_ENUM::LEFT: {
-                DrawSprite(sprites[3], entity->transform, main_camera);
+                Transform t = {0.0f};
+                CopyTransform(&t, entity->transform);
+                if (rendering_top) {
+                    t.position.y += 0.5f;
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+                    ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
+                    
+                    DrawSprite(sprites[3], t, main_camera);
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+                    ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+                } else {
+                    t.position.y -= 0.5f;
+
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+                    
+                    DrawSprite(sprites[3], t, main_camera);
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+                }
                 return;
             } break;
             case EntityComponentPlayer::DIRECTION_ENUM::RIGHT: {
-                DrawSprite(sprites[4], entity->transform, main_camera);
+                Transform t = {0.0f};
+                CopyTransform(&t, entity->transform);
+                if (rendering_top) {
+                    t.position.y += 0.5f;
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+                    ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
+                    
+                    DrawSprite(sprites[4], t, main_camera);
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+                    ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+                } else {
+                    t.position.y -= 0.5f;
+
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+                    
+                    DrawSprite(sprites[4], t, main_camera);
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+                }
                 return;
             } break;
             case EntityComponentPlayer::DIRECTION_ENUM::NEUTRAL: {
-                DrawSprite(sprites[0], entity->transform, main_camera);
+                Transform t = {0.0f};
+                CopyTransform(&t, entity->transform);
+                if (rendering_top) {
+                    t.position.y += 0.5f;
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+                    ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
+                    
+                    DrawSprite(sprites[0], t, main_camera);
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+                    ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+                } else {
+                    t.position.y -= 0.5f;
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+                    
+                    DrawSprite(sprites[0], t, main_camera);
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+                }
                 return;
             } break;
         }
@@ -813,9 +926,57 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
             }
         } else {
             if (entity->door.open_by_default) {
-                DrawSprite(sprites[16], transform, main_camera);
+                Transform t = {0.0f};
+                CopyTransform(&t, entity->transform);
+                if (rendering_top) {
+                    t.position.y += 0.5f;
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+                    ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
+                    
+                    DrawSprite(sprites[16], t, main_camera);
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+                    ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+                } else {
+                    t.position.y -= 0.5f;
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+                    
+                    DrawSprite(sprites[16], t, main_camera);
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+                }
             } else {
-                DrawSprite(sprites[14], transform, main_camera);
+                Transform t = {0.0f};
+                CopyTransform(&t, entity->transform);
+                if (rendering_top) {
+                    t.position.y += 0.5f;
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+                    ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
+                    
+                    DrawSprite(sprites[14], t, main_camera);
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+                    ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+                } else {
+                    t.position.y -= 0.5f;
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+                    
+                    DrawSprite(sprites[14], t, main_camera);
+                    
+                    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+                }
             }
         }
     }
@@ -831,30 +992,134 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
     }
 
     // SECTION: Emitter rendering
-    else if (entity->emitter.active && !entity->movable.moving) {
-        DrawSprite(sprites[7], entity->transform, main_camera);
-        Transform transform = entity->transform;
-        transform.position.z += 0.1f;
+    else if (entity->emitter.active) {
+        Transform t = {0.0f};
+        CopyTransform(&t, entity->transform);
+        if (rendering_top) {
+            t.position.y += 0.5f;
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+            ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
+            
+            DrawSprite(sprites[7], t, main_camera);
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+            ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+        } else {
+            t.position.y -= 0.5f;
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+            
+            DrawSprite(sprites[7], t, main_camera);
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+        }
+
+        t.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->emitter.emission_color));
-        DrawSprite(sprites[8], transform, main_camera);
+        if (rendering_top) {
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+            ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
+            
+            DrawSprite(sprites[8], t, main_camera);
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+            ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+        } else {
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+            
+            DrawSprite(sprites[8], t, main_camera);
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+        }
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
     }
     // SECTION: Receiver rendering
     else if (entity->receiver.active) {
-        DrawSprite(sprites[10], entity->transform, main_camera);
-        Transform transform = entity->transform;
-        transform.position.z += 0.1f;
+        Transform t = {0.0f};
+        CopyTransform(&t, entity->transform);
+        if (rendering_top) {
+            t.position.y += 0.5f;
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+            ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
+            
+            DrawSprite(sprites[10], t, main_camera);
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+            ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+        } else {
+            t.position.y -= 0.5f;
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+            
+            DrawSprite(sprites[10], t, main_camera);
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+        }
+        t.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->receiver.accepted_color));
-        DrawSprite(sprites[12], transform, main_camera);
+        if (rendering_top) {
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+            ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
+            
+            DrawSprite(sprites[12], t, main_camera);
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+            ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+        } else {
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+            
+            DrawSprite(sprites[12], t, main_camera);
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+        }
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
-        transform.position.z += 0.1f;
+        t.position.z += 0.1f;
         if (entity->receiver.signal_received) {
             if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->receiver.signal_color));
-            DrawSprite(sprites[11], transform, main_camera);
+            if (rendering_top) {
+                ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+                ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
+                
+                DrawSprite(sprites[11], t, main_camera);
+                
+                ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+                ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+            } else {
+                ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+                
+                DrawSprite(sprites[11], t, main_camera);
+                
+                ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+                ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+            }
+            //DrawSprite(sprites[11], t, main_camera);
         }
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
         // NOTE: now that we finished rendering, we can mark receiver non-signaled.
-        entity->receiver.signal_received = false;
+        if (rendering_top) entity->receiver.signal_received = false;
     } else if (entity->teleporter.active) {
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->teleporter.color));
         DrawSprite(sprites[20], entity->transform, main_camera);
@@ -901,9 +1166,57 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
     else if (entity->endgoal.active) {
         DrawSprite(sprites[17], entity->transform, main_camera);
     } else if (entity->movable.active) {
-        DrawSprite(sprites[5], entity->transform, main_camera);
+        Transform t = {0.0f};
+        CopyTransform(&t, entity->transform);
+        if (rendering_top) {
+            t.position.y += 0.5f;
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+            ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
+            
+            DrawSprite(sprites[5], t, main_camera);
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+            ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+        } else {
+            t.position.y -= 0.5f;
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+            
+            DrawSprite(sprites[5], t, main_camera);
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+        }
     } else {
-        DrawSprite(sprites[6], entity->transform, main_camera);
+        Transform t = {0.0f};
+        CopyTransform(&t, entity->transform);
+        if (rendering_top) {
+            t.position.y += 0.5f;
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+            ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
+            
+            DrawSprite(sprites[6], t, main_camera);
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+            ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+        } else {
+            t.position.y -= 0.5f;
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+            
+            DrawSprite(sprites[6], t, main_camera);
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+        }
     }
 
 
@@ -918,47 +1231,56 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
 }
 void EmissionRender(int x, int y, EmissionMap map, Sprite emission_sprite_sheet, GL_ID* shaders, bool level_transitioning = false) {
     
-            EmissionTile tile = map.GetEmissionTile(x, y);
-            if (tile.active == false) return;
+    EmissionTile tile = map.GetEmissionTile(x, y);
+    if (tile.active == false) return;
 
-            float uv_x_offset = 0.0f;
-            if (tile.orientation == EmissionTile::VERTICAL) uv_x_offset = (1.0f/5.0f);
-            if (tile.orientation == EmissionTile::CROSSED) uv_x_offset = (2.0f/5.0f);
+    float uv_x_offset = 0.0f;
+    float scale_x = 1.0f;
+    float scale_y = (6.0f/16.0f);
+    if (tile.orientation == EmissionTile::VERTICAL) { 
+        uv_x_offset = (1.0f/5.0f);
+        scale_x = scale_y;
+        scale_y = 1.0f;
+    }
+    if (tile.orientation == EmissionTile::CROSSED) { 
+        uv_x_offset = (2.0f/5.0f);
+        scale_y = 1.0f;
+    }
+    
+    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f/5.0f, 1.0f});
+    ShaderSetVector(shaders, "uv_offset", Vector2{uv_x_offset, 0.0f});
+    
+    Transform transform = {0.0f};
+    transform.position = Vector3{float(x), float(y+0.5f), 0.5f - (2*y)};
+    transform.rotation = Vector3{0.0f, 0.0f, 0.0f};
+    transform.scale    = Vector3{scale_x, scale_y, 1.0f}; 
+    
+    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(map.GetEmissionTile(x,y).color));
+    DrawSprite(emission_sprite_sheet, transform, main_camera);
+    
+    if (tile.orientation == EmissionTile::CROSSED) {
+        transform.position.z += 0.1f;
+        uv_x_offset = (3.0f/5.0f);
+        ShaderSetVector(shaders, "uv_offset", Vector2{uv_x_offset, 0.0f});
+        if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(map.GetEmissionTile(x,y).horizontal_color));
+        DrawSprite(emission_sprite_sheet, transform, main_camera);
 
-            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
-            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f/5.0f, 1.0f});
-            ShaderSetVector(shaders, "uv_offset", Vector2{uv_x_offset, 0.0f});
-            
-            Transform transform = {0.0f};
-            transform.position = Vector3{float(x), float(y), 0.5f - (2*y)};
-            transform.rotation = Vector3{0.0f, 0.0f, 0.0f};
-            transform.scale    = Vector3{1.0f, 2.0f, 1.0f}; 
-            
-            if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(map.GetEmissionTile(x,y).color));
-            DrawSprite(emission_sprite_sheet, transform, main_camera);
-            
-            if (tile.orientation == EmissionTile::CROSSED) {
-                transform.position.z += 0.1f;
-                uv_x_offset = (3.0f/5.0f);
-                ShaderSetVector(shaders, "uv_offset", Vector2{uv_x_offset, 0.0f});
-                if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(map.GetEmissionTile(x,y).horizontal_color));
-                DrawSprite(emission_sprite_sheet, transform, main_camera);
+        transform.position.z += 0.1f;
+        uv_x_offset = (4.0f/5.0f);
+        ShaderSetVector(shaders, "uv_offset", Vector2{uv_x_offset, 0.0f});
+        if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(map.GetEmissionTile(x,y).vertical_color));
+        DrawSprite(emission_sprite_sheet, transform, main_camera);
+    }
 
-                transform.position.z += 0.1f;
-                uv_x_offset = (4.0f/5.0f);
-                ShaderSetVector(shaders, "uv_offset", Vector2{uv_x_offset, 0.0f});
-                if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(map.GetEmissionTile(x,y).vertical_color));
-                DrawSprite(emission_sprite_sheet, transform, main_camera);
-            }
+    
+    
+    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+    ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
 
-            
-            
-            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
-            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
-            ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
-            if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
-
-            tile = {false, EmissionTile::HORIZONTAL, Color{0, 0, 0, 0}, Color{0, 0, 0, 0}, Color{0, 0, 0, 0}};
-            map.SetEmissionTile(x, y, tile);
+    tile = {false, EmissionTile::HORIZONTAL, Color{0, 0, 0, 0}, Color{0, 0, 0, 0}, Color{0, 0, 0, 0}};
+    map.SetEmissionTile(x, y, tile);
 
 }

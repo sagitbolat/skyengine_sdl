@@ -16,12 +16,22 @@ enum UI_Alignment {
     BOTTOM_RIGHT
 };
 
+// NOTE: includes all the possible options for window creation.
+struct UI_Window_Options {
+    bool no_title_bar : 1;
+    bool no_resize : 1;
+    bool no_move : 1;
+    bool no_scrollbar : 1;
+    bool no_background : 1;
+    bool no_collapse_button : 1;
+};
+
 void InitUI(WindowContext *ws);
 void DeinitUI();
 void UI_FrameStart();
 void UI_FrameRender();
 
-void UI_WindowStart(const char* window_name, Vector2Int window_size, Vector2Int window_pos); 
+void UI_WindowStart(const char* window_name, Vector2Int window_size, Vector2Int window_pos, UI_Window_Options* window_options); 
 void UI_WindowEnd();
 
 
