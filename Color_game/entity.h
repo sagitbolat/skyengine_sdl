@@ -1125,34 +1125,79 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
         DrawSprite(sprites[20], entity->transform, main_camera);
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
     } else if (entity->color_changer.active) {
-        Transform transform = entity->transform;
-        // NOTE: Draw the transparent bit (main object)
+        Transform t = {0.0f};
+        CopyTransform(&t, entity->transform);
+        // NOTE: Draw the transparent part (main object)
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->color_changer.color));
-        DrawSprite(sprites[21], transform, main_camera);
+        if (rendering_top) {
+            t.position.y += 0.5f;
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+            ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
+            
+            DrawSprite(sprites[21], t, main_camera);
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+            ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+        } else {
+            t.position.y -= 0.5f;
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+            
+            DrawSprite(sprites[21], t, main_camera);
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+        }
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
         // NOTE: Draw the frame
-        transform.position.z += 0.1f;
-        DrawSprite(sprites[22], transform, main_camera);
+        t.position.z += 0.1f;
+        if (rendering_top) {
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+            ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
+            
+            DrawSprite(sprites[22], t, main_camera);
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+            ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+        } else {
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
+            
+            DrawSprite(sprites[22], t, main_camera);
+            
+            ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+            ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+        }
+
+        if (!rendering_top) return;
         // NOTE: Draw all the blended lasers
         ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
         ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f/5.0f, 1.0f});
         ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
-        transform.position.z += 0.1f;
+        t.scale.y = 2.0f;
+        t.position.y -= 0.5f;
+        t.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->color_changer.horizontal_color));
-        DrawSprite(sprites[23], transform, main_camera);
+        DrawSprite(sprites[23], t, main_camera);
         
         ShaderSetVector(shaders, "uv_offset", Vector2{1.0f/5.0f, 0.0f});
-        transform.position.z += 0.1f;
+        t.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->color_changer.vertical_color));
-        DrawSprite(sprites[23], transform, main_camera);
+        DrawSprite(sprites[23], t, main_camera);
         
 
         ShaderSetVector(shaders, "uv_offset", Vector2{2.0f/5.0f, 0.0f});
         if (entity->color_changer.vertical_color.a == 0) ShaderSetVector(shaders, "uv_offset", Vector2{3.0f/5.0f, 0.0f});
         else if (entity->color_changer.horizontal_color.a == 0) ShaderSetVector(shaders, "uv_offset", Vector2{4.0f/5.0f, 0.0f});
-        transform.position.z += 0.1f;
+        t.position.z += 0.1f;
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(AddColor(entity->color_changer.horizontal_color, entity->color_changer.vertical_color)));
-        DrawSprite(sprites[23], transform, main_camera);
+        DrawSprite(sprites[23], t, main_camera);
         ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
         ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
         ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
@@ -1244,7 +1289,7 @@ void EmissionRender(int x, int y, EmissionMap map, Sprite emission_sprite_sheet,
     }
     if (tile.orientation == EmissionTile::CROSSED) { 
         uv_x_offset = (2.0f/5.0f);
-        scale_y = 1.0f;
+        scale_x = (6.0f/16.0f);
     }
     
     ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
@@ -1260,12 +1305,16 @@ void EmissionRender(int x, int y, EmissionMap map, Sprite emission_sprite_sheet,
     DrawSprite(emission_sprite_sheet, transform, main_camera);
     
     if (tile.orientation == EmissionTile::CROSSED) {
+        transform.scale.y = (6.0f/16.0f);
+        transform.scale.x = 1.0f;
         transform.position.z += 0.1f;
         uv_x_offset = (3.0f/5.0f);
         ShaderSetVector(shaders, "uv_offset", Vector2{uv_x_offset, 0.0f});
         if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(map.GetEmissionTile(x,y).horizontal_color));
         DrawSprite(emission_sprite_sheet, transform, main_camera);
 
+        transform.scale.y = 1.0f;
+        transform.scale.x = (6.0f/16.0f);
         transform.position.z += 0.1f;
         uv_x_offset = (4.0f/5.0f);
         ShaderSetVector(shaders, "uv_offset", Vector2{uv_x_offset, 0.0f});

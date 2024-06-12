@@ -115,8 +115,9 @@ GPUBufferIDs gpu_buffers = {nullptr};
 Transform tile_default_transform;
 
 
+
 #ifdef DEBUG_UI
-#define LEVEL_NAME_MAX 128
+#define LEVEL_NAME_MAX 1024
 char* level_name;
 #endif
 
@@ -1002,6 +1003,15 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         
     }
     RenderLayer(1);
+
+    // SECTION: Render the bottom wall that overlays the entities (for the 3D-esque look)
+    for(int x = 0; x < tilemap.width; ++x) {
+        if (x == 0) DrawTile(tileset, {float(x), 0.5, 2.0}, 15);
+        else if (x == tilemap.width - 1) DrawTile(tileset, {float(x), 0.5, 2.0}, 17);
+        DrawTile(tileset, {float(x), 0.5, 2.0}, 16);
+    }
+
+
     // NOTE: Render entities through entity_id_map
     //for (int z = 0; z < entity_id_map.depth; z++) {
     //    for (int y = 0; y < entity_id_map.height; y++) {
