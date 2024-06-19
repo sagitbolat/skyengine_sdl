@@ -109,7 +109,7 @@ static void RenderHuegene(GameBitmapBuffer* graphics_buffer, HuegeneState* hue_s
         for (int y = 0; y < max_y; ++y) {
             int i = (max_x * y) + x;
             Color color = hue_state->cells[i];
-            int  to_mutate = sky_rand() % jaggedness;
+            int to_mutate = sky_rand() % jaggedness;
             if (color.red == 0 && color.green == 0 && color.blue == 0 && to_mutate == 0) {
                 color = GetColorOfRandNeighbor(hue_state->cells, x, y, max_x, max_y);
                 uint8_t red_dec = sky_rand() % fade_speed;
