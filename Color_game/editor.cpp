@@ -93,8 +93,9 @@ Sprite teleporter_sprite;
 Sprite color_changer_sprite;
 Sprite color_changer_frame_sprite;
 Sprite color_changer_overlay_atlas;
+Sprite color_puddle_sprite;
 
-Sprite sprites[24]; 
+Sprite sprites[25]; 
 
 Sprite wire_sprite;
 
@@ -188,10 +189,10 @@ void Awake(GameMemory *gm)
     color_changer_sprite        = LoadSprite("assets/color_changer.png", shaders, gpu_buffers);
     color_changer_frame_sprite  = LoadSprite("assets/color_changer_frame.png", shaders, gpu_buffers);
     color_changer_overlay_atlas = LoadSprite("assets/color_changer_overlay.png", shaders, gpu_buffers);
-
+    color_puddle_sprite         = LoadSprite("assets/color_puddle.png", shaders, gpu_buffers);
 
     {
-        Sprite temp_sprites[24] = {
+        Sprite temp_sprites[25] = {
             player_sprite,                  //0 
             player_up_sprite,               //1
             player_down_sprite,             //2
@@ -215,10 +216,11 @@ void Awake(GameMemory *gm)
             teleporter_sprite,              //20
             color_changer_sprite,           //21
             color_changer_frame_sprite,     //22
-            color_changer_overlay_atlas     //23
+            color_changer_overlay_atlas,    //23
+            color_puddle_sprite             //24
         };
 
-        for (int i = 0; i < 24; ++i) {sprites[i] = temp_sprites[i];}
+        for (int i = 0; i < 25; ++i) {sprites[i] = temp_sprites[i];}
     }
 
     wire_sprite                 = LoadSprite("assets/wire.png", shaders, gpu_buffers);
@@ -562,6 +564,15 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     ) {
         entity_type_to_spawn = 9;
     }  
+    if ( DrawSimpleImageButton (
+            "ColorPuddleButton", 
+            color_puddle_sprite, 
+            {float(108)/float(1280) * 7.4, 0.2}, 
+            {float(108)/float(1280) * 0.6, 0.6}
+        )
+    ) {
+        entity_type_to_spawn = 10;
+    }  
      
     
     if (ks->state.MBL && !ks->prev_state.MBL) {
@@ -683,6 +694,19 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 entity_array_offset++;
 
                 ColorChangerInit(&entities_array[e], e, {255, 255, 255, 255}, EntityComponentColorChanger::COLOR_MODE::BLENDED, {tile_mouse_x, tile_mouse_y}); 
+                int x = entities_array[e].position.x;
+                int y = entities_array[e].position.y;
+                entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
+            } break;
+            case 10: {
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0) >= 0) break;
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1) >= 0) break;
+                if (TestTileCollide(tilemap, {tile_mouse_x, tile_mouse_y})) break;
+
+                int e = entity_array_offset;
+                entity_array_offset++;
+
+                ColorPuddleInit(&entities_array[e], e, {255, 250, 255, 255}, {tile_mouse_x, tile_mouse_y}); 
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
@@ -877,6 +901,37 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         main_camera.position.y  = float(tilemap.height/2);
         main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
     } 
+
+    {
+        static int level_load_index_curr = -1;
+
+        if (ks->state.TAB && !ks->prev_state.TAB) {
+            level_load_index_curr++;
+            if (level_load_index_curr > NUM_LEVELS - 1) {
+                level_load_index_curr = 0;
+            }
+            //prev level
+            LevelStateInfo level_state_info = ReadLevelState(level_names[level_load_index_curr], &tilemap, &entities_array, &entity_id_map, nullptr);
+            entity_array_offset = level_state_info.num_entities;
+            emission_map.width  = tilemap.width;
+            emission_map.height = tilemap.height;
+            free(emission_map.map);
+            emission_map.map = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
+        }
+        if (ks->state.BACKSPACE && !ks->prev_state.BACKSPACE) {
+            // next level
+            level_load_index_curr--;
+            if (level_load_index_curr < 0) {
+                level_load_index_curr = NUM_LEVELS-1;
+            }
+            LevelStateInfo level_state_info = ReadLevelState(level_names[level_load_index_curr], &tilemap, &entities_array, &entity_id_map, nullptr);
+            entity_array_offset = level_state_info.num_entities;
+            emission_map.width  = tilemap.width;
+            emission_map.height = tilemap.height;
+            free(emission_map.map);
+            emission_map.map = (EmissionTile*)calloc(emission_map.width * emission_map.height, sizeof(EmissionTile));
+        }
+    }
 
     // NOTE: Do toggling movability:
     // TODO:

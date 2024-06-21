@@ -94,6 +94,9 @@ struct EntityComponentColorChanger {
     Color vertical_color;
     Color horizontal_color; 
 };
+struct EntityComponentColorPuddle {
+    bool active;
+};
 
 void EntityComponentMoverInit(EntityComponentMover* component, float seconds_per_tile, bool active = true) {
     component->active = active;
@@ -150,6 +153,10 @@ void EntityComponentColorChangerInit(EntityComponentColorChanger* component, Col
     component->color_mode = color_mode;
 }
 
+void EntityComponentColorPuddleInit(EntityComponentColorPuddle* component, bool active = true) {
+    component->active = active;
+}
+
 // SECTION: Entities
 
 struct Entity {
@@ -159,6 +166,7 @@ struct Entity {
     Transform   transform;
     Vector2Int  prev_position;
     Vector2Int  position;
+    Color       main_color;
     int         entity_layer; // NOTE: Layer 0: floor buttons and other features. Layer 1: Pushblocks, emitters, player etc. 
     EntityComponentPlayer       player;
     EntityComponentMover        movable;
@@ -169,6 +177,7 @@ struct Entity {
     EntityComponentButton       button;
     EntityComponentTeleporter   teleporter;
     EntityComponentColorChanger color_changer;
+    EntityComponentColorPuddle  color_puddle;
 }; 
 
 
@@ -215,6 +224,7 @@ void EntityInit (
     int         id, 
     Vector2Int  position={0, 0},
     float       entity_layer=0,
+    Color       main_color = {0, 0, 0, 0},
     bool        active=true 
 ) {
     entity->id            = id;
@@ -222,6 +232,7 @@ void EntityInit (
     entity->prev_position = position; // NOTE: Cached for transform updates. Do not modify manually
     entity->position      = position;
     entity->entity_layer  = entity_layer;
+    entity->main_color    = main_color;
 
     Transform transform = {0.0f};
     transform.position  = {(float)position.x, (float)position.y, float(entity_layer)};
@@ -240,17 +251,20 @@ void EntityInit (
     EntityComponentButtonInit(&entity->button, false, false);
     EntityComponentTeleporterInit(&entity->teleporter, -1, {0, 0, 0, 0}, false);
     EntityComponentColorChangerInit(&entity->color_changer, Color{0, 0, 0, 0}, EntityComponentColorChanger::COLOR_MODE::BLENDED, false);
+    EntityComponentColorPuddleInit(&entity->color_puddle, false);
 }
 
 void PlayerInit(
     Entity* player,
     int id,
-    Vector2Int init_position
+    Vector2Int init_position,
+    Color player_color = {255, 255, 255, 255}
 ) {
-    EntityInit(player, id, init_position, 1.0f);
+    EntityInit(player, id, init_position, 1.0f, player_color);
     EntityComponentMoverInit(&player->movable, MOVE_SPEED, true);
     player->player.active = true;
     player->entity_type = Entity::ENTITY_TYPE_ENUM::PLAYER;
+    player->main_color = player_color;
 }
 void PushblockInit(
     Entity* pushblock,
@@ -277,7 +291,7 @@ void EmitterInit(
     bool emitter_movable,
     EntityComponentEmitter::DIRECTION_ENUM direction
 ) {
-    EntityInit(emitter, id, init_position, 1.0f);
+    EntityInit(emitter, id, init_position, 1.0f, emitter_color);
     EntityComponentEmitterInit(&emitter->emitter, emitter_color, direction, true);
     EntityComponentMoverInit(&emitter->movable, MOVE_SPEED, emitter_movable);
     emitter->entity_type = Entity::ENTITY_TYPE_ENUM::EMITTER;
@@ -289,7 +303,7 @@ void ReceiverInit(
     Color accepted_signal_color,
     bool receiver_movable
 ) {
-    EntityInit(receiver, id, init_position, 1.0f);
+    EntityInit(receiver, id, init_position, 1.0f, accepted_signal_color);
     EntityComponentReceiverInit(&receiver->receiver, accepted_signal_color, true);
     EntityComponentMoverInit(&receiver->movable, MOVE_SPEED, receiver_movable);
     receiver->entity_type = Entity::ENTITY_TYPE_ENUM::RECEIVER;
@@ -322,7 +336,7 @@ void ButtonInit(
     int id,
     Vector2Int init_position
 ) {
-    EntityInit(button, id,  init_position, 0.0f, true);
+    EntityInit(button, id,  init_position, 0.0f);
     EntityComponentButtonInit(&button->button, false, true);
     button->entity_type = Entity::ENTITY_TYPE_ENUM::BUTTON;
 }
@@ -333,7 +347,7 @@ void TeleporterInit(
     int connected_teleporter_id,
     Vector2Int init_position
 ) {
-    EntityInit(teleporter, id, init_position, 0.0f, true);
+    EntityInit(teleporter, id, init_position, 0.0f, color, true);
     EntityComponentTeleporterInit(&teleporter->teleporter, connected_teleporter_id, color, true);
     teleporter->entity_type = Entity::ENTITY_TYPE_ENUM::TELEPORTER;
 }
@@ -345,10 +359,19 @@ void ColorChangerInit(
     Vector2Int init_position,
     bool movable = true // Movable means its a layer 1 block, not movable is a layer 0 (can be passed through)
 ) {
-    EntityInit(color_changer, id, init_position, movable ? 1.0f : 0.0f, true);
+    EntityInit(color_changer, id, init_position, movable ? 1.0f : 0.0f, color);
     EntityComponentColorChangerInit(&color_changer->color_changer, color, color_mode, true);
     EntityComponentMoverInit(&color_changer->movable, MOVE_SPEED, movable);
     color_changer->entity_type = Entity::ENTITY_TYPE_ENUM::COLOR_CHANGER;
+}
+void ColorPuddleInit(
+    Entity* color_puddle, 
+    int id, 
+    Color color,
+    Vector2Int init_position
+) {
+    EntityInit(color_puddle, id, init_position, 1.0f, color);
+    EntityComponentColorPuddleInit(&color_puddle->color_puddle, true); 
 }
 
 

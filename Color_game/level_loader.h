@@ -33,6 +33,10 @@ void WriteEntityState(
     WriteUint32(entity->position.x,         file_p); 
     WriteUint32(entity->position.y,         file_p); 
     WriteUint32(int(entity->entity_type),   file_p);
+    WriteUint32(int(entity->main_color.r), file_p);
+    WriteUint32(int(entity->main_color.g), file_p);
+    WriteUint32(int(entity->main_color.b), file_p);
+    WriteUint32(int(entity->main_color.a), file_p);
 
     // NOTE: Component flags
     WriteUint32(entity->player.active,      file_p); 
