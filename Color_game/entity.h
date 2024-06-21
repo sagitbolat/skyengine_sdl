@@ -96,6 +96,7 @@ struct EntityComponentColorChanger {
 };
 struct EntityComponentColorPuddle {
     bool active;
+    int id_of_last_changed_entity;
 };
 
 void EntityComponentMoverInit(EntityComponentMover* component, float seconds_per_tile, bool active = true) {
@@ -155,12 +156,13 @@ void EntityComponentColorChangerInit(EntityComponentColorChanger* component, Col
 
 void EntityComponentColorPuddleInit(EntityComponentColorPuddle* component, bool active = true) {
     component->active = active;
+    component->id_of_last_changed_entity = -1;
 }
 
 // SECTION: Entities
 
 struct Entity {
-    enum ENTITY_TYPE_ENUM {PLAYER, PUSH_BLOCK, STATIC_BLOCK, EMITTER, RECEIVER, DOOR, BUTTON, ENDGOAL, TELEPORTER, COLOR_CHANGER} entity_type;
+    enum ENTITY_TYPE_ENUM {PLAYER, PUSH_BLOCK, STATIC_BLOCK, EMITTER, RECEIVER, DOOR, BUTTON, ENDGOAL, TELEPORTER, COLOR_CHANGER, COLOR_PUDDLE} entity_type;
     int         id;
     bool        active; // NOTE: This is equivalent of a null state if this is false.
     Transform   transform;
@@ -370,8 +372,9 @@ void ColorPuddleInit(
     Color color,
     Vector2Int init_position
 ) {
-    EntityInit(color_puddle, id, init_position, 1.0f, color);
-    EntityComponentColorPuddleInit(&color_puddle->color_puddle, true); 
+    EntityInit(color_puddle, id, init_position, 0.0f, color);
+    EntityComponentColorPuddleInit(&color_puddle->color_puddle, true);
+    color_puddle->entity_type = Entity::ENTITY_TYPE_ENUM::COLOR_PUDDLE; 
 }
 
 
@@ -804,10 +807,16 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
                     ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
                     
                     DrawSprite(sprites[1], t, main_camera);
+                    t.position.z += 0.05f;
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->main_color));
+                    DrawSprite(sprites[26], t, main_camera);
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
                     
                     ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
                     ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
                     ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+
+                    
                 } else {
                     t.position.y -= 0.5f;
                     
@@ -815,6 +824,10 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
                     ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
                     
                     DrawSprite(sprites[1], t, main_camera);
+                    t.position.z += 0.05f;
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->main_color));
+                    DrawSprite(sprites[26], t, main_camera);
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
                     
                     ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
                     ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
@@ -832,6 +845,10 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
                     ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
                     
                     DrawSprite(sprites[2], t, main_camera);
+                    t.position.z += 0.05f;
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->main_color));
+                    DrawSprite(sprites[27], t, main_camera);
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
                     
                     ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
                     ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
@@ -843,6 +860,10 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
                     ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
                     
                     DrawSprite(sprites[2], t, main_camera);
+                    t.position.z += 0.05f;
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->main_color));
+                    DrawSprite(sprites[27], t, main_camera);
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
                     
                     ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
                     ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
@@ -860,6 +881,10 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
                     ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
                     
                     DrawSprite(sprites[3], t, main_camera);
+                    t.position.z += 0.05f;
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->main_color));
+                    DrawSprite(sprites[28], t, main_camera);
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
                     
                     ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
                     ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
@@ -871,6 +896,10 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
                     ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
                     
                     DrawSprite(sprites[3], t, main_camera);
+                    t.position.z += 0.05f;
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->main_color));
+                    DrawSprite(sprites[28], t, main_camera);
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
                     
                     ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
                     ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
@@ -888,6 +917,10 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
                     ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
                     
                     DrawSprite(sprites[4], t, main_camera);
+                    t.position.z += 0.05f;
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->main_color));
+                    DrawSprite(sprites[29], t, main_camera);
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
                     
                     ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
                     ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
@@ -899,6 +932,10 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
                     ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
                     
                     DrawSprite(sprites[4], t, main_camera);
+                    t.position.z += 0.05f;
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->main_color));
+                    DrawSprite(sprites[29], t, main_camera);
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
                     
                     ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
                     ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
@@ -916,6 +953,10 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
                     ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.5f});
                     
                     DrawSprite(sprites[0], t, main_camera);
+                    t.position.z += 0.05f;
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->main_color));
+                    DrawSprite(sprites[25], t, main_camera);
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
                     
                     ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
                     ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
@@ -927,6 +968,10 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
                     ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 0.5f});
                     
                     DrawSprite(sprites[0], t, main_camera);
+                    t.position.z += 0.05f;
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->main_color));
+                    DrawSprite(sprites[25], t, main_camera);
+                    if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
                     
                     ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
                     ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
@@ -1229,6 +1274,10 @@ void EntityRender(int entity_id, Entity* entity_array, GL_ID* shaders, const Spr
         entity->color_changer.vertical_color = {0, 0, 0, 0};
         entity->color_changer.horizontal_color = {0, 0, 0, 0};
 
+    } else if (entity->color_puddle.active) {
+        if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vec4(entity->main_color));
+        DrawSprite(sprites[24], entity->transform, main_camera);
+        if (!level_transitioning) ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
     }
         // NOTE: Handle pushblock, static block, endgoal
     else if (entity->endgoal.active) {

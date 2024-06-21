@@ -94,8 +94,13 @@ Sprite color_changer_sprite;
 Sprite color_changer_frame_sprite;
 Sprite color_changer_overlay_atlas;
 Sprite color_puddle_sprite;
+Sprite player_suit_sprite; 
+Sprite player_up_suit_sprite; 
+Sprite player_down_suit_sprite; 
+Sprite player_left_suit_sprite; 
+Sprite player_right_suit_sprite; 
 
-Sprite sprites[25]; 
+Sprite sprites[30]; 
 
 Sprite wire_sprite;
 
@@ -190,9 +195,15 @@ void Awake(GameMemory *gm)
     color_changer_frame_sprite  = LoadSprite("assets/color_changer_frame.png", shaders, gpu_buffers);
     color_changer_overlay_atlas = LoadSprite("assets/color_changer_overlay.png", shaders, gpu_buffers);
     color_puddle_sprite         = LoadSprite("assets/color_puddle.png", shaders, gpu_buffers);
+    player_suit_sprite          = LoadSprite("assets/player_suit.png", shaders, gpu_buffers);
+    player_up_suit_sprite       = LoadSprite("assets/player_up_suit.png", shaders, gpu_buffers);
+    player_down_suit_sprite     = LoadSprite("assets/player_down_suit.png", shaders, gpu_buffers);
+    player_left_suit_sprite     = LoadSprite("assets/player_left_suit.png", shaders, gpu_buffers);
+    player_right_suit_sprite    = LoadSprite("assets/player_right_suit.png", shaders, gpu_buffers);
+
 
     {
-        Sprite temp_sprites[25] = {
+        Sprite temp_sprites[30] = {
             player_sprite,                  //0 
             player_up_sprite,               //1
             player_down_sprite,             //2
@@ -217,10 +228,15 @@ void Awake(GameMemory *gm)
             color_changer_sprite,           //21
             color_changer_frame_sprite,     //22
             color_changer_overlay_atlas,    //23
-            color_puddle_sprite             //24
+            color_puddle_sprite,            //24
+            player_suit_sprite,             //25
+            player_up_suit_sprite,          //26
+            player_down_suit_sprite,        //27
+            player_left_suit_sprite,        //28
+            player_right_suit_sprite        //29
         };
 
-        for (int i = 0; i < 25; ++i) {sprites[i] = temp_sprites[i];}
+        for (int i = 0; i < 30; ++i) {sprites[i] = temp_sprites[i];}
     }
 
     wire_sprite                 = LoadSprite("assets/wire.png", shaders, gpu_buffers);
@@ -808,6 +824,8 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 entities_array[entity_id].receiver.accepted_color = emission_colors[color_index];
             } else if (entities_array[entity_id].color_changer.active) {
                 entities_array[entity_id].color_changer.color = emission_colors[color_index];
+            } else if (entities_array[entity_id].player.active) {
+                entities_array[entity_id].main_color = emission_colors[color_index];
             }
         }
         if (entity_id_floor >= 0) {
