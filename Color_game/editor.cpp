@@ -110,6 +110,9 @@ int static_block;   // NOTE: entity id of first static_block.
 int emitter;        // NOTE: entity id of first emitter.
 int emission;       // NOTE: entity id of first emission.
 
+#define MAX_NUM_PLAYERS 256
+int* player_ids;
+int num_players = 0;
 
 EntityMap entity_id_map; // NOTE: acts as a lookup table from tilemap coordinate to an entity. a negative value indicates no entity at coordinate.
 Entity* entities_array; // Array of entities in the game. Player is always first element.
@@ -137,7 +140,11 @@ void Awake(GameMemory *gm)
     gpu_buffers = InitGPUBuffers();
     ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
 
+    player_ids = (int*)calloc(MAX_NUM_PLAYERS, sizeof(int));
 
+    for (int i = 0; i < MAX_NUM_PLAYERS; ++i) {
+        player_ids[i] = -1;
+    }
 
     Sprite tileset_sprite   = LoadSprite("assets/tileset.png", shaders, gpu_buffers);
     tileset.atlas           = tileset_sprite;
@@ -257,9 +264,6 @@ void Awake(GameMemory *gm)
 
 
 
-    PlayerInit (&entities_array[0], 0, {7,4});
-    player = entities_array[0].id;
-    entity_id_map.SetID(entities_array[0].position.x, entities_array[0].position.y, entities_array[0].entity_layer, 0);
 
     main_camera.position.x  = float(tilemap.width/2);
     main_camera.position.y  = float(tilemap.height/2);
@@ -379,7 +383,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     sprintf(fps_str, "FPS: %d", int(fps));
     DrawSimpleText(fps_str, {0.99f, 0.2f}, UI_Alignment::TOP_RIGHT);
 
-    static int entity_array_offset = 1;
+    static int entity_array_offset = 0;
     static int entity_type_to_spawn = 0;
 
     { // NOTE: Creating empty level.
@@ -409,7 +413,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 nullptr
             )
         ) {
-            entity_array_offset = 1;
+            entity_array_offset = 0;
             tilemap.width = tilemap_size.x;
             tilemap.height = tilemap_size.y;
 
@@ -447,14 +451,6 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             free(entities_array);
             entities_array = (Entity*)calloc(sizeof(Entity), MAX_ENTITIES);
 
-
-            PlayerInit (
-                &entities_array[0], 
-                0,
-                {tilemap.width/2,tilemap.height/2}
-            );
-            Entity player = entities_array[0];
-            entity_id_map.SetID(player.position.x, player.position.y, player.entity_layer, player.id);
              
             emission_map.width  = tilemap.width;
             emission_map.height = tilemap.height;
@@ -589,6 +585,17 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     ) {
         entity_type_to_spawn = 10;
     }  
+    if ( DrawSimpleImageButton (
+            "PlayerButton",
+            player_sprite,
+            {float(108)/float(1280) * 8.2, 0.2},
+            {float(108)/float(1280) * 0.6, 0.6}
+        )
+    ) {
+        if (num_players < MAX_NUM_PLAYERS) {
+            entity_type_to_spawn = 11;
+        }
+    }
      
     
     if (ks->state.MBL && !ks->prev_state.MBL) {
@@ -722,10 +729,27 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 int e = entity_array_offset;
                 entity_array_offset++;
 
-                ColorPuddleInit(&entities_array[e], e, {255, 250, 255, 255}, {tile_mouse_x, tile_mouse_y}); 
+                ColorPuddleInit(&entities_array[e], e, {255, 255, 255, 255}, {tile_mouse_x, tile_mouse_y}); 
                 int x = entities_array[e].position.x;
                 int y = entities_array[e].position.y;
                 entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
+            } break;
+            case 11: {
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 0) >= 0) break;
+                if (entity_id_map.GetID(tile_mouse_x, tile_mouse_y, 1) >= 0) break;
+                if (TestTileCollide(tilemap, {tile_mouse_x, tile_mouse_y})) break;
+
+                int e = entity_array_offset;
+
+                PlayerInit(&entities_array[e], e, {tile_mouse_x, tile_mouse_y});
+                int x = entities_array[e].position.x;
+                int y = entities_array[e].position.y;
+                entity_id_map.SetID(x, y, entities_array[e].entity_layer, entities_array[e].id);
+            
+                player_ids[num_players] = e;
+                num_players++;
+
+                entity_array_offset++;
             } break;
             default:
                 break;
@@ -963,27 +987,101 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     const int BLOCK_PUSH_LIMIT = MAX_ENTITIES;
 
     
-    if (!entities_array[player].movable.moving) {
-        entities_array[player].player.direction = EntityComponentPlayer::DIRECTION_ENUM::NEUTRAL; 
-    }
-    
-    if (ks->state.W && !entities_array[player].movable.moving) { 
-        EntityMove(player, {0, 1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
-        entities_array[player].player.direction = EntityComponentPlayer::DIRECTION_ENUM::UP; 
-    }
-    if (ks->state.S && !entities_array[player].movable.moving) {
-        EntityMove(player, {0,-1}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
-        entities_array[player].player.direction = EntityComponentPlayer::DIRECTION_ENUM::DOWN; 
-    }
-    if (ks->state.A && !entities_array[player].movable.moving) {
-        EntityMove(player, {-1,0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
-        entities_array[player].player.direction = EntityComponentPlayer::DIRECTION_ENUM::LEFT; 
-    }
-    if (ks->state.D && !entities_array[player].movable.moving) {
-        EntityMove(player, {1, 0}, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
-        entities_array[player].player.direction = EntityComponentPlayer::DIRECTION_ENUM::RIGHT; 
-    }
 
+    {
+        for (int i = 0; i < num_players; ++i) {
+            int player_id = player_ids[i];
+
+            if (player_id < 0) continue;
+
+
+            Vector2Int dir = {0, 0};
+            Entity* player_entity = &entities_array[player_id];
+            if (!player_entity->movable.moving) {
+                player_entity->player.direction = EntityComponentPlayer::DIRECTION_ENUM::NEUTRAL; 
+            }
+            if (ks->state.W && !player_entity->movable.moving) { 
+                EntityComponentPlayer::DIRECTION_ENUM dir_enum = EntityComponentPlayer::DIRECTION_ENUM::UP;
+                dir = {0, 1};
+                if (player_entity->main_color.r < 127) {
+                    dir.y = -1;
+                    dir_enum = EntityComponentPlayer::DIRECTION_ENUM::DOWN;
+                }
+                if (player_entity->main_color.b < 127) {
+                    dir.x = dir.y;
+                    dir.y = 0;
+                    if (dir_enum == EntityComponentPlayer::DIRECTION_ENUM::UP) {
+                        dir_enum = EntityComponentPlayer::DIRECTION_ENUM::RIGHT;
+                    } else if (dir_enum == EntityComponentPlayer::DIRECTION_ENUM::DOWN) {
+                        dir_enum = EntityComponentPlayer::DIRECTION_ENUM::LEFT;
+                    }
+
+                }
+                EntityMove(player_id, dir, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
+                entities_array[player_id].player.direction = dir_enum; 
+            }
+            if (ks->state.S && !player_entity->movable.moving) {
+                EntityComponentPlayer::DIRECTION_ENUM dir_enum = EntityComponentPlayer::DIRECTION_ENUM::DOWN;
+                dir = {0, -1};
+                if (player_entity->main_color.r < 127) {
+                    dir.y = 1;
+                    dir_enum = EntityComponentPlayer::DIRECTION_ENUM::UP;
+                }
+                if (player_entity->main_color.b < 127) {
+                    dir.x = dir.y;
+                    dir.y = 0;
+                    if (dir_enum == EntityComponentPlayer::DIRECTION_ENUM::UP) {
+                        dir_enum = EntityComponentPlayer::DIRECTION_ENUM::RIGHT;
+                    } else if (dir_enum == EntityComponentPlayer::DIRECTION_ENUM::DOWN) {
+                        dir_enum = EntityComponentPlayer::DIRECTION_ENUM::LEFT;
+                    }
+
+                }
+                EntityMove(player_id, dir, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
+                entities_array[player_id].player.direction = dir_enum; 
+            }
+            if (ks->state.A && !player_entity->movable.moving) {
+                EntityComponentPlayer::DIRECTION_ENUM dir_enum = EntityComponentPlayer::DIRECTION_ENUM::LEFT;
+                dir = {-1, 0};
+                if (player_entity->main_color.g < 127) {
+                    dir.x = 1;
+                    dir_enum = EntityComponentPlayer::DIRECTION_ENUM::RIGHT;
+                }
+                if (player_entity->main_color.b < 127) {
+                    dir.y = dir.x;
+                    dir.x = 0;
+                    if (dir_enum == EntityComponentPlayer::DIRECTION_ENUM::LEFT) {
+                        dir_enum = EntityComponentPlayer::DIRECTION_ENUM::DOWN;
+                    } else if (dir_enum == EntityComponentPlayer::DIRECTION_ENUM::RIGHT) {
+                        dir_enum = EntityComponentPlayer::DIRECTION_ENUM::UP;
+                    }
+
+                }
+                EntityMove(player_id, dir, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
+                entities_array[player_id].player.direction = dir_enum; 
+            }
+            if (ks->state.D && !player_entity->movable.moving) {
+                EntityComponentPlayer::DIRECTION_ENUM dir_enum = EntityComponentPlayer::DIRECTION_ENUM::RIGHT;
+                dir = {1, 0};
+                if (player_entity->main_color.g < 127) {
+                    dir.x = -1;
+                    dir_enum = EntityComponentPlayer::DIRECTION_ENUM::LEFT;
+                }
+                if (player_entity->main_color.b < 127) {
+                    dir.y = dir.x;
+                    dir.x = 0;
+                    if (dir_enum == EntityComponentPlayer::DIRECTION_ENUM::LEFT) {
+                        dir_enum = EntityComponentPlayer::DIRECTION_ENUM::DOWN;
+                    } else if (dir_enum == EntityComponentPlayer::DIRECTION_ENUM::RIGHT) {
+                        dir_enum = EntityComponentPlayer::DIRECTION_ENUM::UP;
+                    }
+
+                }
+                EntityMove(player_id, dir, tilemap, entity_id_map, entities_array, BLOCK_PUSH_LIMIT);
+                entities_array[player_id].player.direction = dir_enum; 
+            }
+        }
+    }
 
     if (ks->state.ENTER && !ks->prev_state.ENTER) {
         if (main_camera.projection == PERSPECTIVE_CAMERA) {
