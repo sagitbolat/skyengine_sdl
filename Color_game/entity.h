@@ -67,7 +67,7 @@ struct EntityComponentReceiver { // NOTE: Laser reciever struct
     bool signal_accepted; // NOTE: turns true if the laser is of the correct color.
     Color signal_color;
 };
-#define MAX_CONNECTED_ACTIVATORS 5
+#define MAX_CONNECTED_ACTIVATORS 32
 struct EntityComponentDoor { // NOTE: A door that can be open or closed
     bool active;
     bool is_open;

@@ -84,13 +84,20 @@ void WriteEntityState(
     WriteUint32(int(entity->color_changer.color_mode), file_p);
     
 }
-void ReadEntityState(Entity* entity, EntityMap* entity_map, FILE* file_p) {
+void ReadEntityState(Entity* entity, EntityMap* entity_map, int* player_ids, int* num_players, FILE* file_p) {
     // NOTE: General attributes
     int id         = ReadUint32(file_p); 
     int active     = ReadUint32(file_p); 
     int pos_x      = ReadUint32(file_p); 
     int pos_y      = ReadUint32(file_p); 
     int entity_type = ReadUint32(file_p); 
+    
+    // NOTE: Main color variable
+    Color main_color = {0};
+    main_color.r = ReadUint32(file_p); 
+    main_color.g = ReadUint32(file_p); 
+    main_color.b = ReadUint32(file_p); 
+    main_color.a = ReadUint32(file_p); 
     
     // NOTE: Component flags
     int player_active   = ReadUint32(file_p); 
@@ -100,7 +107,7 @@ void ReadEntityState(Entity* entity, EntityMap* entity_map, FILE* file_p) {
     int door_active     = ReadUint32(file_p); 
     int endgoal_active  = ReadUint32(file_p);
     int button_active   = ReadUint32(file_p); 
-    
+
 
 
 
@@ -151,9 +158,12 @@ void ReadEntityState(Entity* entity, EntityMap* entity_map, FILE* file_p) {
         PlayerInit(
             entity, 
             id, 
-            {pos_x, pos_y}
+            {pos_x, pos_y},
+            main_color
         );
         entity_map->SetID(pos_x, pos_y, 1, id);
+        player_ids[*num_players] = id;
+        (*num_players)++;
     } else if (emitter_active) {
         EmitterInit(
             entity, 
@@ -271,7 +281,9 @@ LevelStateInfo ReadLevelState(
     Tilemap* tilemap, 
     Entity** entity_array,
     EntityMap* entity_map,
-    int* num_movable_entities 
+    int* num_movable_entities,
+    int* player_ids,
+    int* num_players 
 ) {
 
     // NOTE: reset num_movable_entities when loading new level:
@@ -340,9 +352,14 @@ LevelStateInfo ReadLevelState(
         for (int i = 0; i < tilemap->height * tilemap->width * entity_map->depth; ++i) entity_map->map[i] = -1;
     }
 
+    for (int i = 0; i < MAX_NUM_PLAYERS; ++i) {
+        player_ids[i] = -1;
+    }
+    *num_players = 0;
+
     // NOTE: Read the entity states:
     for (int e = 0; e < num_entities; ++e) {
-        ReadEntityState(&(*entity_array)[e], entity_map, file_p);
+        ReadEntityState(&(*entity_array)[e], entity_map, player_ids, num_players, file_p);
         
         if (num_movable_entities == nullptr) continue;
         if ((*entity_array)[e].active && (*entity_array)[e].movable.active) {
@@ -354,6 +371,12 @@ LevelStateInfo ReadLevelState(
     fclose(file_p);
     printf("LOG::ReadLevelState: Finished reading level from file: %s\n", filepath);
     printf("                     Num Entities Loaded: %d\n", num_entities);
+    printf("                     Num Players Loaded: %d\n", *num_players);
+    printf("                     Player IDs: ");
+    for (int i = 0; i < *num_players; ++i) {
+        printf("%d ", player_ids[i]);
+    }
+    printf("\n");
 
     return LevelStateInfo{num_floor, num_entities};
 }

@@ -3,6 +3,7 @@
 #include "../Engine/SDL_sky.cpp"
 #include "../Engine/skymath.h"
 
+#define MAX_NUM_PLAYERS 256
 #define MAX_ENTITIES 256 
 #include "tilemap.h"
 #include "entity.h"
@@ -275,7 +276,7 @@ void Awake(GameMemory *gm)
 }
 
 void Start(GameState *gs, KeyboardState *ks) {
-    char level_name_default[] = "untitled";
+    char level_name_default[] = "";
     strncpy(level_name, level_name_default, sizeof(level_name) - 1);
     level_name[sizeof(level_name) - 1] = '\0'; // Null-terminate the string
 }
@@ -484,7 +485,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
         )
     ) {
         
-        LevelStateInfo level_state_info = ReadLevelState(level_name, &tilemap, &entities_array, &entity_id_map, nullptr);
+        LevelStateInfo level_state_info = ReadLevelState(level_name, &tilemap, &entities_array, &entity_id_map, nullptr, player_ids, &num_players);
         entity_array_offset = level_state_info.num_entities;
         emission_map.width  = tilemap.width;
         emission_map.height = tilemap.height;
@@ -783,7 +784,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     if (ks->state.S && ks->state.R && !ks->prev_state.R) {
         for (int i = 0; i < NUM_LEVELS; ++i) {
             
-            LevelStateInfo level_state_info = ReadLevelState(level_names[i], &tilemap, &entities_array, &entity_id_map, nullptr);
+            LevelStateInfo level_state_info = ReadLevelState(level_names[i], &tilemap, &entities_array, &entity_id_map, nullptr, player_ids, &num_players);
             entity_array_offset = level_state_info.num_entities;
             emission_map.width  = tilemap.width;
             emission_map.height = tilemap.height;
@@ -953,7 +954,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
                 level_load_index_curr = 0;
             }
             //prev level
-            LevelStateInfo level_state_info = ReadLevelState(level_names[level_load_index_curr], &tilemap, &entities_array, &entity_id_map, nullptr);
+            LevelStateInfo level_state_info = ReadLevelState(level_names[level_load_index_curr], &tilemap, &entities_array, &entity_id_map, nullptr, player_ids, &num_players);
             entity_array_offset = level_state_info.num_entities;
             emission_map.width  = tilemap.width;
             emission_map.height = tilemap.height;
@@ -966,7 +967,7 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
             if (level_load_index_curr < 0) {
                 level_load_index_curr = NUM_LEVELS-1;
             }
-            LevelStateInfo level_state_info = ReadLevelState(level_names[level_load_index_curr], &tilemap, &entities_array, &entity_id_map, nullptr);
+            LevelStateInfo level_state_info = ReadLevelState(level_names[level_load_index_curr], &tilemap, &entities_array, &entity_id_map, nullptr, player_ids, &num_players);
             entity_array_offset = level_state_info.num_entities;
             emission_map.width  = tilemap.width;
             emission_map.height = tilemap.height;
