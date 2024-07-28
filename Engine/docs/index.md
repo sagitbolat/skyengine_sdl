@@ -11,5 +11,6 @@ If it is your first time using the SkyEngine, refer to the Getting Started guide
 
 - [Getting Started](getting_started.md)
 - [Input](input.md)
+- [Rendering](rendering.md)
 
 
