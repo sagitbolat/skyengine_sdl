@@ -36,7 +36,7 @@ void DrawTile(Tileset tileset, Vector3 world_position, int atlas_x, int atlas_y,
     ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
     ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
 }
-void DrawTile(Tileset tileset, Vector3 world_position, uint8_t atlas_index, GL_ID* shaders, GPUBufferIDs gpu_buffers) {
+void DrawTile(Tileset tileset, Vector3 world_position, int atlas_index, GL_ID* shaders, GPUBufferIDs gpu_buffers) {
     int atlas_x = atlas_index % tileset.width_in_tiles;
     int atlas_y = atlas_index / tileset.width_in_tiles;
     DrawTile(tileset, world_position, atlas_x, atlas_y, shaders, gpu_buffers);

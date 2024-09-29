@@ -4,7 +4,7 @@
 #include <tuple>
 
 enum TileType {
-    void,
+    void_tile,
     
     ground_dark_red,
     ground_dark_green,
@@ -34,6 +34,8 @@ enum TileType {
 };
 
 enum TileOverlay {
+    void_overlay,
+
     purple_bricks_1,
     purple_bricks_2,
     purple_bricks_3,
@@ -61,6 +63,8 @@ enum TileOverlay {
 };
 
 enum TileObject {
+    void_object,
+
     basic_door_1,
     basic_door_2,
 
@@ -110,15 +114,15 @@ enum TileObject {
     mushrooms_1,
     mushrooms_2,
 
-    bones_1, 
-    bones_2,
+    bone_pile_1, 
+    bone_pile_2,
 
     blood_pool_1,
     blood_pool_2
 };
 
-std::unordered_map<TileType, int> tile_type_to_atlas_index = {
-    {TileType::void, 19},
+std::unordered_map<TileType, int, std::hash<int>> tile_type_to_atlas_index = {
+    {TileType::void_tile, 19},
     
     {TileType::ground_dark_red, 0},
     {TileType::ground_dark_green, 1},
@@ -130,7 +134,7 @@ std::unordered_map<TileType, int> tile_type_to_atlas_index = {
     {TileType::crypt_wall_vert, 6},
     {TileType::crypt_wall_horiz, 7},
 
-    {TileType::brick_wall_vert, 8};
+    {TileType::brick_wall_vert, 8},
     {TileType::brick_wall_horiz, 9},
 
     {TileType::cave_wall_vert, 10},
@@ -148,7 +152,9 @@ std::unordered_map<TileType, int> tile_type_to_atlas_index = {
 
 };
 
-std::unordered_map<TileOverlay, int> tile_overlay_to_atlas_index = {
+std::unordered_map<TileOverlay, int, std::hash<int>> tile_overlay_to_atlas_index = {
+    {TileOverlay::void_overlay, 18},
+    
     {TileOverlay::purple_bricks_1, 0},
     {TileOverlay::purple_bricks_2, 1},
     {TileOverlay::purple_bricks_3, 2},
@@ -175,7 +181,9 @@ std::unordered_map<TileOverlay, int> tile_overlay_to_atlas_index = {
 
 };
 
-std::unordered_map<TileObject, int> tile_object_to_atlas_index = {
+std::unordered_map<TileObject, int, std::hash<int>> tile_object_to_atlas_index = {
+    {TileObject::void_object, 40},
+    
     {TileObject::basic_door_1, 0},
     {TileObject::basic_door_2, 1},
 
@@ -225,65 +233,79 @@ std::unordered_map<TileObject, int> tile_object_to_atlas_index = {
     {TileObject::mushrooms_1, 34}, 
     {TileObject::mushrooms_2, 35},
 
-    {TileObject::bones_1, 36},
-    {TileObject::bones_2, 37},
+    {TileObject::bone_pile_1, 36},
+    {TileObject::bone_pile_2, 37},
 
     {TileObject::blood_pool_1, 38},
     {TileObject::blood_pool_2, 39}
 };
 
 struct Tilemap {
-    int* state_map; //NOTE: Stores the actual tile types of the map
+    TileType* state_map; //NOTE: Stores the actual tile types of the map
+    TileOverlay* overlay_map; // NOTE: Stores the overlay features of the map
+    TileObject* object_map; // NOTE: Stores the object type on this tile.
     int width;
     int height;
 };
 
 Tilemap InitTilemap(Vector2Int size) {
     Tilemap tilemap = {0};
-    tilemap.state_map = (int*)malloc(sizeof(int) * size.x * size.y);
+    
+    tilemap.state_map = (TileType*)malloc(sizeof(int) * size.x * size.y);
+    tilemap.overlay_map = (TileOverlay*)malloc(sizeof(int) * size.x * size.y);
+    tilemap.object_map = (TileObject*)malloc(sizeof(int) * size.x * size.y);
+    
+    
     tilemap.width = size.x;
     tilemap.height = size.y;
 
     return tilemap;
 }
 
-void SetTile(Tilemap* tilemap, Vector2Int position, int tile_type) { 
+void SetTile(Tilemap* tilemap, Vector2Int position, TileType tile_type) { 
     if (position.x >= tilemap->width || position.y >= tilemap->height) return;
-    if (tile_type != 0 && tile_type != 1) return;
-    // changes the state of the tile in position
     (*tilemap).state_map[position.x + position.y * tilemap->width] = tile_type;
 }
-
-int GetTile(Tilemap* tilemap, Vector2Int position) {
-    if (position.x >= tilemap->width || position.y >= tilemap->height) return 0;
-    return tilemap->state_map[position.x + position.y * tilemap->width];
+void SetOverlay(Tilemap* tilemap, Vector2Int position, TileOverlay overlay_type) { 
+    if (position.x >= tilemap->width || position.y >= tilemap->height) return;
+    (*tilemap).overlay_map[position.x + position.y * tilemap->width] = overlay_type;
+}
+void SetObject(Tilemap* tilemap, Vector2Int position, TileObject object_type) { 
+    if (position.x >= tilemap->width || position.y >= tilemap->height) return;
+    (*tilemap).object_map[position.x + position.y * tilemap->width] = object_type;
 }
 
-int GetTileSpriteIndex(Tilemap* tilemap, Vector2Int position) {
-    if (position.x >= tilemap->width - 1 || position.y >= tilemap->height - 1) return 0;
-    return tilemap->sprite_map[position.x + position.y * tilemap->width];
-
+TileType GetTile(Tilemap tilemap, Vector2Int position) {
+    if (position.x >= tilemap.width || position.y >= tilemap.height) return TileType::void_tile;
+    return tilemap.state_map[position.x + position.y * tilemap.width];
+}
+TileOverlay GetOverlay(Tilemap tilemap, Vector2Int position) {
+    if (position.x >= tilemap.width || position.y >= tilemap.height) return TileOverlay::purple_bricks_1;
+    return tilemap.overlay_map[position.x + position.y * tilemap.width];
+} 
+TileObject GetObject(Tilemap tilemap, Vector2Int position) {
+    if (position.x >= tilemap.width || position.y >= tilemap.height) return TileObject::basic_door_1;
+    return tilemap.object_map[position.x + position.y * tilemap.width];
 } 
 
-// NOTE: Adjusts the atlas index based on the tile state at this position (taking into account neighbors) 
-void UpdateTileSprite(Tilemap* tilemap, Vector2Int position) {
 
-    if (position.x >= tilemap->width-1 || position.y >= tilemap->height-1) return;
-    int bottom_left = GetTile(tilemap, Vector2Int{position.x, position.y});
-    int top_left = GetTile(tilemap, Vector2Int{position.x, position.y+1});
-    int bottom_right = GetTile(tilemap, Vector2Int{position.x+1, position.y});
-    int top_right = GetTile(tilemap, Vector2Int{position.x+1, position.y+1});
-
-    int state_key = (bottom_left << 3) | (top_left << 2) | (bottom_right << 1) | top_right;
-
-    int sprite_index = state_to_sprite_dict[state_key];
-    (*tilemap).sprite_map[position.x + position.y * tilemap->width] = sprite_index;
-
+void RenderTilemap(Tilemap tilemap, Tileset tile_atlas, Tileset overlay_atlas, Tileset object_atlas, GL_ID* shaders, GPUBufferIDs gpu_buffers) {
+    for (int y = 0; y < tilemap.height; ++y) {
+        for (int x = 0; x < tilemap.width; ++x) {
+            int tile_index = tile_type_to_atlas_index[GetTile(tilemap, Vector2Int{x, y})];
+            int overlay_index = tile_overlay_to_atlas_index[GetOverlay(tilemap, Vector2Int{x, y})];
+            int object_index = tile_object_to_atlas_index[GetObject(tilemap, Vector2Int{x, y})];
+            DrawTile(tile_atlas, Vector3{float(x), float(y), 0.0f}, tile_index, shaders, gpu_buffers);
+            DrawTile(overlay_atlas, Vector3{float(x), float(y), 0.1f}, overlay_index, shaders, gpu_buffers);
+            DrawTile(object_atlas, Vector3{float(x), float(y), 0.2f}, object_index, shaders, gpu_buffers);
+        }
+    }
 }
 
 void FreeTilemap(Tilemap* tilemap) {
     free(tilemap->state_map);
-    free(tilemap->sprite_map);
+    free(tilemap->overlay_map);
+    free(tilemap->object_map);
     (*tilemap).height = 0;
     (*tilemap).width = 0;
 }

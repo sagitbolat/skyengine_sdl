@@ -10,17 +10,20 @@ void Init(
     bool* fullscreen,
     fColor* clear_color
 ) {
-    *w = 720;
+    *w = 1280;
     *h = 720;
-    *width_in_world_space = 32.0f;
+    *width_in_world_space = 16.0f;
     *fullscreen = false;
     *clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
+
 }
 
 GL_ID* shaders = nullptr;
 GPUBufferIDs gpu_buffers = {nullptr};
 
-Tileset tileset = {0};
+Tileset tile_atlas = {0};
+Tileset overlay_atlas = {0};
+Tileset object_atlas = {0};
 
 Tilemap tilemap = {0};
 
@@ -29,48 +32,51 @@ void Awake(GameMemory* gm) {
     gpu_buffers = InitGPUBuffers();
     ShaderSetVector(shaders, "i_color_multiplier", Vector4{1.0f, 1.0f, 1.0f, 1.0f});
     
-    
-    tileset.height_in_tiles = 4;
-    tileset.width_in_tiles = 4; 
 
-    tileset.atlas = LoadSprite("grass_dirt_tileset.png", shaders, gpu_buffers);
+    main_camera.position.x = 7.5f;
+    main_camera.position.y = 4.0f;
+
+    main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
+
+
+    tile_atlas.height_in_tiles = 4;
+    tile_atlas.width_in_tiles = 6; 
+    tile_atlas.atlas = LoadSprite("main_tiles.png", shaders, gpu_buffers);
+    
+    overlay_atlas.height_in_tiles = 7;
+    overlay_atlas.width_in_tiles = 3; 
+    overlay_atlas.atlas = LoadSprite("floor_tile_overlays.png", shaders, gpu_buffers);
+    
+    object_atlas.height_in_tiles = 5;
+    object_atlas.width_in_tiles = 9; 
+    object_atlas.atlas = LoadSprite("tile_objects.png", shaders, gpu_buffers);
 }
 
 
 
 void Start(GameState* gs, KeyboardState* ks) {
-    tilemap = InitTilemap(Vec2(33, 33));
-    for (int x = 0; x < tilemap.width; ++x) {
-        for (int y = 0; y < tilemap.height; ++y) {
-            int tile_type = 1;
-            SetTile(&tilemap, Vector2Int{x, y}, tile_type);
+    tilemap = InitTilemap(Vec2(16, 9));
+
+    for (int y = 0; y < tilemap.height; ++y) {
+        for (int x = 0; x < tilemap.width; ++x) {
+
+            if (x % 2 == y % 2) {
+                SetTile(&tilemap, Vector2Int{x, y}, TileType::ground_dark_cyan);
+
+                SetOverlay(&tilemap, Vector2Int{x, y}, TileOverlay::blue_bricks_1);
+            } else {
+                SetTile(&tilemap, Vector2Int{x, y}, TileType::ground_dark_blue);
+                SetOverlay(&tilemap, Vector2Int{x, y}, TileOverlay::void_overlay);
+
+            }
+            SetObject(&tilemap, Vector2Int{x, y}, TileObject::void_object);
         }
     }
-    main_camera.position.x  = float(16);
-    main_camera.position.y  = float(16);
-    main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
-
 }
 
 void Update(GameState* gs, KeyboardState* ks, double dt) {
 
-    for (int x = 0; x < tilemap.width-1; ++x) {
-        for (int y = 0; y < tilemap.height-1; ++y) {
-            UpdateTileSprite(&tilemap, Vector2Int{x, y});
-            int sprite_index = GetTileSpriteIndex(&tilemap, Vector2Int{x, y});
-            DrawTile(tileset, Vector3{float(x), float(y), 0.0f}, sprite_index, shaders, gpu_buffers);
-        }
-    }
-    Vector2 mouse_pos = GetMousePositionInWorldCoords();
-
-    Vector2Int pos = Vector2Int{int(mouse_pos.x)+1, int(mouse_pos.y)+1};
-
-    if (ks->state.MBL) {
-        SetTile(&tilemap, pos, 0);
-    }
-    else if (ks->state.MBR) {
-        SetTile(&tilemap, pos, 1);
-    }
+    RenderTilemap(tilemap, tile_atlas, overlay_atlas, object_atlas, shaders, gpu_buffers); 
 
 
 }
