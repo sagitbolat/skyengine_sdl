@@ -18,3 +18,4 @@ Rendering 2D sprites is simple in SkyEngine. Some steps must be made during the 
 5. **(Update or Start/Awake)** Initialize a transform for the quad that will contain the sprite.
 6. **(Update)** Draw the sprite.
 7. **(UserFree)** Free the allocated sprites, shaders, and GPU buffers.
+

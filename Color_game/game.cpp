@@ -115,14 +115,14 @@ Sprite reload_controls_sprite;
 Sprite undo_controls_sprite;
 Sprite wire_view_controls_sprite;
 
+
 Sprite player_sprite; 
 Sprite player_up_sprite; 
 Sprite player_down_sprite; 
 Sprite player_left_sprite; 
 Sprite player_right_sprite; 
 Sprite push_block_sprite;        
-Sprite static_block_sprite;  
-Sprite static_block_transparent;    
+Sprite static_block_sprite;      
 Sprite emitter_sprite;     
 Sprite emitter_nozzle_sprite;    
 Sprite emitter_indicator_sprite; 
@@ -140,7 +140,14 @@ Sprite teleporter_sprite;
 Sprite color_changer_sprite;
 Sprite color_changer_frame_sprite;
 Sprite color_changer_overlay_atlas;
-Sprite sprites [24];
+Sprite color_puddle_sprite;
+Sprite player_suit_sprite; 
+Sprite player_up_suit_sprite; 
+Sprite player_down_suit_sprite; 
+Sprite player_left_suit_sprite; 
+Sprite player_right_suit_sprite; 
+
+Sprite sprites[30]; 
 
 Sprite wire_sprite;
 
@@ -222,32 +229,37 @@ void Awake(GameMemory *gm)
     undo_controls_sprite            = LoadSprite("assets/undo_control.png", shaders, gpu_buffers);
     wire_view_controls_sprite       = LoadSprite("assets/wire_view_control.png", shaders, gpu_buffers);
 
-    player_sprite                   = LoadSprite("assets/player.png", shaders, gpu_buffers);
-    player_up_sprite                = LoadSprite("assets/player_up.png", shaders, gpu_buffers);
-    player_down_sprite              = LoadSprite("assets/player_down.png", shaders, gpu_buffers);
-    player_left_sprite              = LoadSprite("assets/player_left.png", shaders, gpu_buffers);
-    player_right_sprite             = LoadSprite("assets/player_right.png", shaders, gpu_buffers);
-    push_block_sprite               = LoadSprite("assets/push_block.png", shaders, gpu_buffers);
-    static_block_sprite             = LoadSprite("assets/static_block.png", shaders, gpu_buffers);
-    static_block_transparent        = LoadSprite("assets/static_block_transparent.png", shaders, gpu_buffers);
-    emitter_sprite                  = LoadSprite("assets/emitter.png", shaders, gpu_buffers);
-    emitter_nozzle_sprite           = LoadSprite("assets/emitter_nozzle.png", shaders, gpu_buffers);
-    emitter_indicator_sprite        = LoadSprite("assets/emitter_indicator.png", shaders, gpu_buffers);
-    receiver_sprite                 = LoadSprite("assets/receiver.png", shaders, gpu_buffers);
-    receiver_nozzle_sprite          = LoadSprite("assets/receiver_nozzle.png", shaders, gpu_buffers);
-    receiver_indicator_sprite       = LoadSprite("assets/receiver_indicator.png", shaders, gpu_buffers);
-    emission_sprite                 = LoadSprite("assets/emission.png", shaders, gpu_buffers);
-    open_door_vertical_sprite       = LoadSprite("assets/door_open.png", shaders, gpu_buffers);
-    closed_door_vertical_sprite     = LoadSprite("assets/door_closed.png", shaders, gpu_buffers);
-    open_door_horizontal_sprite     = LoadSprite("assets/door_open_horiz.png", shaders, gpu_buffers);
-    closed_door_horizontal_sprite   = LoadSprite("assets/door_closed_horiz.png", shaders, gpu_buffers);
-    endgoal_sprite                  = LoadSprite("assets/endgoal.png", shaders, gpu_buffers);
-    button_up_sprite                = LoadSprite("assets/button_up.png", shaders, gpu_buffers);
-    button_down_sprite              = LoadSprite("assets/button_down.png", shaders, gpu_buffers);
-    teleporter_sprite               = LoadSprite("assets/teleporter.png", shaders, gpu_buffers);
-    color_changer_sprite            = LoadSprite("assets/color_changer.png", shaders, gpu_buffers);
-    color_changer_frame_sprite      = LoadSprite("assets/color_changer_frame.png", shaders, gpu_buffers);
-    color_changer_overlay_atlas     = LoadSprite("assets/color_changer_overlay.png", shaders, gpu_buffers);
+    player_sprite               = LoadSprite("assets/player.png", shaders, gpu_buffers);
+    player_up_sprite            = LoadSprite("assets/player_up.png", shaders, gpu_buffers);
+    player_down_sprite          = LoadSprite("assets/player_down.png", shaders, gpu_buffers);
+    player_left_sprite          = LoadSprite("assets/player_left.png", shaders, gpu_buffers);
+    player_right_sprite         = LoadSprite("assets/player_right.png", shaders, gpu_buffers);
+    push_block_sprite           = LoadSprite("assets/push_block.png", shaders, gpu_buffers);
+    static_block_sprite         = LoadSprite("assets/static_block.png", shaders, gpu_buffers);
+    emitter_sprite              = LoadSprite("assets/emitter.png", shaders, gpu_buffers);
+    emitter_nozzle_sprite       = LoadSprite("assets/emitter_nozzle.png", shaders, gpu_buffers);
+    emitter_indicator_sprite    = LoadSprite("assets/emitter_indicator.png", shaders, gpu_buffers);
+    receiver_sprite             = LoadSprite("assets/receiver.png", shaders, gpu_buffers);
+    receiver_nozzle_sprite      = LoadSprite("assets/receiver_nozzle.png", shaders, gpu_buffers);
+    receiver_indicator_sprite   = LoadSprite("assets/receiver_indicator.png", shaders, gpu_buffers);
+    emission_sprite             = LoadSprite("assets/emission.png", shaders, gpu_buffers);
+    open_door_vertical_sprite   = LoadSprite("assets/door_open.png", shaders, gpu_buffers);
+    closed_door_vertical_sprite = LoadSprite("assets/door_closed.png", shaders, gpu_buffers);
+    open_door_horizontal_sprite = LoadSprite("assets/door_open_horiz.png", shaders, gpu_buffers);
+    closed_door_horizontal_sprite = LoadSprite("assets/door_closed_horiz.png", shaders, gpu_buffers);
+    endgoal_sprite              = LoadSprite("assets/endgoal.png", shaders, gpu_buffers);
+    button_up_sprite            = LoadSprite("assets/button_up.png", shaders, gpu_buffers);
+    button_down_sprite          = LoadSprite("assets/button_down.png", shaders, gpu_buffers);
+    teleporter_sprite           = LoadSprite("assets/teleporter.png", shaders, gpu_buffers);
+    color_changer_sprite        = LoadSprite("assets/color_changer.png", shaders, gpu_buffers);
+    color_changer_frame_sprite  = LoadSprite("assets/color_changer_frame.png", shaders, gpu_buffers);
+    color_changer_overlay_atlas = LoadSprite("assets/color_changer_overlay.png", shaders, gpu_buffers);
+    color_puddle_sprite         = LoadSprite("assets/color_puddle.png", shaders, gpu_buffers);
+    player_suit_sprite          = LoadSprite("assets/player_suit.png", shaders, gpu_buffers);
+    player_up_suit_sprite       = LoadSprite("assets/player_up_suit.png", shaders, gpu_buffers);
+    player_down_suit_sprite     = LoadSprite("assets/player_down_suit.png", shaders, gpu_buffers);
+    player_left_suit_sprite     = LoadSprite("assets/player_left_suit.png", shaders, gpu_buffers);
+    player_right_suit_sprite    = LoadSprite("assets/player_right_suit.png", shaders, gpu_buffers);
 
     wire_sprite                     = LoadSprite("assets/wire.png", shaders, gpu_buffers);
 
@@ -257,34 +269,42 @@ void Awake(GameMemory *gm)
     act1_1_text                     = LoadSprite("assets/act1_1.png", shaders, gpu_buffers);
     act2_text                       = LoadSprite("assets/act1.png", shaders, gpu_buffers);
 
+    {
+        Sprite temp_sprites[30] = {
+            player_sprite,                  //0 
+            player_up_sprite,               //1
+            player_down_sprite,             //2
+            player_left_sprite,             //3
+            player_right_sprite,            //4
+            push_block_sprite,              //5
+            static_block_sprite,            //6
+            emitter_sprite,                 //7
+            emitter_nozzle_sprite,          //8
+            emitter_indicator_sprite,       //9
+            receiver_sprite,                //10
+            receiver_nozzle_sprite,         //11
+            receiver_indicator_sprite,      //12
+            open_door_vertical_sprite,      //13
+            closed_door_vertical_sprite,    //14
+            open_door_horizontal_sprite,    //15
+            closed_door_horizontal_sprite,  //16
+            endgoal_sprite,                 //17
+            button_up_sprite,               //18
+            button_down_sprite,             //19
+            teleporter_sprite,              //20
+            color_changer_sprite,           //21
+            color_changer_frame_sprite,     //22
+            color_changer_overlay_atlas,    //23
+            color_puddle_sprite,            //24
+            player_suit_sprite,             //25
+            player_up_suit_sprite,          //26
+            player_down_suit_sprite,        //27
+            player_left_suit_sprite,        //28
+            player_right_suit_sprite        //29
+        };
 
-    sprites[0]  = player_sprite;               
-    sprites[1]  = player_up_sprite;           
-    sprites[2]  = player_down_sprite;         
-    sprites[3]  = player_left_sprite;         
-    sprites[4]  = player_right_sprite;        
-    sprites[5]  = push_block_sprite;          
-    sprites[6]  = static_block_sprite;        
-    sprites[7]  = emitter_sprite;             
-    sprites[8]  = emitter_nozzle_sprite;      
-    sprites[9]  = emitter_indicator_sprite;   
-    sprites[10] = receiver_sprite;             
-    sprites[11] = receiver_nozzle_sprite;      
-    sprites[12] = receiver_indicator_sprite;   
-    sprites[13] = open_door_vertical_sprite;   
-    sprites[14] = closed_door_vertical_sprite; 
-    sprites[15] = open_door_horizontal_sprite; 
-    sprites[16] = closed_door_horizontal_sprite;
-    sprites[17] = endgoal_sprite;              
-    sprites[18] = button_up_sprite;            
-    sprites[19] = button_down_sprite;          
-    sprites[20] = teleporter_sprite;
-    sprites[20] = teleporter_sprite;
-    sprites[20] = teleporter_sprite;
-    sprites[20] = teleporter_sprite;
-    sprites[21] = color_changer_sprite;
-    sprites[22] = color_changer_frame_sprite;
-    sprites[23] = color_changer_overlay_atlas;
+        for (int i = 0; i < 30; ++i) {sprites[i] = temp_sprites[i];}
+    }
     // TODO: Load the saved data
 
     level_state_info = ReadLevelState(level_names[curr_level_index], &tilemap, &entities_array, &entity_id_map, &undo_list_entity_num);

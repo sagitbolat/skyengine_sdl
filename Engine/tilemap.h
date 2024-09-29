@@ -11,7 +11,38 @@ struct Tileset {
     int height_in_tiles;
     Sprite atlas;
 };
-struct Tilemap {
+
+
+void DrawTile(Tileset tileset, Vector3 world_position, int atlas_x, int atlas_y, GL_ID* shaders, GPUBufferIDs gpu_buffers) {
+    float uv_width    = float(1)/float(tileset.width_in_tiles);
+    float uv_height   = float(1)/float(tileset.height_in_tiles);
+    float uv_x_offset = atlas_x * uv_width;
+    float uv_y_offset = atlas_y * uv_height;
+    
+    Transform tile_default_transform = {0};
+    
+    tile_default_transform.position = {0.0f, 0.0f, -1.0f};
+    tile_default_transform.rotation = {0.0f, 0.0f, 0.0f};
+    tile_default_transform.scale    = {1.0f, 1.0f, 1.0f};
+
+    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+    ShaderSetVector(shaders, "top_right_uv", Vector2{uv_width, uv_height});
+    ShaderSetVector(shaders, "uv_offset", Vector2{uv_x_offset, uv_y_offset});
+    
+    tile_default_transform.position = Vector3{world_position.x, world_position.y, world_position.z};
+    DrawSprite(tileset.atlas, tile_default_transform, main_camera);
+    
+    ShaderSetVector(shaders, "bot_left_uv", Vector2{0.0f, 0.0f});
+    ShaderSetVector(shaders, "top_right_uv", Vector2{1.0f, 1.0f});
+    ShaderSetVector(shaders, "uv_offset", Vector2{0.0f, 0.0f});
+}
+void DrawTile(Tileset tileset, Vector3 world_position, uint8_t atlas_index, GL_ID* shaders, GPUBufferIDs gpu_buffers) {
+    int atlas_x = atlas_index % tileset.width_in_tiles;
+    int atlas_y = atlas_index / tileset.width_in_tiles;
+    DrawTile(tileset, world_position, atlas_x, atlas_y, shaders, gpu_buffers);
+}
+
+struct Sky_Tilemap {
     int width;
     int height;
     int num_layers;
@@ -24,37 +55,38 @@ struct Tilemap {
     uint16_t GetTile(int x, int y, int layer);
 };
 
-void Tilemap::SetCollider(int x, int y, uint8_t collider_type) {
-    int w = Tilemap::width;
+void Sky_Tilemap::SetCollider(int x, int y, uint8_t collider_type) {
+    int w = Sky_Tilemap::width;
 
-    Tilemap::collider_data[(y*w) + x] = collider_type;
+    Sky_Tilemap::collider_data[(y*w) + x] = collider_type;
 }
 
-uint8_t Tilemap::GetCollider(int x, int y) {
-    int w = Tilemap::width;
+uint8_t Sky_Tilemap::GetCollider(int x, int y) {
+    int w = Sky_Tilemap::width;
 
-    return Tilemap::collider_data[(y*w) + x];
+    return Sky_Tilemap::collider_data[(y*w) + x];
 }
 
-void Tilemap::SetTile(int x, int y, int layer, uint16_t tile_type) {
-    int w = Tilemap::width;
-    int l = Tilemap::num_layers;
+void Sky_Tilemap::SetTile(int x, int y, int layer, uint16_t tile_type) {
+    int w = Sky_Tilemap::width;
+    int l = Sky_Tilemap::num_layers;
 
-    Tilemap::tile_data[(((y*w) + x)*l) + layer] = tile_type;
+    Sky_Tilemap::tile_data[(((y*w) + x)*l) + layer] = tile_type;
 }
 
-uint16_t Tilemap::GetTile(int x, int y, int layer) {
-    int w = Tilemap::width;
-    int l = Tilemap::num_layers;
+uint16_t Sky_Tilemap::GetTile(int x, int y, int layer) {
+    int w = Sky_Tilemap::width;
+    int l = Sky_Tilemap::num_layers;
 
-    return Tilemap::tile_data[(((y*w) + x)*l) + layer];
+    return Sky_Tilemap::tile_data[(((y*w) + x)*l) + layer];
 }
 
 
 // SECTION: Tilemap Level Loading.
 // NOTE: A tilemap level should have the following format:
-/* HEADER: 32 bytes to represent the width of the level, 32 bytes to represent the height of the level, 
+/* HEADER: 32 bits to represent the width of the level, 32 bits to represent the height of the level, 
  * 32 bits to represent the number of layers, and finally 32 bits of padding.
+ * For a total of 128 bits of header information
  * 
  * Each tile is represented with a string of 16-bit words. 
  * The first word represents the collision information of the time  
@@ -63,7 +95,7 @@ uint16_t Tilemap::GetTile(int x, int y, int layer) {
  * with the first 16-bits being the colliders, and the rest of the 16-bit words being the bottom-top layers.
  * NOTE: if num_layers is only 1, then there are no collider layer.
  */
-Tilemap LoadTilemap(const char* level_name) {
+Sky_Tilemap LoadTilemap(const char* level_name) {
     printf("LoadTilemap 1...\n");
     FILE *file = fopen(level_name, "r");
     
@@ -79,7 +111,7 @@ Tilemap LoadTilemap(const char* level_name) {
     
 
     printf("LoadTilemap 3...\n");
-    Tilemap tilemap = {0};
+    Sky_Tilemap tilemap = {0};
     tilemap.tile_data = (uint16_t*)malloc(sizeof(uint16_t) * (int)width * (int)height * (int)num_layers);
     tilemap.collider_data = (uint8_t*)malloc(sizeof(uint8_t) * (int)width * (int)height);
     tilemap.width = (int)width;
@@ -112,7 +144,7 @@ Tilemap LoadTilemap(const char* level_name) {
 }
 
 
-void ExportTilemap(const char* level_name, Tilemap* tilemap) {
+void ExportTilemap(const char* level_name, Sky_Tilemap* tilemap) {
     FILE* file = fopen(level_name, "w");
     int width = tilemap->width;
     int height = tilemap->height;

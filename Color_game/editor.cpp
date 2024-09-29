@@ -1257,7 +1257,6 @@ void Update(GameState *gs, KeyboardState *ks, double dt) {
     if (ks->state.U) {
         using namespace std::chrono;
         milliseconds oneSecond(1000);
-        std::this_thread::sleep_for(oneSecond);
     }
 
 }

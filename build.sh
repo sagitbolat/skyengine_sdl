@@ -21,6 +21,8 @@ fi
 if [ "$3" = "-f" ] || [ "$3" = "-gl" ]; then
     g++ -c Engine/OpenGL_renderer2D.cpp -Wall -o OpenGL_renderer2D.o -lSDL2 -lGLEW  -lGL
     mv OpenGL_renderer2D.o $1/build
+    cp Engine/assets/shader.vs $1/build
+    cp Engine/assets/shader.fs $1/build
 fi
 # Compile the sound system
 if [ "$3" = "-f" ] || [ "$3" = "-al" ]; then
