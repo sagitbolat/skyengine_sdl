@@ -226,13 +226,12 @@ struct KeyboardState {
 
 
 
-// SECTION: Custom memory allocation
+
 struct ArenaAllocator {
     uint64_t offset_pointer;
     void* memory;
     size_t total_size; 
 };
-
 // SECTION: Memory. This is the persistant memory that
 // has to be passed from the platform layer to the game
 // or vice versa. 

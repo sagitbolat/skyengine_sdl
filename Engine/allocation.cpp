@@ -67,7 +67,31 @@ int FreeArena(ArenaAllocator* arena) {
     return ret;
 }
 
+
+
+
+// SECTION: Pool allocator
+struct PoolAllocator {
+
+};
+
+struct FreeHeader {
+
+};
+
+struct PoolListNode {
+    FreeHeader data;
+    PoolListNode* next;
+};
+
+
+
+
+
+
 // SECTION: Free-List allocator (general purpose)
+
+
 struct FreeListHeader {
     size_t block_size;
     size_t padding;
