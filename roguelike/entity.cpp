@@ -1,4 +1,3 @@
-
 #pragma once
 #include "../Engine/sky_structs.h"
 

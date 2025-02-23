@@ -29,6 +29,7 @@ Tileset object_atlas = {0};
 Tilemap tilemap = {0};
 
 Sprite zombie_sprite = {0};
+Sprite player_sprite = {0};
 
 void Awake(GameMemory* gm) {
     shaders = ShaderInit("shader.vs", "shader.fs");
@@ -56,6 +57,7 @@ void Awake(GameMemory* gm) {
 
 
     zombie_sprite = LoadSprite("zombie.png", shaders, gpu_buffers);
+    player_sprite = LoadSprite("player.png", shaders, gpu_buffers);
 
 }
 
@@ -75,8 +77,8 @@ void Start(GameState* gs, KeyboardState* ks) {
         entity_manager.monsters.active[i] = true;
     }
     for (int i = 0; i < 10; ++i) {
-        entity_manager.monsters.health[i].current_health = 10;
-        entity_manager.monsters.health[i].max_health = 10;
+        entity_manager.monsters.health[i].current_health = 5;
+        entity_manager.monsters.health[i].max_health = 5;
     }
     for (int i = 0; i < 10; ++i) {
         entity_manager.monsters.movement[i].position = Vector2Int{i+1, 2};
@@ -84,10 +86,19 @@ void Start(GameState* gs, KeyboardState* ks) {
     }
     for (int i = 0; i < 10; ++i) {
         entity_manager.monsters.combat[i].armor_class = 8; 
-        entity_manager.monsters.combat[i].damage_per_hit = 4;
+        entity_manager.monsters.combat[i].damage_per_hit = 1;
         entity_manager.monsters.combat[i].cooldown_per_hit = 1; 
     }
-    
+
+    entity_manager.players.active[0] = true;
+    entity_manager.players.health[0].current_health = 10;
+    entity_manager.players.health[0].max_health = 10;
+    entity_manager.players.movement[0].position = Vector2Int{3, 3};
+    entity_manager.players.movement[0].tiles_per_turn = 5;
+    entity_manager.players.combat[0].armor_class = 12; 
+    entity_manager.players.combat[0].damage_per_hit = 3;
+    entity_manager.players.combat[0].cooldown_per_hit = 1; 
+
     // NOTE: Init tilemap
     tilemap = InitTilemap(Vec2(16, 9));
 
@@ -115,6 +126,7 @@ void Start(GameState* gs, KeyboardState* ks) {
 
 }
 
+
 void Update(GameState* gs, KeyboardState* ks, double dt) {
 
     RenderTilemap(tilemap, tile_atlas, overlay_atlas, object_atlas, shaders, gpu_buffers); 
@@ -128,9 +140,21 @@ void Update(GameState* gs, KeyboardState* ks, double dt) {
 
         transform.position = Vector3{float(pos.x), float(pos.y), 1.0f};
         DrawSprite(zombie_sprite, transform, main_camera);
-        printf("Rendering Zombie: %f, %f \n", transform.position.x, transform.position.y);
+        //printf("Rendering Zombie: %f, %f \n", transform.position.x, transform.position.y);
     }
-
+    Vector2Int player_pos = entity_manager.players.movement[0].position;
+    transform.position = Vector3{float(player_pos.x), float(player_pos.y), 1.0f};
+    DrawSprite(player_sprite, transform, main_camera);
+    // SECTION: Unit Selection and movement.
+    static int selected_unit = 0;
+    // NOTE: Get mouse pos
+    Vector2 mouse_world_pos = GetMousePositionInWorldCoords();
+    // NOTE: Get inworld tile position from mouse position
+    int mouse_tile_x = int(round(mouse_world_pos.x));
+    int mouse_tile_y = int(round(mouse_world_pos.y));
+    if (ks->state.MBL && !ks->prev_state.MBL) {
+        selected_unit=Get
+    }
 }
 
 void UserFree() {
