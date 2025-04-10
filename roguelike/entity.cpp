@@ -33,11 +33,21 @@ struct MonsterEntity { // ~ 24 bytes because these are pointers
     CombatComponent* combat;
 };
 
+struct EntityID {
+    enum ENTITY_TYPE {
+        PLAYER_UNIT,
+        MONSTER_UNIT
+    };
+    uint32_t id;
+};
+
 struct EntityManager {
 
     PlayerEntity players;
     MonsterEntity monsters;
 
+
+    
     int InitializePools(ArenaAllocator* scene_arena) {
         players.active = (bool*)ArenaAllocateAsset(scene_arena, sizeof(bool) * MAX_ENTITIES);
         players.health = (HealthComponent*)ArenaAllocateAsset(scene_arena, sizeof(HealthComponent) * MAX_ENTITIES);

@@ -246,6 +246,27 @@ struct Tilemap {
     TileObject* object_map; // NOTE: Stores the object type on this tile.
     int width;
     int height;
+
+    void SetTile(Vector2Int, TileType);
+    void SetOverlay(Vector2Int, TileOverlay);
+    void SetObject(Vector2Int, TileObject);
+    TileType GetTile(Vector2Int);
+    TileOverlay GetOverlay(Vector2Int);
+    TileObject GetObject(Vector2Int);
+    void Render();
+
+    Tileset atlases[3];
+    GL_ID* shaders;
+    GPUBufferIDs gpu_buffers;
+    // SECTION: Which texture atlases this tilemap is tied to for rendering.
+    void SetTileAtlas(Tileset); 
+    void SetOverlayAtlas(Tileset);
+    void SetObjectAtlas(Tileset);
+    // SECTION: Which shaders and gpu buffers this tilemap is tied to.
+    void SetShaders(GL_ID*);
+    void SetGPUBufferIDS(GPUBufferIDs);
+
+    void RenderTilemap();
 };
 
 Tilemap InitTilemap(Vector2Int size) {
@@ -262,42 +283,57 @@ Tilemap InitTilemap(Vector2Int size) {
     return tilemap;
 }
 
-void SetTile(Tilemap* tilemap, Vector2Int position, TileType tile_type) { 
-    if (position.x >= tilemap->width || position.y >= tilemap->height) return;
-    (*tilemap).state_map[position.x + position.y * tilemap->width] = tile_type;
+void Tilemap::SetTile(Vector2Int position, TileType tile_type) { 
+    if (position.x >= this->width || position.y >= this->height) return;
+    (*this).state_map[position.x + position.y * this->width] = tile_type;
 }
-void SetOverlay(Tilemap* tilemap, Vector2Int position, TileOverlay overlay_type) { 
-    if (position.x >= tilemap->width || position.y >= tilemap->height) return;
-    (*tilemap).overlay_map[position.x + position.y * tilemap->width] = overlay_type;
+void Tilemap::SetOverlay(Vector2Int position, TileOverlay overlay_type) { 
+    if (position.x >= this->width || position.y >= this->height) return;
+    (*this).overlay_map[position.x + position.y * this->width] = overlay_type;
 }
-void SetObject(Tilemap* tilemap, Vector2Int position, TileObject object_type) { 
-    if (position.x >= tilemap->width || position.y >= tilemap->height) return;
-    (*tilemap).object_map[position.x + position.y * tilemap->width] = object_type;
+void Tilemap::SetObject(Vector2Int position, TileObject object_type) { 
+    if (position.x >= this->width || position.y >= this->height) return;
+    (*this).object_map[position.x + position.y * this->width] = object_type;
 }
 
-TileType GetTile(Tilemap tilemap, Vector2Int position) {
-    if (position.x >= tilemap.width || position.y >= tilemap.height) return TileType::void_tile;
-    return tilemap.state_map[position.x + position.y * tilemap.width];
+TileType Tilemap::GetTile(Vector2Int position) {
+    if (position.x >= this->width || position.y >= this->height) return TileType::void_tile;
+    return this->state_map[position.x + position.y * this->width];
 }
-TileOverlay GetOverlay(Tilemap tilemap, Vector2Int position) {
-    if (position.x >= tilemap.width || position.y >= tilemap.height) return TileOverlay::purple_bricks_1;
-    return tilemap.overlay_map[position.x + position.y * tilemap.width];
+TileOverlay Tilemap::GetOverlay(Vector2Int position) {
+    if (position.x >= this->width || position.y >= this->height) return TileOverlay::purple_bricks_1;
+    return this->overlay_map[position.x + position.y * this->width];
 } 
-TileObject GetObject(Tilemap tilemap, Vector2Int position) {
-    if (position.x >= tilemap.width || position.y >= tilemap.height) return TileObject::basic_door_1;
-    return tilemap.object_map[position.x + position.y * tilemap.width];
+TileObject Tilemap::GetObject(Vector2Int position) {
+    if (position.x >= this->width || position.y >= this->height) return TileObject::basic_door_1;
+    return this->object_map[position.x + position.y * this->width];
 } 
 
+void Tilemap::SetTileAtlas(Tileset atlas) {
+    this->atlases[0] = atlas;
+}
+void Tilemap::SetOverlayAtlas(Tileset atlas) {
+    this->atlases[1] = atlas;
+}
+void Tilemap::SetObjectAtlas(Tileset atlas) {
+    this->atlases[2] = atlas;
+}
+void Tilemap::SetShaders(GL_ID* shaders) {
+    this->shaders= shaders;
+}
+void Tilemap::SetGPUBufferIDS(GPUBufferIDs gpu_buffers) {
+    this->gpu_buffers = gpu_buffers;
+}
 
-void RenderTilemap(Tilemap tilemap, Tileset tile_atlas, Tileset overlay_atlas, Tileset object_atlas, GL_ID* shaders, GPUBufferIDs gpu_buffers) {
-    for (int y = 0; y < tilemap.height; ++y) {
-        for (int x = 0; x < tilemap.width; ++x) {
-            int tile_index = tile_type_to_atlas_index[GetTile(tilemap, Vector2Int{x, y})];
-            int overlay_index = tile_overlay_to_atlas_index[GetOverlay(tilemap, Vector2Int{x, y})];
-            int object_index = tile_object_to_atlas_index[GetObject(tilemap, Vector2Int{x, y})];
-            DrawTile(tile_atlas, Vector3{float(x), float(y), 0.0f}, tile_index, shaders, gpu_buffers);
-            DrawTile(overlay_atlas, Vector3{float(x), float(y), 0.1f}, overlay_index, shaders, gpu_buffers);
-            DrawTile(object_atlas, Vector3{float(x), float(y), 0.2f}, object_index, shaders, gpu_buffers);
+void Tilemap::Render() {
+    for (int y = 0; y < this->height; ++y) {
+        for (int x = 0; x < this->width; ++x) {
+            int tile_index = tile_type_to_atlas_index[this->GetTile(Vector2Int{x, y})];
+            int overlay_index = tile_overlay_to_atlas_index[this->GetOverlay(Vector2Int{x, y})];
+            int object_index = tile_object_to_atlas_index[this->GetObject(Vector2Int{x, y})];
+            DrawTile(this->atlases[0], Vector3{float(x), float(y), 0.0f}, tile_index, this->shaders, this->gpu_buffers);
+            DrawTile(this->atlases[1], Vector3{float(x), float(y), 0.1f}, overlay_index, this->shaders, this->gpu_buffers);
+            DrawTile(this->atlases[2], Vector3{float(x), float(y), 0.2f}, object_index, this->shaders, this->gpu_buffers);
         }
     }
 }

@@ -99,28 +99,43 @@ void Start(GameState* gs, KeyboardState* ks) {
     entity_manager.players.combat[0].damage_per_hit = 3;
     entity_manager.players.combat[0].cooldown_per_hit = 1; 
 
+    entity_manager.players.active[1] = true;
+    entity_manager.players.health[1].current_health = 10;
+    entity_manager.players.health[1].max_health = 10;
+    entity_manager.players.movement[1].position = Vector2Int{4, 3};
+    entity_manager.players.movement[1].tiles_per_turn = 5;
+    entity_manager.players.combat[1].armor_class = 12; 
+    entity_manager.players.combat[1].damage_per_hit = 3;
+    entity_manager.players.combat[1].cooldown_per_hit = 1; 
+
+
     // NOTE: Init tilemap
     tilemap = InitTilemap(Vec2(16, 9));
+    tilemap.SetTileAtlas(tile_atlas);
+    tilemap.SetOverlayAtlas(overlay_atlas);
+    tilemap.SetObjectAtlas(object_atlas);
+    tilemap.SetShaders(shaders);
+    tilemap.SetGPUBufferIDS(gpu_buffers);
 
     for (int y = 0; y < tilemap.height; ++y) {
         for (int x = 0; x < tilemap.width; ++x) {
 
 
             if ((x == 0 || x == tilemap.width-1) && y != 0) {
-                SetTile(&tilemap, Vector2Int{x, y}, TileType::cave_wall_vert);
-                SetOverlay(&tilemap, Vector2Int{x, y}, TileOverlay::void_overlay);
+                tilemap.SetTile(Vector2Int{x, y}, TileType::cave_wall_vert);
+                tilemap.SetOverlay(Vector2Int{x, y}, TileOverlay::void_overlay);
             } else if (y == 0 || y == tilemap.height-1) {
-                SetTile(&tilemap, Vector2Int{x, y}, TileType::cave_wall_horiz);
-                SetOverlay(&tilemap, Vector2Int{x, y}, TileOverlay::void_overlay);
+                tilemap.SetTile(Vector2Int{x, y}, TileType::cave_wall_horiz);
+                tilemap.SetOverlay(Vector2Int{x, y}, TileOverlay::void_overlay);
             } else if (x % 2 == y % 2) {
-                SetTile(&tilemap, Vector2Int{x, y}, TileType::ground_dark_cyan);
-                SetOverlay(&tilemap, Vector2Int{x, y}, TileOverlay::blue_bricks_1);
+                tilemap.SetTile(Vector2Int{x, y}, TileType::ground_dark_cyan);
+                tilemap.SetOverlay(Vector2Int{x, y}, TileOverlay::blue_bricks_1);
             } else {
-                SetTile(&tilemap, Vector2Int{x, y}, TileType::ground_dark_blue);
-                SetOverlay(&tilemap, Vector2Int{x, y}, TileOverlay::void_overlay);
+                tilemap.SetTile(Vector2Int{x, y}, TileType::ground_dark_blue);
+                tilemap.SetOverlay(Vector2Int{x, y}, TileOverlay::void_overlay);
 
             }
-            SetObject(&tilemap, Vector2Int{x, y}, TileObject::void_object);
+            tilemap.SetObject(Vector2Int{x, y}, TileObject::void_object);
         }
     }
 
@@ -129,11 +144,10 @@ void Start(GameState* gs, KeyboardState* ks) {
 
 void Update(GameState* gs, KeyboardState* ks, double dt) {
 
-    RenderTilemap(tilemap, tile_atlas, overlay_atlas, object_atlas, shaders, gpu_buffers); 
-
+    tilemap.Render();
     Transform transform = {0};
     transform.scale = {1.0f, 1.0f, 1.0f};
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < MAX_ENTITIES; ++i) {
         // NOTE: Render all monsters:
         if (!entity_manager.monsters.active[i]) continue;
         Vector2Int pos = entity_manager.monsters.movement[i].position;
@@ -142,9 +156,15 @@ void Update(GameState* gs, KeyboardState* ks, double dt) {
         DrawSprite(zombie_sprite, transform, main_camera);
         //printf("Rendering Zombie: %f, %f \n", transform.position.x, transform.position.y);
     }
-    Vector2Int player_pos = entity_manager.players.movement[0].position;
-    transform.position = Vector3{float(player_pos.x), float(player_pos.y), 1.0f};
-    DrawSprite(player_sprite, transform, main_camera);
+    for (int i = 0; i < MAX_ENTITIES; ++i) {
+        // NOTE: Render all player units:
+        if (!entity_manager.players.active[i]) continue;
+        Vector2Int pos = entity_manager.players.movement[i].position;
+
+        transform.position = Vector3{float(pos.x), float(pos.y), 1.0f};
+        DrawSprite(player_sprite, transform, main_camera);
+        //printf("Rendering Zombie: %f, %f \n", transform.position.x, transform.position.y);
+    }
     // SECTION: Unit Selection and movement.
     static int selected_unit = 0;
     // NOTE: Get mouse pos
@@ -153,7 +173,17 @@ void Update(GameState* gs, KeyboardState* ks, double dt) {
     int mouse_tile_x = int(round(mouse_world_pos.x));
     int mouse_tile_y = int(round(mouse_world_pos.y));
     if (ks->state.MBL && !ks->prev_state.MBL) {
-        selected_unit=Get
+
+        // TODO: Make this more efficient by storing the entities in a lookup table by positions.
+        for (int i = 0; i < MAX_ENTITIES; ++i) {
+            MovementComponent unit_movement = entity_manager.players.movement[i];
+            bool unit_active = entity_manager.players.active[i];
+            if (unit_active && unit_movement.position.x == mouse_tile_x && unit_movement.position.y == mouse_tile_y) {
+                selected_unit = i;
+            
+            } 
+        }
+        printf("Selected unit %d\n", selected_unit);
     }
 }
 
