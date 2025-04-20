@@ -7,7 +7,7 @@
 
 exec 3>&1     
 exec > /dev/null
-mkdir -p ./$1/buidl_win
+mkdir -p ./$1/build_win
 
 start_time=$(date +%s%N)
 
@@ -31,7 +31,7 @@ fi
 
 
 
-pushd ./$1/buidl_win
+pushd ./$1/build_win
     # Compile the main program
     g++ -Wall sky_ui_imgui.o OpenGL_renderer2D.o OpenAL_sound.o ../$2.cpp -o $2 -lmingw32 -lSDL2main -lSDL2 -lglew32 -lopenl32 -lopenal
 
