@@ -1,0 +1,37 @@
+======================================== 
+===== Build started at  1:20:23.74 ===== 
+======================================== 
+ 
+[ 1:20:23.76] +++++ Compiling UI +++++  
+ 
+[ 1:20:26.43] 0 Errors 
+ 
+[ 1:20:26.44] ===== UI Compiled =====  
+[ 1:20:26.44] +++++ Compiling Rendering Layer +++++ 
+ 
+[ 1:20:27.19] 0 Errors 
+ 
+[ 1:20:27.21] ===== Render Layer Compiled =====  
+[ 1:20:27.22] +++++ Compiling Audio Layer +++++ 
+ 
+[ 1:20:27.41] 0 Errors 
+ 
+[ 1:20:27.42] ===== Audio Layer Compiled =====  
+[ 1:20:27.44] +++++ Compiling Project +++++ 
+ 
+..\main.cpp:14:1: error: 'sakdjasm' does not name a type
+ sakdjasm das;ld
+ ^~~~~~~~
+..\main.cpp:14:14: error: 'ld' does not name a type
+ sakdjasm das;ld
+              ^~
+In file included from ..\../Engine/SDL_sky.cpp:14,
+                 from ..\main.cpp:3:
+..\../Engine/skyengine.cpp:16:13: warning: 'void Init(int*, int*, float*, bool*, fColor*)' declared 'static' but never defined [-Wunused-function]
+ static void Init(int* width, int* height, float* width_in_world_space, bool* is_fullscreen, fColor* clear_color);
+             ^~~~
+..\../Engine/skyengine.cpp:16:13: warning: 'void Init(int*, int*, float*, bool*, fColor*)' used but never defined
+ 
+=======================================
+===== Build failed at  1:20:27.82 =====
+=======================================
