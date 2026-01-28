@@ -90,6 +90,8 @@ echo [%TIME%] ===== Audio Layer Compiled =====  >> %BUILD_DIR%\logs\%LOG_FILE%
 XCOPY Engine\assets\startup.png %BUILD_DIR% /D /Y >nul
 XCOPY Engine\assets\glew32.dll %BUILD_DIR% /D /Y >nul
 XCOPY Engine\assets\SDL2.dll %BUILD_DIR% /D /Y >nul
+XCOPY Engine\assets\OpenAL32.dll %BUILD_DIR% /D /Y >nul
+XCOPY Engine\assets\libwinpthread-1.dll %BUILD_DIR% /D /Y >nul
 
 :: === Final Compilation ===
 :CompileGame
