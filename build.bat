@@ -86,7 +86,7 @@ echo[ >> %BUILD_DIR%\logs\%LOG_FILE%
 echo [%TIME%] ===== Audio Layer Compiled =====  >> %BUILD_DIR%\logs\%LOG_FILE%
 
 :: === Copy Assets === We only do it if -f is envoked because this only needs to happen on the first compilation
-::if "%MODE%" == "-f" (GOTO CompileGame)
+if "%MODE%" != "-f" (GOTO CompileGame)
 XCOPY Engine\assets\startup.png %BUILD_DIR% /D /Y >nul
 XCOPY Engine\assets\glew32.dll %BUILD_DIR% /D /Y >nul
 XCOPY Engine\assets\SDL2.dll %BUILD_DIR% /D /Y >nul

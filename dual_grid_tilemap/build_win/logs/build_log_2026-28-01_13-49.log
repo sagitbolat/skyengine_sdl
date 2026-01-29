@@ -1,0 +1,13 @@
+======================================== 
+===== Build started at 13:49:46.96 ===== 
+======================================== 
+ 
+[13:49:46.98] +++++ Compiling Project +++++ 
+ 
+C:/Users/sagit.bolat/Downloads/MinGW/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/ld.exe: cannot find -lglew32: No such file or directory
+C:/Users/sagit.bolat/Downloads/MinGW/bin/../lib/gcc/x86_64-w64-mingw32/15.2.0/../../../../x86_64-w64-mingw32/bin/ld.exe: cannot find -lOpenAL32: No such file or directory
+collect2.exe: error: ld returned 1 exit status
+ 
+=======================================
+===== Build failed at 13:49:51.12 =====
+=======================================

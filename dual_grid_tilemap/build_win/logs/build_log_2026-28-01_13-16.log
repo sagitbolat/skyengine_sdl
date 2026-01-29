@@ -1,0 +1,12 @@
+======================================== 
+===== Build started at 13:16:13.03 ===== 
+======================================== 
+ 
+[13:16:13.05] +++++ Compiling Project +++++ 
+ 
+'g++' is not recognized as an internal or external command,
+operable program or batch file.
+ 
+=======================================
+===== Build failed at 13:16:13.09 =====
+=======================================

@@ -39,15 +39,15 @@ void Awake(GameMemory* gm) {
 
 
 void Start(GameState* gs, KeyboardState* ks) {
-    tilemap = InitTilemap(Vec2(33, 33));
+    tilemap = InitTilemap(Vec2(15, 15));
     for (int x = 0; x < tilemap.width; ++x) {
         for (int y = 0; y < tilemap.height; ++y) {
             int tile_type = 1;
             SetTile(&tilemap, Vector2Int{x, y}, tile_type);
         }
     }
-    main_camera.position.x  = float(16);
-    main_camera.position.y  = float(16);
+    main_camera.position.x  = float(7);
+    main_camera.position.y  = float(7);
     main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
 
 }

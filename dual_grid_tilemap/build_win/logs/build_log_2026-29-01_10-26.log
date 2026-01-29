@@ -1,0 +1,10 @@
+======================================== 
+===== Build started at 10:26:47.36 ===== 
+======================================== 
+ 
+[10:26:47.37] +++++ Compiling UI +++++  
+ 
+Engine\UI\sky_ui_imgui.cpp:2:10: fatal error: GL/glew.h: No such file or directory
+    2 | #include <GL/glew.h>
+      |          ^~~~~~~~~~~
+compilation terminated.
