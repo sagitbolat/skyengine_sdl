@@ -1,5 +1,6 @@
 #define INCLUDE_IMGUI
 #define DEBUG_UI
+#define NO_SPLASH_SCREEN
 #include "../Engine/SDL_sky.cpp"
 #include "../Engine/skymath.h"
 
@@ -12,6 +13,7 @@ DEFINE_LIST(int);
 #include <chrono>
 #include <thread>
 
+
 // SECTION: Initialization of stuff...
 void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *clear_color)
 {
@@ -23,13 +25,24 @@ void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *cle
     *clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
 }
 
+void PrintList(int_List* list) {
+    printf("List (len = %zu, cap = %zu): [", list->length, list->capacity);
+    for (index_t i = 0; i < list->length; i++) {
+        printf("%d", list->data[i]);
+        if (i + 1 < list->length) printf(", ");
+    }
+    printf("]\n");
+}
+
 void Awake(GameMemory *gm){
+
 }
 
 void Start(GameState *gs, KeyboardState *ks) {
 }
 
 void Update(GameState *gs, KeyboardState *ks, double dt) {
+
 }
 
 void UserFree() {

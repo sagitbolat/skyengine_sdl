@@ -6,6 +6,7 @@
 #include "../Engine/scene.h"
 
 #define MAX_ENTITIES 256 
+#define MAX_NUM_PLAYERS 24
 #include "tilemap.h"
 #include "entity.h"
 #include "level_loader.h"
@@ -14,6 +15,7 @@
 #ifdef PROFILING
 #include <chrono>
 #endif
+
 
 // SECTION: Initialization of stuff...
 void Init(int *w, int *h, float *w_in_world_space, bool *fullscreen, fColor *clear_color)

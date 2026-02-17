@@ -46,8 +46,10 @@ void Start(GameState* gs, KeyboardState* ks) {
             SetTile(&tilemap, Vector2Int{x, y}, tile_type);
         }
     }
-    main_camera.position.x  = float(7);
-    main_camera.position.y  = float(7);
+    main_camera.position.x  = float(6.5);
+    main_camera.position.y  = float(6.5);
+    main_camera.width = 15;
+    main_camera.height = 15;
     main_camera.look_target = {main_camera.position.x, main_camera.position.y, 0.0f}; 
 
 }

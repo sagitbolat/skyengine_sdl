@@ -2,7 +2,6 @@
 #include "../Engine/skymath.h"
 #include "tilemap.h"
 
-#define MOVE_SPEED 0.2f // NOTE: The player's movespeed measured in seconds per block.
 
 struct EntityMap { // NOTE: Similar to a 2D tilemap, but holds entity ids instead of tile ids.
     int* map;       // NOTE: width x height x depth map. width and height matches tilemap. Can contain up to number of depth entities per tile.
@@ -45,130 +44,102 @@ void EmissionMap::SetEmissionTile(int x, int y, EmissionTile tile) {
 
 
 // SECTION: Components
-struct EntityComponentPlayer {
-    enum DIRECTION_ENUM {UP, RIGHT, DOWN, LEFT, NEUTRAL} direction;
+// Enums
+enum class Direction : uint8_t { Up, Right, Down, Left, Neutral };
+
+enum class ColorBlendMode : uint8_t { Blended, Additive, Subtractive };
+
+// Movement related
+#define MOVE_SPEED 0.2f // NOTE: The player's movespeed measured in seconds per block.
+
+struct PlayerControlled {}; // This is a tag for player characters
+
+struct MoveIntent { // Intent requested this frame by input
+    Direction dir = Direction::Neutral;
+    bool wants_move = false;
 };
-struct EntityComponentMover { // NOTE: Whether movable by the player
-    float seconds_per_tile;
-    float move_timer;
-    bool  moving;
+
+struct GridMover { // Movement system data
+    float move_timer = 0.0f;
+    bool moving = false;
+    Direction dir = Direction::Neutral;
 };
-struct EntityComponentEmitter { // NOTE: Laser emitter struct
-    Color emission_color;
-    enum DIRECTION_ENUM {UP, RIGHT, DOWN, LEFT} direction;
+
+// Laser stuff
+struct LaserEmitter {
+    Color color;
+    Direction dir = Direction::Up;
 };
-struct EntityComponentReceiver { // NOTE: Laser reciever struct
+
+enum class LaserSurfaceMode : uint8_t { Absorb, PassThrough, Reflect /* later */, Refract /* later */ };
+
+struct LaserSurface {
+    LaserSurfaceMode mode = LaserSurfaceMode::Absorb;
+};
+
+struct LaserFilter {
+    // “accepts/passes” mask or tint; simplest: multiply laser color
+    Color filter_color {1,1,1,1};
+};
+
+struct OpticalTransmittance {
+    int transmittance = 1; // 0=opaque, 1=fully passes
+};
+
+struct LaserReceiver {
     Color accepted_color;
-    bool signal_received; // NOTE: turns true if a laser hits the Reciever
-    bool signal_accepted; // NOTE: turns true if the laser is of the correct color.
-    Color signal_color;
-};
-#define MAX_CONNECTED_ACTIVATORS 32
-struct EntityComponentDoor { // NOTE: A door that can be open or closed
-    bool is_open;
-    bool open_by_default; // NOTE: If true, the door will be open by default and closed when activated
-    int connected_activators_ids[MAX_CONNECTED_ACTIVATORS];
-    int num_connected_activators;
-};
-struct EntityComponentButton {
-    bool is_pressed;
-};
-struct EntityComponentTeleporter {
-    Color color;
-    int connected_teleporter_id;
-};
-struct EntityComponentColorChanger {
-    Color color;
-    enum COLOR_MODE {BLENDED, ADDITIVE, SUBTRACTIVE} color_mode;
-    Color vertical_color;
-    Color horizontal_color; 
-};
-struct EntityComponentColorGate {
-    int id_of_last_changed_entity;
-    enum DIRECTION_ENUM {UP, RIGHT, DOWN, LEFT} direction;
 };
 
-void EntityComponentMoverInit(EntityComponentMover* component, float seconds_per_tile, bool active = true) {
-    component->active = active;
-    component->seconds_per_tile = seconds_per_tile;
-    component->move_timer = 0.0f;
-    component->moving = false;
-}
-void EntityComponentEmitterInit(EntityComponentEmitter* component, Color emission_color,  EntityComponentEmitter::DIRECTION_ENUM dir, bool active = true) {
-    component->active = active;
-    component->emission_color = emission_color;
-    component->direction = dir;
-}
-void EntityComponentReceiverInit(EntityComponentReceiver* component, Color accepted_color, bool active=true) {
-    component->active = active;
-    component->accepted_color = accepted_color; // NOTE: The color that the receiver accepts as valid.
-    component->signal_received = false;
-    component->signal_accepted = false;
-    component->signal_color = {0, 0, 0, 0};
-}
-void EntityComponentDoorInit(EntityComponentDoor* component, bool open_by_default = false, int connected_receivers[MAX_CONNECTED_ACTIVATORS] = nullptr, int num_connected_activators = 0, bool active=true) {
-    component->active  = active;
-    component->is_open = false;
-    component->open_by_default = open_by_default;
-    if (num_connected_activators == 0 || connected_receivers == nullptr) {
-        for (int i = 0; i < MAX_CONNECTED_ACTIVATORS; ++i) {
-            component->connected_activators_ids[i] = -1; 
-        }
-        component->num_connected_activators = 0;
-    } else {
-        for (int i = 0; i < MAX_CONNECTED_ACTIVATORS; ++i) {
-            if (i < num_connected_activators) {
-                component->connected_activators_ids[i] = connected_receivers[i];
-            } else {
-                component->connected_activators_ids[i] = -1;
-            }
-        }
-        component->num_connected_activators = num_connected_activators;
-    }
-}
-void EntityComponentButtonInit(EntityComponentButton* component, bool is_pressed = false, bool active = true) {
-    component->active = active;
-    component->is_pressed = is_pressed;
-}
-void EntityComponentTeleporterInit(EntityComponentTeleporter* component, int connected_teleporter_id = -1, Color color = {0, 0, 0, 0}, bool active = true) {
-    component->active = active;
-    component->connected_teleporter_id = connected_teleporter_id;
-    component->color = color;
-}
-void EntityComponentColorChangerInit(EntityComponentColorChanger* component, Color color = {0, 0, 0, 0}, EntityComponentColorChanger::COLOR_MODE color_mode = EntityComponentColorChanger::COLOR_MODE::ADDITIVE, bool active = true) {
-    component->active = active;
-    component->color = color;
-    component->vertical_color = {0, 0, 0, 0};
-    component->horizontal_color = {0, 0, 0, 0};
-    component->color_mode = color_mode;
-}
+struct LaserHit {
+    bool received = false;
+    bool accepted = false;
+    Color incoming_color;
+};
 
-void EntityComponentColorGateInit(EntityComponentColorGate* component, bool active = true, EntityComponentColorGate::DIRECTION_ENUM dir) {
-    component->active = active;
-    component->id_of_last_changed_entity = -1;
-    component->direction = dir;
-}
+// Doors, buttons, teleporters, and wiring
+#define MAX_CONNECTIONS 10
+struct SignalOutput { // Used bu activators
+    uint32_t channel[MAX_CONNECTIONS]{-1};
+    bool channel_active[MAX_CONNECTIONS]{false}; // computed by systems (button pressed, receiver accepted, etc.)
+};
+
+struct SignalInput { // Used by things that need activation
+    uint32_t channel[MAX_CONNECTIONS]{-1};
+    bool channel_active[MAX_CONNECTIONS]{false}; // resolved by logic system from outputs
+};
+
+struct Door {
+    bool is_open = false;
+    bool open_by_default = false;
+};
+
+struct Button {
+    bool isPressed = false; // could also be transient if computed from overlap
+};
+
+struct Teleporter {
+    uint32_t pairId = 0; // all teleporters with same pairId are connected
+    Color color;
+};
+
+// Color Changers
+
+struct ColorChanger {
+    Color main_color;
+    ColorBlendMode mode = ColorBlendMode::Blended;
+
+    // Optional: directional behavior
+    Color vertical_input_color {0,0,0,0};
+    Color horizontal_input_color {0,0,0,0};
+};
+
+
 
 // SECTION: Entities
 
 struct Entity {
-    enum ENTITY_TYPE_ENUM {PLAYER, PUSH_BLOCK, STATIC_BLOCK, EMITTER, RECEIVER, DOOR, BUTTON, ENDGOAL, TELEPORTER, COLOR_CHANGER, COLOR_GATE} entity_type;
-    int         id;
-    bool        active; // NOTE: This is equivalent of a null state if this is false.
-    Transform   transform;
-    Vector2Int  prev_position;
-    Vector2Int  position;
-    Color       main_color;
-    int         entity_layer; // NOTE: Layer 0: floor buttons and other features. Layer 1: Pushblocks, emitters, player etc. 
-    EntityComponentPlayer       player;
-    EntityComponentMover        movable;
-    EntityComponentEmitter      emitter;
-    EntityComponentReceiver     receiver;
-    EntityComponentDoor         door;
-    EntityComponentButton       button;
-    EntityComponentTeleporter   teleporter;
-    EntityComponentColorChanger color_changer;
-    EntityComponentColorGate    color_gate;
+    uint32_t id = 0;
+    uint32_t generation = 0;
 }; 
 
 
