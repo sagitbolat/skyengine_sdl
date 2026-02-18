@@ -50,11 +50,14 @@ enum class Direction : uint8_t { Up, Right, Down, Left, Neutral };
 
 enum class ColorBlendMode : uint8_t { Blended, Additive, Subtractive };
 
+enum class GridLayer : uint8_t { GroundLayer, EntityLayer }; // Ground does not stop movement, Entity does.
+
 // Movement related
 #define MOVE_SPEED 0.2f // NOTE: The player's movespeed measured in seconds per block.
 
 struct GridPosition {
     Vector2Int position;
+    GridLayer layer; 
 };
 
 struct GridPlayerControlled { // This is a tag for player characters{
@@ -86,9 +89,6 @@ struct LaserFilter {
 
 struct LaserReceiver {
     Color accepted_color;
-};
-
-struct LaserHit {
     bool received = false;
     bool accepted = false;
     Color incoming_color;
@@ -96,27 +96,26 @@ struct LaserHit {
 
 // Doors, buttons, teleporters, and wiring
 #define MAX_CONNECTIONS 10
-struct SignalOutput { // Used by activators
-    uint32_t channel[MAX_CONNECTIONS]{-1};
-    bool channel_active[MAX_CONNECTIONS]{false}; // computed by systems (button pressed, receiver accepted, etc.)
+struct SignalChannel { // Used by activators and things that need activation. This is used to set a central global channel bitfield
+    int32_t channels[MAX_CONNECTIONS]{-1};
 };
 
-struct SignalInput { // Used by things that need activation
-    uint32_t channel[MAX_CONNECTIONS]{-1};
-    bool channel_active[MAX_CONNECTIONS]{false}; // resolved by logic system from outputs
-};
 
 struct Door {
     bool is_open = false;
     bool open_by_default = false;
 };
 
+struct Endgoal{
+    bool is_activated_by_player = false;
+}; // Tag for endgoal
+
 struct Button {
-    bool isPressed = false; // could also be transient if computed from overlap
+    bool is_pressed = false; // could also be transient if computed from overlap
 };
 
 struct Teleporter {
-    uint32_t pairId = 0; // all teleporters with same pairId are connected
+    uint32_t pair_id = 0; // all teleporters with same pairId are connected
     Color color;
 };
 
@@ -150,12 +149,11 @@ struct ComponentArrays {
     SparseSet<LaserFilter>          laser_filter_arr;
     
     SparseSet<LaserReceiver>        laser_receiver_arr;
-    SparseSet<LaserHit>             laser_hit_arr;
     
-    SparseSet<SignalOutput>         signal_output_arr;
-    SparseSet<SignalInput>          signal_input_arr;
+    SparseSet<SignalChannel>         signal_channel_arr;
     
     SparseSet<Door>                 door_arr;
+    SparseSet<Endgoal>              endgoal_arr;
     SparseSet<Button>               button_arr;
     SparseSet<Teleporter>           teleporter_arr;
     SparseSet<ColorChanger>         color_changer_arr;
@@ -171,12 +169,11 @@ struct ComponentArrays {
         laser_filter_arr.Init(initial_entity_num);
         
         laser_receiver_arr.Init(initial_entity_num);
-        laser_hit_arr.Init(initial_entity_num);
         
-        signal_output_arr.Init(initial_entity_num);
-        signal_input_arr.Init(initial_entity_num);
+        signal_channel_arr.Init(initial_entity_num);
         
         door_arr.Init(initial_entity_num);
+        endgoal_arr.Init(initial_entity_num);
         button_arr.Init(initial_entity_num);
         teleporter_arr.Init(initial_entity_num);
         color_changer_arr.Init(initial_entity_num);
@@ -186,84 +183,86 @@ struct ComponentArrays {
 
 void PlayerInit(
     Entity* player,
-    ComponentArrays comp_arrays,
+    ComponentArrays* comp_arrays,
     Vector2Int init_position,
     Direction orientation    
 ) {
-    
-
-
-    EntityInit(player, id, init_position, 1.0f, player_color);
-    EntityComponentMoverInit(&player->movable, MOVE_SPEED, true);
-    player->player.active = true;
-    player->entity_type = Entity::ENTITY_TYPE_ENUM::PLAYER;
-    player->main_color = player_color;
+    comp_arrays->grid_position_arr.Insert(player->id, GridPosition{init_position, GridLayer::EntityLayer});
+    comp_arrays->grid_player_controlled_arr.Insert(player->id, GridPlayerControlled{orientation});
+    comp_arrays->grid_mover_arr.Insert(player->id, GridMover{0.0f, false, Direction::Neutral});
 }
+
 void PushblockInit(
     Entity* pushblock,
-    int id,
+    ComponentArrays* comp_arrays,
     Vector2Int init_position
 ) {
-    EntityInit(pushblock, id, init_position, 1.0f);
-    EntityComponentMoverInit(&pushblock->movable, MOVE_SPEED, true);
-    pushblock->entity_type = Entity::ENTITY_TYPE_ENUM::PUSH_BLOCK;
+    comp_arrays->grid_position_arr.Insert(pushblock->id, GridPosition{init_position, GridLayer::EntityLayer});
+    comp_arrays->grid_mover_arr.Insert(pushblock->id, GridMover{0.0f, false, Direction::Neutral});
 }
+
 void StaticBlockInit(
     Entity* static_block,
-    int id,
+    ComponentArrays* comp_arrays,
     Vector2Int init_position
 ) {
-    EntityInit(static_block, id, init_position, 1.0f);
-    static_block->entity_type = Entity::ENTITY_TYPE_ENUM::STATIC_BLOCK;
+    comp_arrays->grid_position_arr.Insert(static_block->id, GridPosition{init_position, GridLayer::EntityLayer});
 }
+
 void EmitterInit(
     Entity* emitter,
-    int id,
+    ComponentArrays* comp_arrays,
     Vector2Int init_position,
     Color emitter_color,
-    bool emitter_movable,
-    EntityComponentEmitter::DIRECTION_ENUM direction
+    Direction direction
 ) {
-    EntityInit(emitter, id, init_position, 1.0f, emitter_color);
-    EntityComponentEmitterInit(&emitter->emitter, emitter_color, direction, true);
-    EntityComponentMoverInit(&emitter->movable, MOVE_SPEED, emitter_movable);
-    emitter->entity_type = Entity::ENTITY_TYPE_ENUM::EMITTER;
+    comp_arrays->grid_position_arr.Insert(emitter->id, GridPosition{init_position, GridLayer::EntityLayer});
+    comp_arrays->grid_mover_arr.Insert(emitter->id, GridMover{0.0f, false, Direction::Neutral});
+    comp_arrays->laser_emitter_arr.Insert(emitter->id, LaserEmitter{emitter_color, Direction::Up});
+
 }
+
 void ReceiverInit(
     Entity* receiver,
-    int id,
+    ComponentArrays* comp_arrays,
     Vector2Int init_position,
     Color accepted_signal_color,
-    bool receiver_movable
+    int32_t channels[MAX_CONNECTIONS]
 ) {
-    EntityInit(receiver, id, init_position, 1.0f, accepted_signal_color);
-    EntityComponentReceiverInit(&receiver->receiver, accepted_signal_color, true);
-    EntityComponentMoverInit(&receiver->movable, MOVE_SPEED, receiver_movable);
-    receiver->entity_type = Entity::ENTITY_TYPE_ENUM::RECEIVER;
+    comp_arrays->grid_position_arr.Insert(receiver->id, GridPosition{init_position, GridLayer::EntityLayer});
+    comp_arrays->grid_mover_arr.Insert(receiver->id, GridMover{0.0f, false, Direction::Neutral});
+    comp_arrays->laser_receiver_arr.Insert(receiver->id, LaserReceiver{accepted_signal_color, false, false, {0, 0, 0, 0}});
+    
+    SignalChannel sc{};
+    std::copy(channels, channels + MAX_CONNECTIONS, sc.channels);
+
+    comp_arrays->signal_channel_arr.Insert(receiver->id, sc); 
 }
+
 void DoorInit(
     Entity* door,
-    int id,
+    ComponentArrays* comp_arrays,
     Vector2Int init_position,
     bool open_by_default = false,
-    int connected_receivers[MAX_CONNECTED_ACTIVATORS] = nullptr,
-    int num_connected_activators = 0
+    int32_t channels[MAX_CONNECTIONS]
 ) {
-    //EntityInit(door, id, sprite, init_position, 1.0f, true, false);
-
-    EntityInit(door, id, init_position, 0.0f);
-    EntityComponentDoorInit(&door->door, open_by_default, connected_receivers, num_connected_activators, true);
-    door->entity_type = Entity::ENTITY_TYPE_ENUM::DOOR;
+    comp_arrays->grid_position_arr.Insert(door->id, GridPosition{init_position, GridLayer::GroundLayer});
+    
+    SignalChannel sc{};
+    std::copy(channels, channels + MAX_CONNECTIONS, sc.channels);
+    
+    comp_arrays->door_arr.Insert(door->id, Door{false, open_by_default});
 }
+
 void EndgoalInit(
     Entity* endgoal,
-    int id,
+    ComponentArrays* comp_arrays,
     Vector2Int init_position
 ) {
-    EntityInit(endgoal, id, init_position, 0.0f);
-    endgoal->endgoal.active = true;
-    endgoal->entity_type = Entity::ENTITY_TYPE_ENUM::ENDGOAL;
+    comp_arrays->grid_position_arr.Insert(endgoal->id, GridPosition{init_position, GridLayer::GroundLayer});
+    comp_arrays->endgoal_arr.Insert(endgoal->id, Endgoal{false});
 }
+
 void ButtonInit(
     Entity* button,
     int id,
