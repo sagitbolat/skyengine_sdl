@@ -1,5 +1,6 @@
 #pragma once
 #include "../Engine/skymath.h"
+#include "../Engine/data_structs/sparse_set.h"
 #include "tilemap.h"
 
 
@@ -52,11 +53,12 @@ enum class ColorBlendMode : uint8_t { Blended, Additive, Subtractive };
 // Movement related
 #define MOVE_SPEED 0.2f // NOTE: The player's movespeed measured in seconds per block.
 
-struct PlayerControlled {}; // This is a tag for player characters
+struct GridPosition {
+    Vector2Int position;
+};
 
-struct MoveIntent { // Intent requested this frame by input
-    Direction dir = Direction::Neutral;
-    bool wants_move = false;
+struct GridPlayerControlled { // This is a tag for player characters{
+    Direction orientation = Direction::Up; // orientation is equivalent to what direction is up.
 };
 
 struct GridMover { // Movement system data
@@ -82,10 +84,6 @@ struct LaserFilter {
     Color filter_color {1,1,1,1};
 };
 
-struct OpticalTransmittance {
-    int transmittance = 1; // 0=opaque, 1=fully passes
-};
-
 struct LaserReceiver {
     Color accepted_color;
 };
@@ -98,7 +96,7 @@ struct LaserHit {
 
 // Doors, buttons, teleporters, and wiring
 #define MAX_CONNECTIONS 10
-struct SignalOutput { // Used bu activators
+struct SignalOutput { // Used by activators
     uint32_t channel[MAX_CONNECTIONS]{-1};
     bool channel_active[MAX_CONNECTIONS]{false}; // computed by systems (button pressed, receiver accepted, etc.)
 };
@@ -140,88 +138,61 @@ struct ColorChanger {
 struct Entity {
     uint32_t id = 0;
     uint32_t generation = 0;
-}; 
+};
 
-
-void PrintEntity(Entity e) {
-    printf("############################\n");
-    printf("Type:                   %d\n", e.entity_type);
-    printf("ID:                     %d\n", e.id);
-    printf("Active:                 %d\n", e.active);
-    printf("Position:               {%d, %d}\n", e.position.x, e.position.y);
-    printf("TransformPos:           {%f, %f, %f}\n", e.transform.position.x, e.transform.position.y, e.transform.position.z);
-    printf("Layer:                  %d\n", e.entity_layer);
-    printf("Player::Active:         %d\n", e.player.active);
-    printf("Mover::Active           %d\n", e.movable.active);
-    printf("Mover::Moving           %d\n", e.movable.moving);
-    printf("Emitter::Active:        %d\n", e.emitter.active);
-    printf("Emitter::Color:         {%d, %d, %d, %d}\n", e.emitter.emission_color.r, e.emitter.emission_color.g, e.emitter.emission_color.b, e.emitter.emission_color.a);
-    printf("Receiver::Active:       %d\n", e.receiver.active);
-    printf("Receiver::ColorReceived:{%d, %d, %d, %d}\n", e.receiver.signal_color.r, e.receiver.signal_color.g, e.receiver.signal_color.b, e.receiver.signal_color.a);
-    printf("Receiver::ColorAccepted:{%d, %d, %d, %d}\n", e.receiver.accepted_color.r, e.receiver.accepted_color.g, e.receiver.accepted_color.b, e.receiver.accepted_color.a);
-    printf("Receiver::SigReceived:  %d\n", e.receiver.signal_received);
-    printf("Receiver::SigAccepted:  %d\n", e.receiver.signal_accepted);
-    printf("Door::Active:           %d\n", e.door.active);
-    printf("Door::Open:             %d\n", e.door.is_open);
-    printf("Door::OpenByDefault:    %d\n", e.door.open_by_default);
-    printf("Door::NumAttached       %d\n", e.door.num_connected_activators);
-    printf("Door::AttachedReceivers:{%d", e.door.connected_activators_ids[0]);
-    for (int i = 1; i < MAX_CONNECTED_ACTIVATORS; ++i) {
-        
-        printf(", %d", e.door.connected_activators_ids[i]);
-    }
-    printf("}\n");
-    printf("Endgoal::Active:        %d\n", e.endgoal.active);
-    printf("Button::Active:         %d\n", e.button.active);
-    printf("Button::Pressed:        %d\n", e.button.is_pressed);
-    printf("Teleporter::Active:     %d\n", e.teleporter.active);
-    printf("Teleporter::Connected:  %d\n", e.teleporter.connected_teleporter_id);
-    printf("############################\n");
-
-} 
-
-
-void EntityInit (
-    Entity*     entity, 
-    int         id, 
-    Vector2Int  position={0, 0},
-    float       entity_layer=0,
-    Color       main_color = {0, 0, 0, 0},
-    bool        active=true 
-) {
-    entity->id            = id;
-    entity->active        = active;
-    entity->prev_position = position; // NOTE: Cached for transform updates. Do not modify manually
-    entity->position      = position;
-    entity->entity_layer  = entity_layer;
-    entity->main_color    = main_color;
-
-    Transform transform = {0.0f};
-    transform.position  = {(float)position.x, (float)position.y, float(entity_layer)};
-    transform.rotation  = {0.0f, 0.0f, 0.0f};
-    transform.scale     = {1.0f, 1.0f, 1.0f};
+struct ComponentArrays {
+    SparseSet<GridPosition>         grid_position_arr;          // NOTE: Every entity that exists on the grid needs this.
+    SparseSet<GridPlayerControlled> grid_player_controlled_arr; // NOTE: all player entities need this.
+    SparseSet<GridMover>            grid_mover_arr;             // NOTE: all movable entities need this.
     
-    entity->transform   = transform;
+    SparseSet<LaserEmitter>         laser_emitter_arr;          
+    SparseSet<LaserSurface>         laser_surface_arr;
+    SparseSet<LaserFilter>          laser_filter_arr;
+    
+    SparseSet<LaserReceiver>        laser_receiver_arr;
+    SparseSet<LaserHit>             laser_hit_arr;
+    
+    SparseSet<SignalOutput>         signal_output_arr;
+    SparseSet<SignalInput>          signal_input_arr;
+    
+    SparseSet<Door>                 door_arr;
+    SparseSet<Button>               button_arr;
+    SparseSet<Teleporter>           teleporter_arr;
+    SparseSet<ColorChanger>         color_changer_arr;
+    
 
-    // SECTION: Zero The entity components. Should be unnecessary but done just in case
-    entity->player.active = false;
-    entity->endgoal.active = false;
-    EntityComponentMoverInit(&entity->movable, MOVE_SPEED, false);
-    EntityComponentEmitterInit(&entity->emitter, {0, 0, 0, 0}, EntityComponentEmitter::DIRECTION_ENUM::DOWN, false);
-    EntityComponentReceiverInit(&entity->receiver, {0, 0, 0, 0}, false);
-    EntityComponentDoorInit(&entity->door, false, nullptr, 0, false);
-    EntityComponentButtonInit(&entity->button, false, false);
-    EntityComponentTeleporterInit(&entity->teleporter, -1, {0, 0, 0, 0}, false);
-    EntityComponentColorChangerInit(&entity->color_changer, Color{0, 0, 0, 0}, EntityComponentColorChanger::COLOR_MODE::BLENDED, false);
-    EntityComponentColorGateInit(&entity->color_gate, false, EntityComponentColorGate::DIRECTION_ENUM::UP);
-}
+    void Init(int initial_entity_num) {
+        grid_position_arr.Init(initial_entity_num);
+        grid_player_controlled_arr.Init(initial_entity_num);
+        grid_mover_arr.Init(initial_entity_num);
+
+        laser_emitter_arr.Init(initial_entity_num);
+        laser_surface_arr.Init(initial_entity_num);
+        laser_filter_arr.Init(initial_entity_num);
+        
+        laser_receiver_arr.Init(initial_entity_num);
+        laser_hit_arr.Init(initial_entity_num);
+        
+        signal_output_arr.Init(initial_entity_num);
+        signal_input_arr.Init(initial_entity_num);
+        
+        door_arr.Init(initial_entity_num);
+        button_arr.Init(initial_entity_num);
+        teleporter_arr.Init(initial_entity_num);
+        color_changer_arr.Init(initial_entity_num);
+    }
+};
+
 
 void PlayerInit(
     Entity* player,
-    int id,
+    ComponentArrays comp_arrays,
     Vector2Int init_position,
-    Color player_color = {255, 255, 255, 255}
+    Direction orientation    
 ) {
+    
+
+
     EntityInit(player, id, init_position, 1.0f, player_color);
     EntityComponentMoverInit(&player->movable, MOVE_SPEED, true);
     player->player.active = true;
