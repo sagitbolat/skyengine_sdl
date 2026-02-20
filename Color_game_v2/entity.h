@@ -190,6 +190,7 @@ void PlayerInit(
     comp_arrays->grid_position_arr.Insert(player->id, GridPosition{init_position, GridLayer::EntityLayer});
     comp_arrays->grid_player_controlled_arr.Insert(player->id, GridPlayerControlled{orientation});
     comp_arrays->grid_mover_arr.Insert(player->id, GridMover{0.0f, false, Direction::Neutral});
+    comp_arrays->laser_surface_arr.Insert(player->id, LaserSurface{LaserSurfaceMode::Absorb}); 
 }
 
 void PushblockInit(
@@ -199,6 +200,7 @@ void PushblockInit(
 ) {
     comp_arrays->grid_position_arr.Insert(pushblock->id, GridPosition{init_position, GridLayer::EntityLayer});
     comp_arrays->grid_mover_arr.Insert(pushblock->id, GridMover{0.0f, false, Direction::Neutral});
+    comp_arrays->laser_surface_arr.Insert(pushblock->id, LaserSurface{LaserSurfaceMode::Absorb}); 
 }
 
 void StaticBlockInit(
@@ -207,6 +209,7 @@ void StaticBlockInit(
     Vector2Int init_position
 ) {
     comp_arrays->grid_position_arr.Insert(static_block->id, GridPosition{init_position, GridLayer::EntityLayer});
+    comp_arrays->laser_surface_arr.Insert(static_block->id, LaserSurface{LaserSurfaceMode::Absorb}); 
 }
 
 void EmitterInit(
@@ -219,6 +222,7 @@ void EmitterInit(
     comp_arrays->grid_position_arr.Insert(emitter->id, GridPosition{init_position, GridLayer::EntityLayer});
     comp_arrays->grid_mover_arr.Insert(emitter->id, GridMover{0.0f, false, Direction::Neutral});
     comp_arrays->laser_emitter_arr.Insert(emitter->id, LaserEmitter{emitter_color, Direction::Up});
+    comp_arrays->laser_surface_arr.Insert(emitter->id, LaserSurface{LaserSurfaceMode::Absorb}); 
 
 }
 
@@ -232,6 +236,7 @@ void ReceiverInit(
     comp_arrays->grid_position_arr.Insert(receiver->id, GridPosition{init_position, GridLayer::EntityLayer});
     comp_arrays->grid_mover_arr.Insert(receiver->id, GridMover{0.0f, false, Direction::Neutral});
     comp_arrays->laser_receiver_arr.Insert(receiver->id, LaserReceiver{accepted_signal_color, false, false, {0, 0, 0, 0}});
+    comp_arrays->laser_surface_arr.Insert(receiver->id, LaserSurface{LaserSurfaceMode::Absorb}); 
     
     SignalChannel sc{};
     std::copy(channels, channels + MAX_CONNECTIONS, sc.channels);
@@ -247,6 +252,7 @@ void DoorInit(
     int32_t channels[MAX_CONNECTIONS]
 ) {
     comp_arrays->grid_position_arr.Insert(door->id, GridPosition{init_position, GridLayer::GroundLayer});
+    comp_arrays->laser_surface_arr.Insert(door->id, LaserSurface{open_by_default ? LaserSurfaceMode::PassThrough : LaserSurfaceMode::Absorb}); // when open, should be set to PassThrough, otherwise set to absorb  
     
     SignalChannel sc{};
     std::copy(channels, channels + MAX_CONNECTIONS, sc.channels);
@@ -261,50 +267,43 @@ void EndgoalInit(
 ) {
     comp_arrays->grid_position_arr.Insert(endgoal->id, GridPosition{init_position, GridLayer::GroundLayer});
     comp_arrays->endgoal_arr.Insert(endgoal->id, Endgoal{false});
+    comp_arrays->laser_surface_arr.Insert(endgoal->id, LaserSurface{LaserSurfaceMode::PassThrough}); 
 }
 
 void ButtonInit(
     Entity* button,
-    int id,
+    ComponentArrays* comp_arrays,
     Vector2Int init_position
 ) {
-    EntityInit(button, id,  init_position, 0.0f);
-    EntityComponentButtonInit(&button->button, false, true);
-    button->entity_type = Entity::ENTITY_TYPE_ENUM::BUTTON;
+    comp_arrays->grid_position_arr.Insert(button->id, GridPosition{init_position, GridLayer::GroundLayer});
+    comp_arrays->button_arr.Insert(button->id, Button{false});
+    comp_arrays->laser_surface_arr.Insert(button->id, LaserSurface{LaserSurfaceMode::PassThrough}); 
 }
+
 void TeleporterInit(
     Entity* teleporter,
-    int id,
+    ComponentArrays* comp_arrays,
     Color color,
-    int connected_teleporter_id,
+    uint32_t connected_teleporter_id,
     Vector2Int init_position
 ) {
-    EntityInit(teleporter, id, init_position, 0.0f, color, true);
-    EntityComponentTeleporterInit(&teleporter->teleporter, connected_teleporter_id, color, true);
-    teleporter->entity_type = Entity::ENTITY_TYPE_ENUM::TELEPORTER;
+    comp_arrays->grid_position_arr.Insert(teleporter->id, GridPosition{init_position, GridLayer::GroundLayer});
+    comp_arrays->teleporter_arr.Insert(teleporter->id, Teleporter{connected_teleporter_id, color});
+    comp_arrays->laser_surface_arr.Insert(teleporter->id, LaserSurface{LaserSurfaceMode::PassThrough}); 
 }
+
 void ColorChangerInit(
     Entity* color_changer,
-    int id,
+    ComponentArrays* comp_arrays,
     Color color,
-    EntityComponentColorChanger::COLOR_MODE color_mode,
+    ColorBlendMode color_mode,
     Vector2Int init_position,
     bool movable = true // Movable means its a layer 1 block, not movable is a layer 0 (can be passed through)
 ) {
-    EntityInit(color_changer, id, init_position, movable ? 1.0f : 0.0f, color);
-    EntityComponentColorChangerInit(&color_changer->color_changer, color, color_mode, true);
-    EntityComponentMoverInit(&color_changer->movable, MOVE_SPEED, movable);
-    color_changer->entity_type = Entity::ENTITY_TYPE_ENUM::COLOR_CHANGER;
-}
-void ColorGateInit(
-    Entity* color_gate, 
-    int id, 
-    Color color,
-    Vector2Int init_position
-) {
-    EntityInit(color_gate, id, init_position, 0.0f, color);
-    EntityComponentColorGateInit(&color_gate->color_gate, true, EntityComponentColorGate::DIRECTION_ENUM::UP);
-    color_gate->entity_type = Entity::ENTITY_TYPE_ENUM::COLOR_GATE; 
+    comp_arrays->grid_position_arr.Insert(color_changer->id, GridPosition{init_position, GridLayer::EntityLayer});
+    comp_arrays->grid_mover_arr.Insert(color_changer->id, GridMover{0.0f, false, Direction::Neutral});
+    comp_arrays->color_changer_arr.Insert(color_changer->id, ColorChanger{color, ColorBlendMode::Blended, {0, 0, 0, 0}, {0, 0, 0, 0}});
+    comp_arrays->laser_surface_arr.Insert(color_changer->id, LaserSurface{LaserSurfaceMode::PassThrough}); 
 }
 
 
@@ -383,6 +382,7 @@ bool EntityMove(int entity_id, Vector2Int direction, Tilemap map, EntityMap enti
 }
 
 Color BlendColor(Vector4Int c, int i) {
+    if (i == 0 || i == 1) return c;
     return Color{uint8_t(c.x / i), uint8_t(c.y / i), uint8_t(c.z / i), uint8_t(c.w / i)};
 }
 Color BlendColor(Color a, Color b) {
